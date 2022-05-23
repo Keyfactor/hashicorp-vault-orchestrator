@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
+    <AssemblyName>Keyfactor.Extensions.Orchestrator.HCV</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Keyfactor.Common" Version="2.3.6" />
+    <PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
+    <PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.1.2" />
+    <PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.6.0" />
+    <PackageReference Include="VaultSharp" Version="1.7.0.4" />
+  </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties manifest_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
+</Project>

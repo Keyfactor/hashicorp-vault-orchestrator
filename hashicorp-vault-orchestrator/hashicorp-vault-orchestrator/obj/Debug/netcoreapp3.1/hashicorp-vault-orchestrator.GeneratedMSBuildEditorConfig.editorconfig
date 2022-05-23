@@ -1,0 +1,3 @@
+is_global = true
+build_property.RootNamespace = Keyfactor.Extensions.Orchestrator.HashicorpVault
+build_property.ProjectDir = C:\Users\jvanwanzeele\source\repos\hashicorp-vault-orchestrator\hashicorp-vault-orchestrator\hashicorp-vault-orchestrator\

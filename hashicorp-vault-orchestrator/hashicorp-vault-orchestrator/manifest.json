@@ -1,0 +1,18 @@
+{
+  "extensions": {
+    "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
+      "CertStores.HCV.Inventory": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.HCV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.HCV.Inventory"
+      },
+      "CertStores.HCV.Discovery": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.HCV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.HCV.Discovery"
+      },
+      "CertStores.HCV.Management": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.HCV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.HCV.Management"
+      }
+    }
+  }
+}
