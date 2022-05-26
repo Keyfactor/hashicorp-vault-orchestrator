@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
 using VaultSharp;
-using VaultSharp.V1;
 using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Token;
-using VaultSharp.V1.Commons;
-using VaultSharp.V1.SecretsEngines.Consul;
-using VaultSharp.V1.SecretsEngines.PKI;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
@@ -28,7 +25,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private VaultClientSettings clientSettings { get; set; }
 
 
-        public HcvClient(string vaultToken, string serverUrl, string storePath)
+        public HcvClient(string vaultToken, string serverUrl)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
@@ -36,63 +33,193 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             // Initialize settings. You can also set proxies, custom delegates etc. here.
             clientSettings = new VaultClientSettings(serverUrl, authMethod);
 
-            // Use client to read a key-value secret.
-
-            // Very important to provide mountpath and secret name as two separate parameters. Don't provide a single combined string.
-            // Please use named parameters for 100% clarity of code. (the method also takes version and wrapTimeToLive as params)
-
-            // Generate a dynamic Consul credential
-            // Secret<ConsulCredentials> consulCreds = await vaultClient.V1.Secrets.Consul.GetCredentialsAsync(consulRole, consulMount);
-
-            // string consulToken = consulCredentials.Data.Token;
+            _vaultClient = new VaultClient(clientSettings);
         }
 
-        public async Task<CurrentInventoryItem> GetCertificate(string serial)
+        public async Task<CurrentInventoryItem> GetCertificate(string key, string storePath, string mountPoint = null)
         {
-            Secret<CertificateData> cert = null;
+            VaultClient.V1.Auth.ResetVaultToken();
+
+            Dictionary<string, string> certData;
+            try
+            {
+                var fullPath = storePath + "/" + key;
+
+                if (mountPoint == null)
+                {
+                    certData = (Dictionary<string, string>)(await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath)).Data.Data;
+                }
+                else
+                {
+                    certData = (Dictionary<string, string>)(await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _storePath)).Data.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error getting certificate from Vault", ex);
+                throw;
+            }
 
             try
             {
-                _vaultClient = new VaultClient(clientSettings);
+                var certs = new List<string>() { certData["PUBLIC_KEY"] };
 
-                cert = await VaultClient.V1.Secrets.PKI.ReadCertificateAsync(serial, _storePath);
+                var keys = certData.Keys.Where(k => k.StartsWith("PUBLIC_KEY_")).ToList();
+
+                keys.ForEach(k => certs.Add(certData[k]));
+
+                return new CurrentInventoryItem()
+                {
+                    Alias = key,
+                    PrivateKeyEntry = certData.Keys.Contains("PRIVATE_KEY"),
+                    ItemStatus = OrchestratorInventoryItemStatus.Unknown,
+                    UseChainLevel = true,
+                    Certificates = certs.ToArray()
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error parsing cert data", ex);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<string>> GetVaults(string storePath, string mountPoint = null)
+        {
+            VaultClient.V1.Auth.ResetVaultToken();
+
+            var vaults = new List<string>();
+
+            try
+            {
+                if (mountPoint == null)
+                {
+                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath)).Data.Keys.ToList();
+                }
+                else
+                {
+                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, mountPoint)).Data.Keys.ToList();
+                }
+
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
-                throw;
             }
 
-            return new CurrentInventoryItem()
-            {
-                Alias = cert.Data.SerialNumber,
-                PrivateKeyEntry = true,
-                ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                UseChainLevel = true,
-                Certificates = new string[] { cert.Data.CertificateContent }
-            };
+            return vaults;
         }
 
-        public async Task PutCertificate()
+        public async Task PutCertificate(string certName, string contents, string pfxPassword, string storePath, string mountPoint = null)
         {
+            VaultClient.V1.Auth.ResetVaultToken();
 
-        }
+            var beginPrivateKey = "-----BEGIN PRIVATE KEY-----";
+            var endPrivateKey = "-----END PRIVATE KEY-----";
 
-        public async Task CreateStore()
-        {
+            var beginCert = "-----BEGIN CERTIFICATE-----";
+            var endCert = "-----END CERTIFICATE-----";
 
-        }
+            string[] privateSplit = { beginPrivateKey, endPrivateKey };
+            string[] publicSplit = { beginCert, endCert };
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
-        {
-            var certs = new List<CurrentInventoryItem>();
+            var certDict = new Dictionary<string, string>();
+
             try
             {
-                var certSerials = await VaultClient.V1.Secrets.PKI.ListCertificatesAsync(_storePath);
+                var privateKey = contents.Split(privateSplit, StringSplitOptions.RemoveEmptyEntries)[0];
+                var publicKeysOnly = contents.Replace(beginCert, "").Replace(endCert, "").Replace(privateKey, "");
+                var publicKeys = publicKeysOnly.Split(publicSplit, StringSplitOptions.RemoveEmptyEntries).ToList();
 
-                certSerials.Data.Keys.ForEach(k =>
+                certDict.Add("PRIVATE_KEY", privateKey);
+
+                var index = 0;
+
+                publicKeys.ForEach(pubk =>
                 {
-                    var cert = GetCertificate(k).Result;
+                    var fieldName = index == 0 ? "PUBLIC_KEY" : "PUBLIC_KEY_" + index;
+                    certDict.Add(fieldName, pubk);
+                });
+
+                certDict.Add("KEY_SECRET", pfxPassword);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error parsing certificate content", ex);
+                throw;
+            }
+            try
+            {
+                var fullPath = storePath + "/" + certName;
+
+                if (mountPoint == null)
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict, mountPoint: mountPoint);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error writing cert to Vault", ex);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteCertificate(string certName, string storePath, string mountPoint = null)
+        {
+            VaultClient.V1.Auth.ResetVaultToken();
+
+            try
+            {
+                var fullPath = storePath + "/" + certName;
+
+                if (mountPoint == null)
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath, mountPoint);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error removing cert from Vault", ex);
+                throw;
+            }
+            return true;
+        }
+
+        public async Task<bool> CreateStore(string storePath, string mountPoint = null)
+        {
+            return true;
+            //VaultClient.V1.Auth.ResetVaultToken();
+        }
+
+        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = null)
+        {
+            VaultClient.V1.Auth.ResetVaultToken();
+
+            var certs = new List<CurrentInventoryItem>();
+            var certNames = new List<string>();
+            try
+            {
+                if (mountPoint == null)
+                {
+                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath)).Data.Keys.ToList();
+                }
+                else
+                {
+                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, mountPoint)).Data.Keys.ToList();
+                }
+
+                certNames.ForEach(async k =>
+                {
+                    var cert = await GetCertificate(k, mountPoint);
                     certs.Add(cert);
                 });
             }

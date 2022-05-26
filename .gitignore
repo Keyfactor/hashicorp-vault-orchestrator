@@ -3,3 +3,5 @@
 ################################################################################
 
 /hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/bin
+/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/obj
+/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/.vs/**.*

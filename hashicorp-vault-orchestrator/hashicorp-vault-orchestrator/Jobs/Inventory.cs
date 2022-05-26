@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Keyfactor.Extensions.Orchestrator.HashicorpVault;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -14,17 +12,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         ILogger logger = LogHandler.GetClassLogger<Inventory>();
 
-        string IOrchestratorJobExtension.ExtensionName => throw new NotImplementedException();
+        public Inventory()
+        {
+            VaultClient = new HcvClient(VaultToken, VaultServerUrl);
+        }
+
 
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventoryUpdate)
         {
+            InitializeStore(config);
+
             IEnumerable<CurrentInventoryItem> certs = null;
             try
             {
-                VaultClient = new HcvClient(VaultToken, VaultServerUrl, StorePath);
-
-                certs = VaultClient.GetCertificates().Result;
-
+                certs = VaultClient.GetCertificates(StorePath, MountPoint).Result;
             }
             catch (Exception ex)
             {
@@ -46,7 +47,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 JobHistoryId = config.JobHistoryId,
                 FailureMessage = string.Empty
             };
-
         }
     }
 }

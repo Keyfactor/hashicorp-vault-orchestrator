@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
+﻿namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public abstract class JobBase
     {
@@ -14,6 +10,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         internal protected string VaultServerUrl { get; set; }
 
+        internal protected string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV
+
         internal protected HcvClient VaultClient { get; set; }
 
 
@@ -21,6 +19,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         {
             VaultToken = config.VaultToken;
             VaultServerUrl = config.VaultServerUrl;
+            MountPoint = config.MountPoint;
 
             if (config.GetType().GetProperty("CertificateStoreDetails") != null)
             {
