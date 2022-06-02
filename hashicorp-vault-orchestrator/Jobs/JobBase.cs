@@ -44,6 +44,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
             InitProps(props);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
+            StorePath = StorePath.Replace("/", string.Empty);
+
         }
 
         private void InitProps(dynamic props) {

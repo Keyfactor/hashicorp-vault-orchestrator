@@ -9,8 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Keyfactor.Logging;
@@ -59,6 +57,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             Dictionary<string, object> certData;
             Secret<SecretData> res;
+
+            storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
             try
             {
                 var fullPath = storePath + "/" + key;
@@ -144,6 +144,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task PutCertificate(string certName, string contents, string pfxPassword, string storePath, string mountPoint = null)
         {
             VaultClient.V1.Auth.ResetVaultToken();
+
             var certDict = new Dictionary<string, string>();
             
             var pfxBytes = Convert.FromBase64String(contents);
@@ -201,6 +202,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             try
             {
+                storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
                 var fullPath = storePath + "/" + certName;
 
                 if (mountPoint == null)
@@ -225,6 +227,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
+                storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
                 var fullPath = storePath + "/" + certName;
 
                 if (mountPoint == null)
@@ -253,6 +256,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = null)
         {
             VaultClient.V1.Auth.ResetVaultToken();
+            storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
 
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
@@ -284,70 +288,70 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private static Func<string, string> Pemify = ss =>
             ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + Pemify(ss.Substring(64));
 
-        private string GetCertPem(string alias, string contents, string password, ref string privateKeyString)
-        {
-            logger.MethodEntry(LogLevel.Debug);
-            logger.LogTrace($"alias {alias} privateKeyString {privateKeyString}");
-            string certPem = null;
-            try
-            {
-                if (!string.IsNullOrEmpty(password))
-                {
-                    logger.LogTrace($"Certificate and Key exist for {alias}");
-                    var certData = Convert.FromBase64String(contents);
+        //private string GetCertPem(string alias, string contents, string password, ref string privateKeyString)
+        //{
+        //    logger.MethodEntry(LogLevel.Debug);
+        //    logger.LogTrace($"alias {alias} privateKeyString {privateKeyString}");
+        //    string certPem = null;
+        //    try
+        //    {
+        //        if (!string.IsNullOrEmpty(password))
+        //        {
+        //            logger.LogTrace($"Certificate and Key exist for {alias}");
+        //            var certData = Convert.FromBase64String(contents);
 
-                    var ms = new MemoryStream(certData);
-                    Pkcs12Store store = new Pkcs12Store(ms,
-                        password.ToCharArray());
+        //            var ms = new MemoryStream(certData);
+        //            Pkcs12Store store = new Pkcs12Store(ms,
+        //                password.ToCharArray());
 
                    
-                    string storeAlias;
-                    TextWriter streamWriter;
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        streamWriter = new StreamWriter(memoryStream);
-                        var pemWriter = new PemWriter(streamWriter);
+        //            string storeAlias;
+        //            TextWriter streamWriter;
+        //            using (var memoryStream = new MemoryStream())
+        //            {
+        //                streamWriter = new StreamWriter(memoryStream);
+        //                var pemWriter = new PemWriter(streamWriter);
 
-                        storeAlias = store.Aliases.Cast<string>().SingleOrDefault(a => store.IsKeyEntry(a));
-                        var publicKey = store.GetCertificate(storeAlias).Certificate.GetPublicKey();
-                        var privateKey = store.GetKey(storeAlias).Key;
-                        var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
+        //                storeAlias = store.Aliases.Cast<string>().SingleOrDefault(a => store.IsKeyEntry(a));
+        //                var publicKey = store.GetCertificate(storeAlias).Certificate.GetPublicKey();
+        //                var privateKey = store.GetKey(storeAlias).Key;
+        //                var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
 
-                        var pkStart = "-----BEGIN RSA PRIVATE KEY-----\n";
-                        var pkEnd = "\n-----END RSA PRIVATE KEY-----";
+        //                var pkStart = "-----BEGIN RSA PRIVATE KEY-----\n";
+        //                var pkEnd = "\n-----END RSA PRIVATE KEY-----";
 
 
-                        pemWriter.WriteObject(keyPair.Private);
-                        streamWriter.Flush();
-                        privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
-                            .Replace("\r", "")
-                            .Replace("\0", "");
-                        privateKeyString = privateKeyString.Replace(pkStart, "").Replace(pkEnd, "");
+        //                pemWriter.WriteObject(keyPair.Private);
+        //                streamWriter.Flush();
+        //                privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
+        //                    .Replace("\r", "")
+        //                    .Replace("\0", "");
+        //                privateKeyString = privateKeyString.Replace(pkStart, "").Replace(pkEnd, "");
 
-                        memoryStream.Close();
-                    }
+        //                memoryStream.Close();
+        //            }
 
-                    streamWriter.Close();
+        //            streamWriter.Close();
 
-                    // Extract server certificate
-                    certPem = Pemify(
-                        Convert.ToBase64String(store.GetCertificate(storeAlias).Certificate.GetEncoded()));                                      
-                }
-                else
-                {
-                    logger.LogTrace($"Certificate ONLY for {alias}");
-                    certPem = Pemify(contents);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error Generating PEM: Error {LogHandler.FlattenException(ex)}");
-            }
+        //            // Extract server certificate
+        //            certPem = Pemify(
+        //                Convert.ToBase64String(store.GetCertificate(storeAlias).Certificate.GetEncoded()));                                      
+        //        }
+        //        else
+        //        {
+        //            logger.LogTrace($"Certificate ONLY for {alias}");
+        //            certPem = Pemify(contents);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError($"Error Generating PEM: Error {LogHandler.FlattenException(ex)}");
+        //    }
 
-            logger.LogTrace($"PEM {certPem}");
-            logger.MethodEntry(LogLevel.Debug);
-            return certPem;
-        }
+        //    logger.LogTrace($"PEM {certPem}");
+        //    logger.MethodEntry(LogLevel.Debug);
+        //    return certPem;
+        //}
 
     }
 }

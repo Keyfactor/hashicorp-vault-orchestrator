@@ -7,3 +7,4 @@
 /hashicorp-vault-orchestrator/Properties
 /hashicorp-vault-orchestrator/hashicorp-vault-orchestrator.csproj.user
 .vs
+*.licenseheader
