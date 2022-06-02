@@ -2,6 +2,8 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/bin
-/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/obj
-/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator/.vs/**.*
+/hashicorp-vault-orchestrator/bin
+/hashicorp-vault-orchestrator/obj
+/hashicorp-vault-orchestrator/Properties
+/hashicorp-vault-orchestrator/hashicorp-vault-orchestrator.csproj.user
+.vs
