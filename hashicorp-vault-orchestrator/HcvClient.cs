@@ -154,6 +154,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 p = new Pkcs12Store(pfxBytesMemoryStream,
                     pfxPassword.ToCharArray());
             }
+            
             // Extract private key
             string alias;
             string privateKeyString;
@@ -245,12 +246,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 throw;
             }
             return true;
-        }
-
-        public async Task<bool> CreateStore(string storePath, string mountPoint = null)
-        {
-            return false;
-            //VaultClient.V1.Auth.ResetVaultToken();
         }
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = null)

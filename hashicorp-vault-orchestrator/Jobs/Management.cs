@@ -6,7 +6,6 @@
 // and limitations under the License.
 
 using System;
-using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -30,10 +29,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             switch (config.OperationType)
             {
-                case CertStoreOperationType.Create:
-                    logger.LogDebug($"Begin Management > Create...");
-                    complete = PerformCreateVault(config.JobHistoryId).Result;
-                    break;
+                //case CertStoreOperationType.Create:
+                //    logger.LogDebug($"Begin Management > Create...");
+                //    complete = PerformCreateVault(config.JobHistoryId).Result;
+                //    break;
                 case CertStoreOperationType.Add:
                     logger.LogDebug($"Begin Management > Add...");
                     complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, config.JobHistoryId);
@@ -47,31 +46,31 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             return complete;
         }
 
-        protected async Task<JobResult> PerformCreateVault(long jobHistoryId)
-        {
-            var jobResult = new JobResult() { JobHistoryId = jobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
-            bool createVaultResult;
-            try
-            {
-                createVaultResult = await VaultClient.CreateStore(StorePath, MountPoint);
-            }
-            catch (Exception ex)
-            {
-                jobResult.FailureMessage = ex.Message;
-                return jobResult;
-            }
+        //protected async Task<JobResult> PerformCreateVault(long jobHistoryId)
+        //{
+        //    var jobResult = new JobResult() { JobHistoryId = jobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
+        //    bool createVaultResult;
+        //    try
+        //    {
+        //        createVaultResult = await VaultClient.CreateStore(StorePath, MountPoint);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        jobResult.FailureMessage = ex.Message;
+        //        return jobResult;
+        //    }
 
-            if (createVaultResult)
-            {
-                jobResult.Result = OrchestratorJobStatusJobResult.Success;
-            }
-            else
-            {
-                jobResult.FailureMessage = "The creation of the Azure Key Vault failed for an unknown reason. Check your job parameters and ensure permissions are correct.";
-            }
+        //    if (createVaultResult)
+        //    {
+        //        jobResult.Result = OrchestratorJobStatusJobResult.Success;
+        //    }
+        //    else
+        //    {
+        //        jobResult.FailureMessage = "The creation of the Azure Key Vault failed for an unknown reason. Check your job parameters and ensure permissions are correct.";
+        //    }
 
-            return jobResult;
-        }
+        //    return jobResult;
+        //}
 
         protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, long jobHistoryId)
         {
