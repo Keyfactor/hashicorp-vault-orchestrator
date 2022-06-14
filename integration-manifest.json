@@ -8,21 +8,21 @@
   "about": {
     "orchestrator": {
       "win": {
-        "supportsCreateStore": false,
-        "supportsDiscovery": false,
-        "supportsManagementAdd": false,
-        "supportsManagementRemove": false,
+        "supportsCreateStore": true,
+        "supportsDiscovery": true,
+        "supportsManagementAdd": true,
+        "supportsManagementRemove": true,
         "supportsReenrollment": false,
-        "supportsInventory": false,
+        "supportsInventory": true,
         "platformSupport": "Unused"
       },
       "linux": {
-        "supportsCreateStore": false,
-        "supportsDiscovery": false,
-        "supportsManagementAdd": false,
-        "supportsManagementRemove": false,
+        "supportsCreateStore": true,
+        "supportsDiscovery": true,
+        "supportsManagementAdd": true,
+        "supportsManagementRemove": true,
         "supportsReenrollment": false,
-        "supportsInventory": false,
+        "supportsInventory": true,
         "platformSupport": "Unused"
       }
     }
