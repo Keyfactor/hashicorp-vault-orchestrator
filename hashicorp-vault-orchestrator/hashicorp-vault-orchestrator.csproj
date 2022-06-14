@@ -21,7 +21,7 @@
 		<DebugType>full</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 		<PlatformTarget>AnyCPU</PlatformTarget>
-		<OutputPath>bin\release\</OutputPath>
+		<OutputPath>bin\Release\</OutputPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -29,7 +29,7 @@
 		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
 		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
 		<Optimize>false</Optimize>
-		<OutputPath>bin\debug\</OutputPath>
+		<OutputPath>bin\Debug\</OutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
