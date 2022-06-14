@@ -4,7 +4,7 @@
   "name": "Orchestrator Extension for Hashicorp Vault",
   "status": "production",
   "link_github": true,
-  "description": "The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine.",
+  "description": "The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine. ",
   "about": {
     "orchestrator": {
       "win": {
