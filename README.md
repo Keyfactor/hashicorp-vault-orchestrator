@@ -2,7 +2,7 @@
 
 The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine. 
 
-#### Integration status: Production - Ready for use in production environments.
+#### Integration status: Prototype - Demonstration quality. Not for use in customer environments.
 
 ## About the Keyfactor Universal Orchestrator Capability
 
