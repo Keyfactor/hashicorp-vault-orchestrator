@@ -89,11 +89,12 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 ![](images/store_type_add.png)
 
-    - Name: "Hashicorp Vault" (or another preferred name)
-    - Short Name: "HCV"
-    - Supported Job Types: "Inventory", "Add", "Remove", "Discovery"
-    - Supports Custom Alias: "Optional"
-    - Private Key Handling: "Optional"
+- Set the following values in the "Basic" tab:
+  - **Name** - "Hashicorp Vault" (or another preferred name)
+  - **Short Name** - "HCV"
+  - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
+  - **Supports Custom Alias** - "Optional"
+  - **Private Key Handling** - "Optional"
 
 ![](images/store_type_1.png)
 
