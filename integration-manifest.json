@@ -2,7 +2,7 @@
   "$schema": "https://keyfactor.github.io/integration-manifest-schema.json",
   "integration_type": "orchestrator",
   "name": "Orchestrator Extension for Hashicorp Vault",
-  "status": "pilot",
+  "status": "production",
   "link_github": true,
   "description": "The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine. ",
   "about": {
