@@ -18,12 +18,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         public string VaultToken { get; set; }
 
+        public string SecretsEngine { get; set; } // "PKI", "Keyfactor", "Key Value"
+
         public string VaultServerUrl { get; set; }
 
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV
 
-        internal protected HcvClient VaultClient { get; set; }
+        public string RoleName { get; set; }
 
+        internal protected IHashiClient VaultClient { get; set; }
+
+        const string KEY_VALUE_ENGINE = "KV";
+        const string KEYFACTOR_ENGINE = "KF";
+        const string PKI_ENGINE = "PKI";
 
         public void InitializeStore(InventoryJobConfiguration config)
         {
@@ -45,17 +52,26 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             InitProps(props);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
             StorePath = StorePath.Replace("/", string.Empty);
-
         }
 
-        private void InitProps(dynamic props) {
+        private void InitProps(dynamic props)
+        {
             if (props == null) throw new System.Exception("Properties is null", props);
 
             VaultToken = props["VaultToken"];
             VaultServerUrl = props["VaultServerUrl"];
+            SecretsEngine = props["SecretsEngine"];
             MountPoint = props["MountPoint"] ?? null;
+            //RoleName = props["RoleName"];
+            if (SecretsEngine == KEY_VALUE_ENGINE)
+            {
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint);
+            }
+            else
+            {
+                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, SecretsEngine, MountPoint);
+            }
 
-            VaultClient = new HcvClient(VaultToken, VaultServerUrl);
         }
     }
 }

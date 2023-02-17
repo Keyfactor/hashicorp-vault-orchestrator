@@ -25,29 +25,30 @@ using VaultSharp.V1.Commons;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
-    public class HcvClient
+    public class HcvKeyValueClient : IHashiClient
     {
         private IVaultClient _vaultClient { get; set; }
 
         protected IVaultClient VaultClient => _vaultClient;
 
-        private ILogger logger = LogHandler.GetClassLogger<HcvClient>();
+        private ILogger logger = LogHandler.GetClassLogger<HcvKeyValueClient>();
 
         private string _storePath { get; set; }
+        private string _mountPoint { get; set; }
 
-        private VaultClientSettings clientSettings { get; set; }
+        //private VaultClientSettings clientSettings { get; set; }
 
         private static readonly string privKeyStart = "-----BEGIN RSA PRIVATE KEY-----\n";
         private static readonly string privKeyEnd = "\n-----END RSA PRIVATE KEY-----";
 
-        public HcvClient(string vaultToken, string serverUrl)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
 
             // Initialize settings. You can also set proxies, custom delegates etc. here.
-            clientSettings = new VaultClientSettings(serverUrl, authMethod);
-
+            var clientSettings = new VaultClientSettings(serverUrl, authMethod);
+            _mountPoint = mountPoint;
             _vaultClient = new VaultClient(clientSettings);
         }
 
@@ -59,6 +60,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             Secret<SecretData> res;
 
             storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
+
             try
             {
                 var fullPath = storePath + "/" + key;
@@ -146,7 +148,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             VaultClient.V1.Auth.ResetVaultToken();
 
             var certDict = new Dictionary<string, string>();
-            
+
             var pfxBytes = Convert.FromBase64String(contents);
             Pkcs12Store p;
             using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
@@ -154,7 +156,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 p = new Pkcs12Store(pfxBytesMemoryStream,
                     pfxPassword.ToCharArray());
             }
-            
+
             // Extract private key
             string alias;
             string privateKeyString;
@@ -280,8 +282,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return certs;
         }
 
+
         private static Func<string, string> Pemify = ss =>
             ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + Pemify(ss.Substring(64));
+
 
         //private string GetCertPem(string alias, string contents, string password, ref string privateKeyString)
         //{
@@ -299,7 +303,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         //            Pkcs12Store store = new Pkcs12Store(ms,
         //                password.ToCharArray());
 
-                   
+
         //            string storeAlias;
         //            TextWriter streamWriter;
         //            using (var memoryStream = new MemoryStream())
