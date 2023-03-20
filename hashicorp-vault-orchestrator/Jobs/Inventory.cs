@@ -26,7 +26,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             IEnumerable<CurrentInventoryItem> certs = null;
             try
             {
-                certs = VaultClient.GetCertificates(MountPoint).Result;
+                certs = VaultClient.GetCertificates().Result;
             }
             catch (Exception ex)
             {

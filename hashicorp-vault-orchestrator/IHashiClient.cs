@@ -6,10 +6,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
     public interface IHashiClient
     {
-        Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = null);
-        Task<CurrentInventoryItem> GetCertificate(string key, string storePath, string mountPoint = null);
-        Task<IEnumerable<string>> GetVaults(string storePath, string mountPoint = null);
-        Task PutCertificate(string certName, string contents, string pfxPassword, string storePath, string mountPoint = null);
-        Task<bool> DeleteCertificate(string certName, string storePath, string mountPoint = null);
+        Task<IEnumerable<CurrentInventoryItem>> GetCertificates();
+        Task<CurrentInventoryItem> GetCertificate(string key);
+        Task<IEnumerable<string>> GetVaults();
+        Task PutCertificate(string certName, string contents, string pfxPassword);
+        Task<bool> DeleteCertificate(string certName);
     }
 }

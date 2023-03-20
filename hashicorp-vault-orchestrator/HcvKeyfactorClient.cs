@@ -29,14 +29,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _vaultToken { get; set; }       
 
+        private string _mountPoint { get; set; }
 
-        public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint)
+        private string _storePath { get; set; }
+
+        public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
         {
-            _vaultToken = vaultToken;            
-            _vaultUrl = $"{ serverUrl }/v1/{ mountPoint.Replace("/", string.Empty) }";
+            _vaultToken = vaultToken;
+            _mountPoint = mountPoint ?? "keyfactor";
+            _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
+            _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("/", string.Empty) }";
         }
 
-        public async Task<CurrentInventoryItem> GetCertificate(string key, string storePath, string mountPoint = "keyfactor")
+        public async Task<CurrentInventoryItem> GetCertificate(string key)
         {
             var fullPath = $"{ _vaultUrl }/cert/{ key }";
 
@@ -82,9 +87,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = "keyfactor")
+        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
-            var getKeysPath = $"{ _vaultUrl }/v1/{ mountPoint }/certs?list=true";
+            var getKeysPath = $"{ _vaultUrl }/v1/{ _mountPoint }/certs?list=true";
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
 
@@ -102,7 +107,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 certKeys.ToList().ForEach(k =>
                 {
-                    var cert = GetCertificate(k, storePath, mountPoint).Result;
+                    var cert = GetCertificate(k).Result;
                     if (cert != null) certs.Add(cert);
                 });
             }
@@ -113,17 +118,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return certs;
         }
 
-        public Task<IEnumerable<string>> GetVaults(string storePath, string mountPoint = null)
+        public Task<IEnumerable<string>> GetVaults()
         {
             throw new NotSupportedException();
         }
 
-        public Task PutCertificate(string certName, string contents, string pfxPassword, string storePath, string mountPoint = null)
+        public Task PutCertificate(string certName, string contents, string pfxPassword)
         {
             throw new NotSupportedException();
         }
 
-        public Task<bool> DeleteCertificate(string certName, string storePath, string mountPoint = null)
+        public Task<bool> DeleteCertificate(string certName)
         {
             throw new NotSupportedException();
         }

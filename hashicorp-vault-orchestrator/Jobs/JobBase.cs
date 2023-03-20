@@ -67,11 +67,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
             }
             else
             {
-                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, MountPoint);
+                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
             }
 
         }
