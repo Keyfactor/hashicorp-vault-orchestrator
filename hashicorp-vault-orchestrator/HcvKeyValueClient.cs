@@ -277,6 +277,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
+                throw ex;
             }
 
             return certs;

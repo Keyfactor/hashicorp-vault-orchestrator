@@ -27,15 +27,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _vaultUrl { get; set; }
 
-        private string _vaultToken { get; set; }
-
-        private string _secretsEngine { get; set; }
+        private string _vaultToken { get; set; }       
 
 
-        public HcvKeyfactorClient(string vaultToken, string serverUrl, string secretsEngine, string mountPoint)
+        public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint)
         {
-            _vaultToken = vaultToken;
-            _secretsEngine = secretsEngine;
+            _vaultToken = vaultToken;            
             _vaultUrl = $"{ serverUrl }/v1/{ mountPoint.Replace("/", string.Empty) }";
         }
 

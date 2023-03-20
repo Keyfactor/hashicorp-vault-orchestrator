@@ -29,32 +29,32 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         internal protected IHashiClient VaultClient { get; set; }
 
         const string KEY_VALUE_ENGINE = "KV";
-        const string KEYFACTOR_ENGINE = "KF";
-        const string PKI_ENGINE = "PKI";
+        const string KEYFACTOR_ENGINE = "Keyfactor";
+        const string PKI_ENGINE = "Hashicorp PKI";
 
         public void InitializeStore(InventoryJobConfiguration config)
         {
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
             //var props = Jsonconfig.CertificateStoreDetails.Properties;
 
-            InitProps(props);
+            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
         }
 
         public void InitializeStore(DiscoveryJobConfiguration config)
         {
             var props = config.JobProperties;
-            InitProps(props);
+            InitProps(props, config.Capability);
         }
         public void InitializeStore(ManagementJobConfiguration config)
         {
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            InitProps(props);
+            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
             StorePath = StorePath.Replace("/", string.Empty);
         }
 
-        private void InitProps(dynamic props)
+        private void InitProps(dynamic props, string capability)
         {
             if (props == null) throw new System.Exception("Properties is null", props);
 
@@ -62,14 +62,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             VaultServerUrl = props["VaultServerUrl"];
             SecretsEngine = props["SecretsEngine"];
             MountPoint = props["MountPoint"] ?? null;
-            //RoleName = props["RoleName"];
-            if (SecretsEngine == KEY_VALUE_ENGINE)
+
+            var isPki = capability.Contains("HCVPKI");
+
+            if (!isPki)
             {
                 VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint);
             }
             else
             {
-                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, SecretsEngine, MountPoint);
+                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, MountPoint);
             }
 
         }

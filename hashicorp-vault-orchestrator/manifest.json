@@ -13,7 +13,7 @@
         "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Management"
       },
-      "CertStores.HCV.Inventory": {
+      "CertStores.HCVPKI.Inventory": {
         "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       }
