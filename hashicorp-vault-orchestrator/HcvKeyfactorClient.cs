@@ -55,10 +55,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
                     CertResponse content = JsonConvert.DeserializeObject<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
-                    string cert = content.data["certificate"];
-                    string issuingCA = content.data["issuing_ca"];
-                    string privateKey = content.data["private_key"];
-                    string revokeTime = content.data["revocation_time"];
+                    string cert;
+                    content.data.TryGetValue("certificate", out cert);
+
+                    string issuingCA;
+                    content.data.TryGetValue("issuing_ca", out issuingCA);
+
+                    string privateKey;
+                    content.data.TryGetValue("private_key", out privateKey);
+
+                    string revokeTime;
+                    content.data.TryGetValue("revocation_time", out revokeTime);
 
                     if (revokeTime.Equals(0))
                     {
@@ -89,7 +96,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
-            var getKeysPath = $"{ _vaultUrl }/v1/{ _mountPoint }/certs?list=true";
+            var getKeysPath = $"{ _vaultUrl }/certs?list=true";
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
 
@@ -133,24 +140,24 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             throw new NotSupportedException();
         }
 
-        public interface HashiResponse
+        public class HashiResponse
         {
-            string request_id { get; set; }
-            bool renewable { get; set; }
-            int lease_duration { get; set; }
-            string wrap_info { get; set; }
-            string warnings { get; set; }
-            string auth { get; set; }
+            public string request_id { get; set; }
+            public bool renewable { get; set; }
+            public int lease_duration { get; set; }
+            public string wrap_info { get; set; }
+            public string warnings { get; set; }
+            public string auth { get; set; }
         }
 
-        public interface CertResponse : HashiResponse
+        public class CertResponse : HashiResponse
         {
-            Dictionary<string, string> data { get; set; }
+            public Dictionary<string, string> data { get; set; }
         }
 
-        public interface ListResponse : HashiResponse
+        public class ListResponse : HashiResponse
         {
-            Dictionary<string, string[]> data { get; set; }
+            public Dictionary<string, string[]> data { get; set; }
         }
     }
 }
