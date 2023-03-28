@@ -18,44 +18,62 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         public string VaultToken { get; set; }
 
+        public string SecretsEngine { get; set; } // "PKI", "Keyfactor", "Key Value"
+
         public string VaultServerUrl { get; set; }
 
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV
 
-        internal protected HcvClient VaultClient { get; set; }
+        public string RoleName { get; set; }
 
+        internal protected IHashiClient VaultClient { get; set; }
+
+        const string KEY_VALUE_ENGINE = "KV";
+        const string KEYFACTOR_ENGINE = "Keyfactor";
+        const string PKI_ENGINE = "Hashicorp PKI";
 
         public void InitializeStore(InventoryJobConfiguration config)
         {
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
             //var props = Jsonconfig.CertificateStoreDetails.Properties;
 
-            InitProps(props);
+            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
         }
 
         public void InitializeStore(DiscoveryJobConfiguration config)
         {
             var props = config.JobProperties;
-            InitProps(props);
+            InitProps(props, config.Capability);
         }
         public void InitializeStore(ManagementJobConfiguration config)
         {
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            InitProps(props);
+            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
             StorePath = StorePath.Replace("/", string.Empty);
-
         }
 
-        private void InitProps(dynamic props) {
+        private void InitProps(dynamic props, string capability)
+        {
             if (props == null) throw new System.Exception("Properties is null", props);
 
             VaultToken = props["VaultToken"];
             VaultServerUrl = props["VaultServerUrl"];
+            SecretsEngine = props["SecretsEngine"];
             MountPoint = props["MountPoint"] ?? null;
 
-            VaultClient = new HcvClient(VaultToken, VaultServerUrl);
+            var isPki = capability.Contains("HCVPKI");
+
+            if (!isPki)
+            {
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
+            }
+            else
+            {
+                VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
+            }
+
         }
     }
 }
