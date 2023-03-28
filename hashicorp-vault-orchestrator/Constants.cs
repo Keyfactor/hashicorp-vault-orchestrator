@@ -9,7 +9,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
     static class AzureKeyVaultConstants
     {
-        public const string STORE_TYPE_NAME = "HCV";
+        public const string KEY_VALUE_STORE_TYPE = "HCVKV";
+        public const string PKI_STORE_TYPE = "HCV"; //same for Keyfactor plugin store type
     }
 
     static class JobTypes

@@ -27,19 +27,27 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             try
             {
-                vaults = VaultClient.GetVaults(StorePath, MountPoint).Result.ToList();
-
+                vaults = VaultClient.GetVaults().Result.ToList();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
-
-                return new JobResult
+                var result = new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,
-                    JobHistoryId = config.JobHistoryId,
-                    FailureMessage = ex.Message
+                    JobHistoryId = config.JobHistoryId
                 };
+
+                if (ex.GetType() == typeof(NotSupportedException))
+                {
+                    logger.LogError("Attempt to perform discovery on unsupported Secrets Engine backend.");
+
+                    result.FailureMessage = $"{SecretsEngine} does not support Discovery jobs.";
+                }
+                else
+                {
+                    result.FailureMessage = ex.Message;
+                }
+                return result;
             }
 
             submitDiscoveryUpdate.DynamicInvoke(vaults);
