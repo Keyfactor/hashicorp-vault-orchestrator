@@ -1,6 +1,6 @@
 # Orchestrator Extension for Hashicorp Vault
 
-The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine.
+The Hashicorp Vault Orchestrator extension allows you store certificates in Hashicorp Vault KeyValue secrets engine. 
 
 #### Integration status: Production - Ready for use in production environments.
 
@@ -11,6 +11,9 @@ This repository contains a Universal Orchestrator Capability which is a plugin t
 The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Capabilities, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Capability, see below in this readme.
 
 The Universal Orchestrator is the successor to the Windows Orchestrator. This Capability plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+
+
+
 
 ---
 
@@ -29,7 +32,9 @@ The Keyfactor Universal Orchestrator may be installed on either Windows or Linux
 |Supports Inventory|&check; |&check; |
 
 
+
 ---
+
 
 <!-- add integration specific information below -->
 
@@ -87,9 +92,12 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 ![](images/store_type_add.png)
 
-    - **Name:** "Hashicorp Vault" (or another preferred name)
-    - **Short Name:** "HCV"
-    - **Supported Job Types:** "Inventory", "Add", "Remove", "Discovery"
+- Set the following values in the "Basic" tab:
+  - **Name** - "Hashicorp Vault" (or another preferred name)
+  - **Short Name** - "HCV"
+  - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
+  - **Supports Custom Alias** - "Optional"
+  - **Private Key Handling** - "Optional"
 
 ![](images/store_type_1.png)
 
