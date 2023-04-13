@@ -120,7 +120,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *string*, *required*
+  - **VaultToken** - type: *secret*, *required*
 
 ![](images/store_type_fields.png)
 
@@ -169,7 +169,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *string*, *required*
+  - **VaultToken** - type: *secret*, *required*
 
 ![](images/store_type_fields.png)
 
