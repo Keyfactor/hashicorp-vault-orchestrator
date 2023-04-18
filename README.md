@@ -4,7 +4,7 @@ The Hashicorp Vault Orchestrator extension allows you store certificates in Hash
 
 #### Integration status: Production - Ready for use in production environments.
 
-## About the Keyfactor Universal Orchestrator Capability
+## About the Keyfactor Universal Orchestrator Extension
 
 This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
 
