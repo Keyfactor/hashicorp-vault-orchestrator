@@ -6,11 +6,11 @@ The Hashicorp Vault Orchestrator extension allows you store certificates in Hash
 
 ## About the Keyfactor Universal Orchestrator Capability
 
-This repository contains a Universal Orchestrator Capability which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
+This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
 
-The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Capabilities, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Capability, see below in this readme.
+The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Extensions, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Extension see below in this readme.
 
-The Universal Orchestrator is the successor to the Windows Orchestrator. This Capability plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
 
 
 
@@ -120,7 +120,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *string*, *required*
+  - **VaultToken** - type: *secret*, *required*
 
 ![](images/store_type_fields.png)
 
@@ -169,7 +169,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *string*, *required*
+  - **VaultToken** - type: *secret*, *required*
 
 ![](images/store_type_fields.png)
 

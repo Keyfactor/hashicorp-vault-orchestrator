@@ -171,18 +171,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     var publicKey = p.GetCertificate(alias).Certificate.GetPublicKey();
                     logger.LogTrace($"publicKey = {publicKey}");
                     var KeyEntry = p.GetKey(alias);
-                    logger.LogTrace($"KeyEntry = {KeyEntry}");
+                    // logger.LogTrace($"KeyEntry = {KeyEntry}");
                     if (KeyEntry == null) throw new Exception("Unable to retrieve private key");
 
                     var privateKey = KeyEntry.Key;
-                    logger.LogTrace($"privateKey = {privateKey}");
+                    // logger.LogTrace($"privateKey = {privateKey}");
                     var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
 
                     pemWriter.WriteObject(keyPair.Private);
                     streamWriter.Flush();
                     privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                         .Replace("\r", "").Replace("\0", "");
-                    logger.LogTrace($"Got Private Key String {privateKeyString}");
+                    // logger.LogTrace($"Got Private Key String {privateKeyString}");
+                    logger.LogTrace($"Got Private Key String");
                     memoryStream.Close();
                     streamWriter.Close();
                     logger.LogTrace("Finished Extracting Private Key...");
