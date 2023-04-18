@@ -25,53 +25,54 @@ using VaultSharp.V1.Commons;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
-    public class HcvClient
+    public class HcvKeyValueClient : IHashiClient
     {
         private IVaultClient _vaultClient { get; set; }
 
         protected IVaultClient VaultClient => _vaultClient;
 
-        private ILogger logger = LogHandler.GetClassLogger<HcvClient>();
+        private ILogger logger = LogHandler.GetClassLogger<HcvKeyValueClient>();
 
         private string _storePath { get; set; }
+        private string _mountPoint { get; set; }
 
-        private VaultClientSettings clientSettings { get; set; }
+        //private VaultClientSettings clientSettings { get; set; }
 
         private static readonly string privKeyStart = "-----BEGIN RSA PRIVATE KEY-----\n";
         private static readonly string privKeyEnd = "\n-----END RSA PRIVATE KEY-----";
 
-        public HcvClient(string vaultToken, string serverUrl)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
 
             // Initialize settings. You can also set proxies, custom delegates etc. here.
-            clientSettings = new VaultClientSettings(serverUrl, authMethod);
-
+            var clientSettings = new VaultClientSettings(serverUrl, authMethod);
+            _mountPoint = mountPoint;
+            _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
             _vaultClient = new VaultClient(clientSettings);
         }
 
-        public async Task<CurrentInventoryItem> GetCertificate(string key, string storePath, string mountPoint = null)
+        public async Task<CurrentInventoryItem> GetCertificate(string key)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData;
             Secret<SecretData> res;
-
-            storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
+            
             try
             {
-                var fullPath = storePath + "/" + key;
+                var fullPath = _storePath + "/" + key;
 
                 try
                 {
-                    if (mountPoint == null)
+                    if (_mountPoint == null)
                     {
                         res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath));
                     }
                     else
                     {
-                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: mountPoint));
+                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint));
                     }
                 }
                 catch (Exception ex)
@@ -115,7 +116,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<IEnumerable<string>> GetVaults(string storePath, string mountPoint = null)
+        public async Task<IEnumerable<string>> GetVaults()
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
@@ -123,13 +124,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                if (mountPoint == null)
+                if (_mountPoint == null)
                 {
-                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath)).Data.Keys.ToList();
+                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath)).Data.Keys.ToList();
                 }
                 else
                 {
-                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, mountPoint)).Data.Keys.ToList();
+                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, _mountPoint)).Data.Keys.ToList();
                 }
 
             }
@@ -141,12 +142,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return vaults;
         }
 
-        public async Task PutCertificate(string certName, string contents, string pfxPassword, string storePath, string mountPoint = null)
+        public async Task PutCertificate(string certName, string contents, string pfxPassword)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
             var certDict = new Dictionary<string, string>();
-            
+
             var pfxBytes = Convert.FromBase64String(contents);
             Pkcs12Store p;
             using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
@@ -154,7 +155,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 p = new Pkcs12Store(pfxBytesMemoryStream,
                     pfxPassword.ToCharArray());
             }
-            
+
             // Extract private key
             string alias;
             string privateKeyString;
@@ -170,18 +171,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     var publicKey = p.GetCertificate(alias).Certificate.GetPublicKey();
                     logger.LogTrace($"publicKey = {publicKey}");
                     var KeyEntry = p.GetKey(alias);
-                    logger.LogTrace($"KeyEntry = {KeyEntry}");
+                    // logger.LogTrace($"KeyEntry = {KeyEntry}");
                     if (KeyEntry == null) throw new Exception("Unable to retrieve private key");
 
                     var privateKey = KeyEntry.Key;
-                    logger.LogTrace($"privateKey = {privateKey}");
+                    // logger.LogTrace($"privateKey = {privateKey}");
                     var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
 
                     pemWriter.WriteObject(keyPair.Private);
                     streamWriter.Flush();
                     privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                         .Replace("\r", "").Replace("\0", "");
-                    logger.LogTrace($"Got Private Key String {privateKeyString}");
+                    // logger.LogTrace($"Got Private Key String {privateKeyString}");
+                    logger.LogTrace($"Got Private Key String");
                     memoryStream.Close();
                     streamWriter.Close();
                     logger.LogTrace("Finished Extracting Private Key...");
@@ -202,17 +204,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 throw;
             }
             try
-            {
-                storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
-                var fullPath = storePath + "/" + certName;
+            {                
+                var fullPath = _storePath + "/" + certName;
 
-                if (mountPoint == null)
+                if (_mountPoint == null)
                 {
                     await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict);
                 }
                 else
                 {
-                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict, mountPoint: mountPoint);
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict, mountPoint: _mountPoint);
                 }
             }
             catch (Exception ex)
@@ -222,22 +223,21 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<bool> DeleteCertificate(string certName, string storePath, string mountPoint = null)
+        public async Task<bool> DeleteCertificate(string certName)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
             try
             {
-                storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
-                var fullPath = storePath + "/" + certName;
+                var fullPath = _storePath + "/" + certName;
 
-                if (mountPoint == null)
+                if (_mountPoint == null)
                 {
                     await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath);
                 }
                 else
                 {
-                    await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath, mountPoint);
+                    await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath, _mountPoint);
                 }
             }
             catch (Exception ex)
@@ -248,105 +248,40 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return true;
         }
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates(string storePath, string mountPoint = null)
+        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
             VaultClient.V1.Auth.ResetVaultToken();
-            storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath; //add the slash back in.
-
+           
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
             try
             {
-                if (string.IsNullOrEmpty(mountPoint))
+                if (string.IsNullOrEmpty(_mountPoint))
                 {
-                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath)).Data.Keys.ToList();
+                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath)).Data.Keys.ToList();
                 }
                 else
                 {
-                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, mountPoint)).Data.Keys.ToList();
+                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, _mountPoint)).Data.Keys.ToList();
                 }
 
                 certNames.ForEach(k =>
                 {
-                    var cert = GetCertificate(k, storePath, mountPoint).Result;
+                    var cert = GetCertificate(k).Result;
                     if (cert != null) certs.Add(cert);
                 });
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
+                throw ex;
             }
 
             return certs;
         }
 
+
         private static Func<string, string> Pemify = ss =>
             ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + Pemify(ss.Substring(64));
-
-        //private string GetCertPem(string alias, string contents, string password, ref string privateKeyString)
-        //{
-        //    logger.MethodEntry(LogLevel.Debug);
-        //    logger.LogTrace($"alias {alias} privateKeyString {privateKeyString}");
-        //    string certPem = null;
-        //    try
-        //    {
-        //        if (!string.IsNullOrEmpty(password))
-        //        {
-        //            logger.LogTrace($"Certificate and Key exist for {alias}");
-        //            var certData = Convert.FromBase64String(contents);
-
-        //            var ms = new MemoryStream(certData);
-        //            Pkcs12Store store = new Pkcs12Store(ms,
-        //                password.ToCharArray());
-
-                   
-        //            string storeAlias;
-        //            TextWriter streamWriter;
-        //            using (var memoryStream = new MemoryStream())
-        //            {
-        //                streamWriter = new StreamWriter(memoryStream);
-        //                var pemWriter = new PemWriter(streamWriter);
-
-        //                storeAlias = store.Aliases.Cast<string>().SingleOrDefault(a => store.IsKeyEntry(a));
-        //                var publicKey = store.GetCertificate(storeAlias).Certificate.GetPublicKey();
-        //                var privateKey = store.GetKey(storeAlias).Key;
-        //                var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
-
-        //                var pkStart = "-----BEGIN RSA PRIVATE KEY-----\n";
-        //                var pkEnd = "\n-----END RSA PRIVATE KEY-----";
-
-
-        //                pemWriter.WriteObject(keyPair.Private);
-        //                streamWriter.Flush();
-        //                privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
-        //                    .Replace("\r", "")
-        //                    .Replace("\0", "");
-        //                privateKeyString = privateKeyString.Replace(pkStart, "").Replace(pkEnd, "");
-
-        //                memoryStream.Close();
-        //            }
-
-        //            streamWriter.Close();
-
-        //            // Extract server certificate
-        //            certPem = Pemify(
-        //                Convert.ToBase64String(store.GetCertificate(storeAlias).Certificate.GetEncoded()));                                      
-        //        }
-        //        else
-        //        {
-        //            logger.LogTrace($"Certificate ONLY for {alias}");
-        //            certPem = Pemify(contents);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError($"Error Generating PEM: Error {LogHandler.FlattenException(ex)}");
-        //    }
-
-        //    logger.LogTrace($"PEM {certPem}");
-        //    logger.MethodEntry(LogLevel.Debug);
-        //    return certPem;
-        //}
-
     }
 }
