@@ -37,8 +37,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
             //var props = Jsonconfig.CertificateStoreDetails.Properties;
 
-            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
+            StorePath = StorePath.TrimStart('/');
+            StorePath = StorePath.TrimEnd('/');
+            StorePath = StorePath == null ? null : StorePath + "/"; //enforce single trailing slash for path
+
+            InitProps(props, config.Capability);
         }
 
         public void InitializeStore(DiscoveryJobConfiguration config)
@@ -49,9 +53,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public void InitializeStore(ManagementJobConfiguration config)
         {
             var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            InitProps(props, config.Capability);
             StorePath = config.CertificateStoreDetails?.StorePath ?? null;
             StorePath = StorePath.TrimStart('/');
+            StorePath = StorePath.TrimEnd('/');
+            StorePath = StorePath == null ? null : StorePath + "/"; //enforce single trailing slash for path
+
+            InitProps(props, config.Capability);
         }
 
         private void InitProps(dynamic props, string capability)

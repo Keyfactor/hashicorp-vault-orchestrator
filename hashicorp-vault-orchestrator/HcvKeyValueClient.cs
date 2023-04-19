@@ -62,7 +62,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             
             try
             {
-                var fullPath = _storePath + "/" + key;
+                var fullPath = _storePath + key;
 
                 try
                 {
@@ -205,7 +205,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             try
             {                
-                var fullPath = _storePath + "/" + certName;
+                var fullPath = _storePath + certName;
 
                 if (_mountPoint == null)
                 {
@@ -229,7 +229,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                var fullPath = _storePath + "/" + certName;
+                var fullPath = _storePath + certName;
 
                 if (_mountPoint == null)
                 {
@@ -251,7 +251,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
             VaultClient.V1.Auth.ResetVaultToken();
-           
+            _storePath = _storePath.TrimStart('/');
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
             try
@@ -262,7 +262,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 else
                 {
-                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, _mountPoint)).Data.Keys.ToList();
+                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, mountPoint: _mountPoint)).Data.Keys.ToList();
                 }
 
                 certNames.ForEach(k =>
