@@ -38,9 +38,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         //private VaultClientSettings clientSettings { get; set; }
 
-        private static readonly string privKeyStart = "-----BEGIN RSA PRIVATE KEY-----\n";
-        private static readonly string privKeyEnd = "\n-----END RSA PRIVATE KEY-----";
-
         public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
         {
             // Initialize one of the several auth methods.
@@ -193,7 +190,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                privateKeyString = privateKeyString.Replace(privKeyStart, "").Replace(privKeyEnd, "");
                 certDict.Add("PRIVATE_KEY", privateKeyString);
                 certDict.Add("PUBLIC_KEY", pubCertPem);
             }
@@ -278,9 +274,15 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             return certs;
         }
+        private static Func<string, string> Pemify = base64Cert =>
+        {
+            string FormatBase64(string ss) =>
+                ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + FormatBase64(ss.Substring(64));
 
+            string header = "-----BEGIN CERTIFICATE-----\n";
+            string footer = "\n-----END CERTIFICATE-----";
 
-        private static Func<string, string> Pemify = ss =>
-            ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + Pemify(ss.Substring(64));
+            return header + FormatBase64(base64Cert) + footer;
+        };
     }
 }
