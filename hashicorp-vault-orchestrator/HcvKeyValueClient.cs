@@ -196,7 +196,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 privateKeyString = privateKeyString.Replace(privKeyStart, "").Replace(privKeyEnd, "");
                 certDict.Add("PRIVATE_KEY", privateKeyString);
                 certDict.Add("PUBLIC_KEY", pubCertPem);
-                certDict.Add("KEY_SECRET", pfxPassword);
             }
             catch (Exception ex)
             {
