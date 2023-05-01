@@ -76,11 +76,10 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
 
-1. For the Key-Value secrets engine, the certificates are stored as an entry with 3 fields.  
+1. For the Key-Value secrets engine, the certificates are stored as an entry with 2 fields.  
 
 - `PUBLIC_KEY` - The certificate public key
 - `PRIVATE_KEY` - The certificate private key
-- `KEY_SECRET` - The certificate private key password
 
 ## Extension Configuration
 
@@ -121,6 +120,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
   - **VaultToken** - type: *secret*, *required*
+  - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
 
 ![](images/store_type_fields.png)
 
@@ -144,6 +144,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
   - If left blank, will default to "kv-v2".
 - **Vault Token** - This is the access token that will be used by the orchestrator for requests to Vault.
 - **Vault Server Url** - the full url and port of the Vault server instance
+- **Subfolder Inventory** - Set to 'True' if it is a requirement to inventory secrets at the subfolder/component level. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders.
 
 ### For the Keyfactor and PKI plugins
 
@@ -238,4 +239,3 @@ At this point you should be able to enroll a certificate and store it in Vault u
 ## Notes / Future Enhancements
 
 - For the Key-Value stores we operate on a single version of the Key Value secret (no versioning capabilities through the Orchesterator Extension / Keyfactor).
-

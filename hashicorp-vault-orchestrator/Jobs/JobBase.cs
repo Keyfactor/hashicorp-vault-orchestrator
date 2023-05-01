@@ -21,6 +21,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public string SecretsEngine { get; set; } // "PKI", "Keyfactor", "Key Value"
 
         public string VaultServerUrl { get; set; }
+        
+        public bool SubfolderInventory { get; set; }
 
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV
 
@@ -69,12 +71,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             VaultServerUrl = props["VaultServerUrl"];
             SecretsEngine = props["SecretsEngine"];
             MountPoint = props["MountPoint"] ?? null;
+            if (props["SubfolderInventory"] == null)
+            {
+                SubfolderInventory = false;
+            }
+            else
+            {
+                SubfolderInventory = props["SubfolderInventory"];
+            }
 
             var isPki = capability.Contains("HCVPKI");
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, SubfolderInventory);
             }
             else
             {
