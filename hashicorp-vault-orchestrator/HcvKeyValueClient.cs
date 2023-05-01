@@ -35,10 +35,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _storePath { get; set; }
         private string _mountPoint { get; set; }
+        private bool _subfolderInventory { get; set; }
 
         //private VaultClientSettings clientSettings { get; set; }
 
-        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath,bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
@@ -48,18 +49,47 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _mountPoint = mountPoint;
             _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
             _vaultClient = new VaultClient(clientSettings);
+            _subfolderInventory = SubfolderInventory;
         }
+        public async Task<List<string>> ListComponentPathsAsync(string storagePath)
+        {
+            VaultClient.V1.Auth.ResetVaultToken();
+             List<string> componentPaths = new List<string> {};
+            try
+            {
+                Secret<ListInfo> listInfo = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint));
 
+                foreach (var path in listInfo.Data.Keys)
+                {
+                    if (!path.EndsWith("/"))
+                    {
+                        continue;
+                    }
+
+                    string fullPath = $"{storagePath}{path}";
+                    componentPaths.Add(fullPath);
+
+                    List<string> subPaths = await ListComponentPathsAsync(fullPath);
+                    componentPaths.AddRange(subPaths);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning($"Error while listing component paths: {ex}");
+            }
+            return componentPaths;
+        }
         public async Task<CurrentInventoryItem> GetCertificate(string key)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData;
             Secret<SecretData> res;
-            
+            var fullPath = _storePath + key;
+            var relativePath = fullPath.Substring(_storePath.Length);
             try
             {
-                var fullPath = _storePath + key;
+            
 
                 try
                 {
@@ -74,7 +104,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning("Error getting certificate (deleted?)", ex);
+                    logger.LogWarning($"Error getting certificate (deleted?) {fullPath}", ex);
                     return null;
                 }
 
@@ -99,7 +129,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 return new CurrentInventoryItem()
                 {
-                    Alias = key,
+                    Alias = relativePath,
                     PrivateKeyEntry = hasPrivateKey,
                     ItemStatus = OrchestratorInventoryItemStatus.Unknown,
                     UseChainLevel = true,
@@ -247,31 +277,48 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         {
             VaultClient.V1.Auth.ResetVaultToken();
             _storePath = _storePath.TrimStart('/');
+            List<string> subPaths = new List<string>();
+        //Grabs the list of subpaths to get certificates from, if SubFolder Inventory is turned on.
+        //Otherwise just define the single path _storePath
+            if (_subfolderInventory == true)
+            {
+                subPaths = (await ListComponentPathsAsync(_storePath));
+                subPaths.Add(_storePath);
+            }
+            else
+            {
+                subPaths.Add(_storePath);
+            }
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
-            try
+            logger.LogDebug($"SubInventoryEnabled: {_subfolderInventory}");
+            foreach (var path in subPaths)
             {
-                if (string.IsNullOrEmpty(_mountPoint))
+                var relative_path = path.Substring(_storePath.Length);
+                try
                 {
-                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath)).Data.Keys.ToList();
-                }
-                else
-                {
-                    certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, mountPoint: _mountPoint)).Data.Keys.ToList();
-                }
 
-                certNames.ForEach(k =>
+                    if (string.IsNullOrEmpty(_mountPoint))
+                    {
+                        certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path)).Data.Keys.ToList();
+                    }
+                    else
+                    {
+                        certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, mountPoint: _mountPoint)).Data.Keys.ToList();
+                    }
+             
+                        certNames.ForEach(k =>
+                    {
+                        var cert = GetCertificate($"{relative_path}{k}").Result;
+                        if (cert != null) certs.Add(cert);
+                    });
+                }
+                catch (Exception ex)
                 {
-                    var cert = GetCertificate(k).Result;
-                    if (cert != null) certs.Add(cert);
-                });
+                    logger.LogError(ex.Message);
+                    throw ex;
+                }
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.Message);
-                throw ex;
-            }
-
             return certs;
         }
         private static Func<string, string> Pemify = base64Cert =>
