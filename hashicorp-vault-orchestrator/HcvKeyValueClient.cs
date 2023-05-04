@@ -88,8 +88,27 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                string publicKey = certData["PUBLIC_KEY"]?.ToString() ?? null;
-                bool hasPrivateKey = certData["PRIVATE_KEY"] != null;
+                string publicKey;
+                bool hasPrivateKey;
+
+                //Validates if the "PUBLIC_KEY" and "PRIVATE_KEY" keys exist in certData
+                if (certData.TryGetValue("PUBLIC_KEY", out object publicKeyObj))
+                {
+                    publicKey = publicKeyObj?.ToString();
+                }
+                else
+                {
+                    publicKey = null;
+                }
+                
+                if (certData.TryGetValue("PRIVATE_KEY", out object privateKeyObj))
+                {
+                    hasPrivateKey = true;
+                }
+                else
+                {
+                    hasPrivateKey = false;
+                }
 
                 var certs = new List<string>() { publicKey };
 
