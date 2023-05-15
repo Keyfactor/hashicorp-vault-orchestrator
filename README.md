@@ -82,6 +82,8 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 - `PUBLIC_KEY` - The certificate public key
 - `PRIVATE_KEY` - The certificate private key
 
+**Note**: Key/Value secrets that do not include these keys (PUBLIC_KEY, and PRIVATE_KEY), will be ignored during inventory scans. 
+
 ## Extension Configuration
 
 ### On the Orchestrator Agent Machine
