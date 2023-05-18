@@ -77,11 +77,12 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
 
-1. For the Key-Value secrets engine, the certificates are stored as an entry with 3 fields.  
+1. For the Key-Value secrets engine, the certificates are stored as an entry with 2 fields.  
 
 - `PUBLIC_KEY` - The certificate public key
 - `PRIVATE_KEY` - The certificate private key
-- `KEY_SECRET` - The certificate private key password
+
+**Note**: Key/Value secrets that do not include these keys (PUBLIC_KEY, and PRIVATE_KEY), will be ignored during inventory scans. 
 
 ## Extension Configuration
 
@@ -122,6 +123,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
   - **MountPoint** - type: *string*
   - **VaultServerUrl** - type: *string*, *required*
   - **VaultToken** - type: *secret*, *required*
+  - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
 
 ![](images/store_type_fields.png)
 
@@ -145,6 +147,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
   - If left blank, will default to "kv-v2".
 - **Vault Token** - This is the access token that will be used by the orchestrator for requests to Vault.
 - **Vault Server Url** - the full url and port of the Vault server instance
+- **Subfolder Inventory** - Set to 'True' if it is a requirement to inventory secrets at the subfolder/component level. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
 
 ### For the Keyfactor and PKI plugins
 
