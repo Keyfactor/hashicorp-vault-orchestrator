@@ -84,6 +84,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
   - **VaultServerUrl** - type: *string*, *required*
   - **VaultToken** - type: *secret*, *required*
   - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
+  - **IncludeCertChain** - type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
 
 ![](images/store_type_fields.png)
 

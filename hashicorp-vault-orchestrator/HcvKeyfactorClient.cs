@@ -130,7 +130,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             throw new NotSupportedException();
         }
 
-        public Task PutCertificate(string certName, string contents, string pfxPassword)
+        public Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
             throw new NotSupportedException();
         }

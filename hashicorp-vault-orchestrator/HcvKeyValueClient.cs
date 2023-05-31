@@ -89,8 +89,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             var relativePath = fullPath.Substring(_storePath.Length);
             try
             {
-
-
                 try
                 {
                     if (_mountPoint == null)
@@ -188,7 +186,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return vaults;
         }
 
-        public async Task PutCertificate(string certName, string contents, string pfxPassword)
+        public async Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
@@ -255,15 +253,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 certDict.Add("PRIVATE_KEY", privateKeyString);
                 certDict.Add("PUBLIC_KEY", pubCertPem);
 
-                var i = 1;
-                pemChain.ForEach(pc =>
+                if (includeChain)
                 {
-                    if (pc != pubCertPem)
+                    var i = 1;
+                    pemChain.ForEach(pc =>
                     {
-                        certDict.Add($"PUBLIC_KEY_{i}", pc);
-                        i++;
-                    }
-                });
+                        if (pc != pubCertPem)
+                        {
+                            certDict.Add($"PUBLIC_KEY_{i}", pc);
+                            i++;
+                        }
+                    });
+
+                }
             }
             catch (Exception ex)
             {
