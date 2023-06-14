@@ -77,15 +77,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             SubfolderInventory = props["SubfolderInventory"] ?? false;
             IncludeCertChain = props["IncludeCertChain"] ?? false;
 
-            //if (props["SubfolderInventory"] == null)
-            //{
-            //    SubfolderInventory = false;
-            //}
-            //else
-            //{
-            //    SubfolderInventory = props["SubfolderInventory"];
-            //}
-
             var isPki = capability.Contains("HCVPKI");
 
             if (!isPki)

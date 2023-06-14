@@ -66,8 +66,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                     string revokeTime;
                     content.data.TryGetValue("revocation_time", out revokeTime);
+                                        
 
-                    if (revokeTime.Equals(0))
+                    if (revokeTime.Equals("0"))
                     {
                         var inventoryItem = new CurrentInventoryItem()
                         {
