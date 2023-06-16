@@ -140,7 +140,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 // if the certs have not been revoked, include them
 
-                if (!string.IsNullOrEmpty(certificate) && (revocationTime == null || revocationTime.Equals(0)))
+                if (!string.IsNullOrEmpty(certificate) && (revocationTime == null || Equals(revocationTime.ToString(), "0")))
                 {
                     return new CurrentInventoryItem()
                     {

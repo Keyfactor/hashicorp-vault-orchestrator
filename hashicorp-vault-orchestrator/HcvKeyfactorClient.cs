@@ -73,7 +73,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     
                     // don't include them in inventory unless they haven't been revoked
 
-                    if (revokeTime == null || revokeTime.Equals(0))
+                    if (revokeTime == null || Equals(revokeTime.ToString(), "0"))
                     {
                         var inventoryItem = new CurrentInventoryItem()
                         {
