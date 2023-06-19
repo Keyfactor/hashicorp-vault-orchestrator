@@ -6,11 +6,9 @@
 * **Breaking Change**: the properties have been renamed from:
     * `PUBLIC_KEY` to `certificate`
     * `PRIVATE_KEY` to `private_key`
-    * `PUBLIC_KEY_<n>` for each CA chain certificate to `ca_chain`
+    * `PUBLIC_KEY_<n>` has been removed.  Now the chain is stored in `certificate` if the option is selected.
 
 * **Breaking Change**: Added a flag on the Keyfactor Certificate store definition to indicate whether to store the full CA chain along with the certificate
-
-* `ca_chain` contains all certificates in the CA chain, including the leaf.
 
 2.0
 

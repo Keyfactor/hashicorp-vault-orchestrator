@@ -35,9 +35,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _storePath { get; set; }
         private string _mountPoint { get; set; }
-        private bool _subfolderInventory { get; set; }
-
-        //private VaultClientSettings clientSettings { get; set; }
+        private bool _subfolderInventory { get; set; }        
 
         public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, bool SubfolderInventory = false)
         {
@@ -86,7 +84,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             Dictionary<string, object> certData;
             Secret<SecretData> res;
             var fullPath = _storePath + key;
-            //var relativePath = fullPath.Substring(_storePath.Length);
+            
             try
             {
                 try
@@ -116,8 +114,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                string certificate = null;
-                string caChain = "";
+                string certificate = null;                
 
                 //Validates if the "certificate" and "private_key" keys exist in certData
                 if (certData.TryGetValue("certificate", out object publicKeyObj))
@@ -127,27 +124,28 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 var certs = new List<string>() { certificate };
 
-                certData.TryGetValue("private_key", out object privateKeyObj);            
+                certData.TryGetValue("private_key", out object privateKeyObj);
+                
+                //split the chain entries (if chain is included)
+                
+                var certFooter = "\n-----END CERTIFICATE-----";
 
-                if (certData.TryGetValue("ca_chain", out object caChainObj))
-                {
-                    caChain = caChainObj?.ToString();
+                certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                                
+                for (int i = 0; i<certs.Count(); i++) {
+                    certs[i] = certs[i] + certFooter;
                 }
-
-                certData.TryGetValue("revocation_time", out object revocationTime);
-
-                certs = !string.IsNullOrEmpty(caChain) ? caChain.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).ToList() : certs;
 
                 // if the certs have not been revoked, include them
 
-                if (!string.IsNullOrEmpty(certificate) && (revocationTime == null || Equals(revocationTime.ToString(), "0")))
+                if (certs.Count() > 0)
                 {
                     return new CurrentInventoryItem()
                     {
                         Alias = key,
                         PrivateKeyEntry = privateKeyObj != null,
                         ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                        UseChainLevel = true,
+                        UseChainLevel = certs.Count() > 1,
                         Certificates = certs
                     };
                 }
@@ -228,7 +226,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     streamWriter.Flush();
                     privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                         .Replace("\r", "").Replace("\0", "");
-                    // logger.LogTrace($"Got Private Key String {privateKeyString}");
                     logger.LogTrace($"Got Private Key String");
                     memoryStream.Close();
                     streamWriter.Close();
@@ -254,12 +251,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             try
             {
                 certDict.Add("private_key", privateKeyString);
-                certDict.Add("certificate", pubCertPem);
-                certDict.Add("revocation_time", 0);
+
+                // certDict.Add("revocation_time", 0);
 
                 if (includeChain)
                 {
-                    certDict.Add("ca_chain", String.Join("\n\n", pemChain));
+
+                    certDict.Add("certificate", String.Join("\n", pemChain));
+                }
+                else {
+                    certDict.Add("certificate", pubCertPem);
                 }
             }
             catch (Exception ex)
