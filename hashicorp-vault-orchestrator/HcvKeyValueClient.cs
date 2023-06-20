@@ -125,9 +125,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 var certs = new List<string>() { certificate };
 
                 certData.TryGetValue("private_key", out object privateKeyObj);
+
+                // if either field is missing, don't include it in inventory
                 
+                if (publicKeyObj == null || privateKeyObj == null) return null; 
+
                 //split the chain entries (if chain is included)
-                
+
                 var certFooter = "\n-----END CERTIFICATE-----";
 
                 certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
