@@ -81,10 +81,8 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 1. For the Key-Value secrets engine, the certificates are stored as an entry with these fields.  
 
-- `certificate` - The PEM formatted certificate
-- `ca_chain` - The full certificate authority chain, including the certificate
+- `certificate` - The PEM formatted certificate and intermediate CA chain (if selected)
 - `private_key` - The certificate private key
-- `revocation_time` - a value other than "0" indicates the time that a certificate was revoked.
 
 **Note**: Key/Value secrets that do not include the keys `certificate` and `private_key` will be ignored during inventory scans. 
 
