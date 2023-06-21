@@ -35,7 +35,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _storePath { get; set; }
         private string _mountPoint { get; set; }
-        private bool _subfolderInventory { get; set; }        
+        private bool _subfolderInventory { get; set; }
+
+        //private VaultClientSettings clientSettings { get; set; }
 
         public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, bool SubfolderInventory = false)
         {
@@ -84,7 +86,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             Dictionary<string, object> certData;
             Secret<SecretData> res;
             var fullPath = _storePath + key;
-            
+            var relativePath = fullPath.Substring(_storePath.Length);
+
             try
             {
                 try
@@ -101,6 +104,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 catch (Exception ex)
                 {
                     logger.LogError($"Error getting certificate {fullPath}", ex);
+
                     return null;
                 }
 
@@ -230,6 +234,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     streamWriter.Flush();
                     privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                         .Replace("\r", "").Replace("\0", "");
+
                     logger.LogTrace($"Got Private Key String");
                     memoryStream.Close();
                     streamWriter.Close();

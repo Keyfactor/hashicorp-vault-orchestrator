@@ -18,4 +18,3 @@
 * **Breaking Change**: the cert store types are now:
     * **HCVPKI** for the PKI and Keyfactor secrets engine
     * **HCVKV** for the Key-Value secrets engine
-

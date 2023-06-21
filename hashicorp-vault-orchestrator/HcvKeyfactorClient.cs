@@ -55,7 +55,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
                     CertResponse content = JsonConvert.DeserializeObject<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
-                    
+                   
                     content.data.TryGetValue("certificate", out object cert);                                        
                     content.data.TryGetValue("ca_chain", out object caChain);                                        
                     content.data.TryGetValue("private_key", out object privateKey);                                        
@@ -90,6 +90,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 catch (Exception ex)
                 {
                     logger.LogWarning($"Error getting certificate \"{fullPath}\" from Vault", ex);
+
                     return null;
                 }
             }
