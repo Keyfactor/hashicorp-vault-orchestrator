@@ -57,7 +57,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 try
                 {
                     // uploadCollection is either not null or an exception was thrown.
-                    var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword);
+                    var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
                     complete.Result = OrchestratorJobStatusJobResult.Success;
                 }
                 catch (Exception ex)

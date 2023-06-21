@@ -66,8 +66,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                     string revokeTime;
                     content.data.TryGetValue("revocation_time", out revokeTime);
+                                        
 
-                    if (revokeTime.Equals(0))
+                    if (revokeTime.Equals("0"))
                     {
                         var inventoryItem = new CurrentInventoryItem()
                         {
@@ -130,7 +131,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             throw new NotSupportedException();
         }
 
-        public Task PutCertificate(string certName, string contents, string pfxPassword)
+        public Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
             throw new NotSupportedException();
         }

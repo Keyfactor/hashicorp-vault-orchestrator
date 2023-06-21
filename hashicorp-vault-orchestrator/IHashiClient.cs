@@ -16,7 +16,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         Task<IEnumerable<CurrentInventoryItem>> GetCertificates();
         Task<CurrentInventoryItem> GetCertificate(string key);
         Task<IEnumerable<string>> GetVaults();
-        Task PutCertificate(string certName, string contents, string pfxPassword);
+        Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain);
         Task<bool> DeleteCertificate(string certName);
     }
 }

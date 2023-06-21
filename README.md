@@ -79,9 +79,10 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
 
-1. For the Key-Value secrets engine, the certificates are stored as an entry with 2 fields.  
+1. For the Key-Value secrets engine, the certificates are stored as an entry with these fields.  
 
 - `PUBLIC_KEY` - The certificate public key
+- `PUBLIC_KEY_<n>` - The nth certificate in the chain
 - `PRIVATE_KEY` - The certificate private key
 
 **Note**: Key/Value secrets that do not include these keys (PUBLIC_KEY, and PRIVATE_KEY), will be ignored during inventory scans. 
@@ -126,6 +127,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
   - **VaultServerUrl** - type: *string*, *required*
   - **VaultToken** - type: *secret*, *required*
   - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
+  - **IncludeCertChain** - type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
 
 ![](images/store_type_fields.png)
 
