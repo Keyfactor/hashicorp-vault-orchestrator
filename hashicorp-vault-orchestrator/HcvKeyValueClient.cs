@@ -87,6 +87,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             Secret<SecretData> res;
             var fullPath = _storePath + key;
             var relativePath = fullPath.Substring(_storePath.Length);
+
             try
             {
                 try
@@ -102,7 +103,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning($"Error getting certificate (deleted?) {fullPath}", ex);
+                    logger.LogError($"Error getting certificate {fullPath}", ex);
+
                     return null;
                 }
 
@@ -116,42 +118,49 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                string publicKey;
-                bool hasPrivateKey;
+                string certificate = null;                
 
-                //Validates if the "PUBLIC_KEY" and "PRIVATE_KEY" keys exist in certData
-                if (certData.TryGetValue("PUBLIC_KEY", out object publicKeyObj))
+                //Validates if the "certificate" and "private_key" keys exist in certData
+                if (certData.TryGetValue("certificate", out object publicKeyObj))
                 {
-                    publicKey = publicKeyObj?.ToString();
+                    certificate = publicKeyObj as string;
+                }
+
+                var certs = new List<string>() { certificate };
+
+                certData.TryGetValue("private_key", out object privateKeyObj);
+
+                // if either field is missing, don't include it in inventory
+                
+                if (publicKeyObj == null || privateKeyObj == null) return null; 
+
+                //split the chain entries (if chain is included)
+
+                var certFooter = "\n-----END CERTIFICATE-----";
+
+                certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                                
+                for (int i = 0; i<certs.Count(); i++) {
+                    certs[i] = certs[i] + certFooter;
+                }
+
+                // if the certs have not been revoked, include them
+
+                if (certs.Count() > 0)
+                {
+                    return new CurrentInventoryItem()
+                    {
+                        Alias = key,
+                        PrivateKeyEntry = privateKeyObj != null,
+                        ItemStatus = OrchestratorInventoryItemStatus.Unknown,
+                        UseChainLevel = certs.Count() > 1,
+                        Certificates = certs
+                    };
                 }
                 else
                 {
-                    publicKey = null;
+                    return null;
                 }
-
-                if (certData.TryGetValue("PRIVATE_KEY", out object privateKeyObj))
-                {
-                    hasPrivateKey = true;
-                }
-                else
-                {
-                    hasPrivateKey = false;
-                }
-
-                var certs = new List<string>() { publicKey };
-
-                var keys = certData.Keys.Where(k => k.StartsWith("PUBLIC_KEY_")).ToList();
-
-                keys.ForEach(k => certs.Add(certData[k].ToString()));
-
-                return new CurrentInventoryItem()
-                {
-                    Alias = relativePath,
-                    PrivateKeyEntry = hasPrivateKey,
-                    ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                    UseChainLevel = true,
-                    Certificates = certs.ToArray()
-                };
             }
             catch (Exception ex)
             {
@@ -190,7 +199,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
-            var certDict = new Dictionary<string, string>();
+            var certDict = new Dictionary<string, object>();
 
             var pfxBytes = Convert.FromBase64String(contents);
             Pkcs12Store p;
@@ -225,7 +234,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     streamWriter.Flush();
                     privateKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                         .Replace("\r", "").Replace("\0", "");
-                    // logger.LogTrace($"Got Private Key String {privateKeyString}");
+
                     logger.LogTrace($"Got Private Key String");
                     memoryStream.Close();
                     streamWriter.Close();
@@ -250,21 +259,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                certDict.Add("PRIVATE_KEY", privateKeyString);
-                certDict.Add("PUBLIC_KEY", pubCertPem);
+                certDict.Add("private_key", privateKeyString);
+
+                // certDict.Add("revocation_time", 0);
 
                 if (includeChain)
                 {
-                    var i = 1;
-                    pemChain.ForEach(pc =>
-                    {
-                        if (pc != pubCertPem)
-                        {
-                            certDict.Add($"PUBLIC_KEY_{i}", pc);
-                            i++;
-                        }
-                    });
 
+                    certDict.Add("certificate", String.Join("\n", pemChain));
+                }
+                else {
+                    certDict.Add("certificate", pubCertPem);
                 }
             }
             catch (Exception ex)
