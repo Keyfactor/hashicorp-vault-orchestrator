@@ -55,27 +55,33 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
                     CertResponse content = JsonConvert.DeserializeObject<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
-                    string cert;
-                    content.data.TryGetValue("certificate", out cert);
+                   
+                    content.data.TryGetValue("certificate", out object cert);                                        
+                    content.data.TryGetValue("ca_chain", out object caChain);                                        
+                    content.data.TryGetValue("private_key", out object privateKey);                                        
+                    content.data.TryGetValue("revocation_time", out object revokeTime);
 
-                    string issuingCA;
-                    content.data.TryGetValue("issuing_ca", out issuingCA);
+                    List<string> certList = new List<string>() { cert as string };
 
-                    string privateKey;
-                    content.data.TryGetValue("private_key", out privateKey);
+                    // if the chain is available, include all certs
 
-                    string revokeTime;
-                    content.data.TryGetValue("revocation_time", out revokeTime);
+                    if (!string.IsNullOrEmpty(caChain as string))
+                    {
+                        string fullChain = caChain.ToString();
+                        certList = fullChain.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    }
+                    
+                    // don't include them in inventory unless they haven't been revoked
 
-                    if (revokeTime.Equals(0))
+                    if (revokeTime == null || Equals(revokeTime.ToString(), "0"))
                     {
                         var inventoryItem = new CurrentInventoryItem()
                         {
                             Alias = key,
-                            Certificates = new string[] { cert },
+                            Certificates = certList,
                             ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                            PrivateKeyEntry = !string.IsNullOrEmpty(privateKey),
-                            UseChainLevel = !string.IsNullOrEmpty(issuingCA),
+                            PrivateKeyEntry = !string.IsNullOrEmpty(privateKey as string),
+                            UseChainLevel = !string.IsNullOrEmpty(caChain as string),
                         };
                         return inventoryItem;
                     }
@@ -83,13 +89,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning("Error getting certificate (deleted?)", ex);
+                    logger.LogWarning($"Error getting certificate \"{fullPath}\" from Vault", ex);
+
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError("Error getting certificate from Vault", ex);
+                logger.LogError($"Error getting certificate \"{fullPath}\" from Vault", ex);
                 throw;
             }
         }
@@ -130,7 +137,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             throw new NotSupportedException();
         }
 
-        public Task PutCertificate(string certName, string contents, string pfxPassword)
+        public Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
             throw new NotSupportedException();
         }
@@ -152,7 +159,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public class CertResponse : HashiResponse
         {
-            public Dictionary<string, string> data { get; set; }
+            public Dictionary<string, object> data { get; set; }
         }
 
         public class ListResponse : HashiResponse
