@@ -105,6 +105,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
   - example: `kv-v2\kf-secrets\certname` would use the path "\kf-secrets"
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
+  - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
 - **Vault Token** - This is the access token that will be used by the orchestrator for requests to Vault.
 - **Vault Server Url** - the full url and port of the Vault server instance
 - **Subfolder Inventory** - Set to 'True' if it is a requirement to inventory secrets at the subfolder/component level. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
