@@ -26,7 +26,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
     {
         public const string HCVKVPEM = "HCVKVPEM";
         public const string KCVKVJKS = "HCVKVJKS";
-        public const string HCVKVPKCS12 = "HCVKVPKCS12";
+        public const string HCVKVPKCS12 = "HCVKVP12";
         public const string HCVKVPFX = "HCVKVPFX";
         public const string HCVPKI = "HCVPKI";        
     }

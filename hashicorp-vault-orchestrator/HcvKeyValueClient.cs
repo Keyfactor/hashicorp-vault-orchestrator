@@ -508,10 +508,51 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private List<CurrentInventoryItem> GetCertsFromPKCS12(Dictionary<string, object> certFields)
         {
-            // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
+            string password;
+            string base64encodedCert;
+            var certs = new List<CurrentInventoryItem>();
 
+            try
+            {
+                var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPKCS12));
 
-            throw new NotImplementedException();
+                if (certKey == null)
+                {
+                    throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPKCS12}' found");
+                }
+                else
+                {
+                    base64encodedCert = certFields[certKey].ToString();
+                }
+
+                if (certFields.TryGetValue("password", out object filePasswordObj))
+                {
+                    password = filePasswordObj.ToString();
+                }
+                else
+                {
+                    throw new Exception($"No password entry found for PKCS12 store '{certKey}'.");
+                }
+
+                // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
+                var bytes = Convert.FromBase64String(base64encodedCert);
+                
+                Pkcs12Store pkcs12Store;
+                
+                using (var stream = new MemoryStream(bytes))
+                {
+                    Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
+                    pkcs12Store = storeBuilder.Build();
+                    pkcs12Store.Load(stream, password.ToCharArray());
+                }
+                certs = CurrentInventoryFromPkcs12(pkcs12Store);
+                return certs;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Unable to read PKCS12 file.", ex);
+                throw;
+            }
         }
 
         private List<CurrentInventoryItem> GetCertsFromPFX(Dictionary<string, object> certFields)
