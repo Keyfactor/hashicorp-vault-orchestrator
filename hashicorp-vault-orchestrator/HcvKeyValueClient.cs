@@ -219,7 +219,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                             vaultPaths.Add(storePath + path);
                         }
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         logger.LogError("Error reading secret keys.", ex);
                         throw;
                     }
@@ -245,8 +246,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             Pkcs12Store p;
             using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
             {
-                p = new Pkcs12Store(pfxBytesMemoryStream,
-                    pfxPassword.ToCharArray());
+                Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
+                p = storeBuilder.Build();
+                p.Load(pfxBytesMemoryStream, pfxPassword.ToCharArray());
             }
 
             // Extract private key
@@ -457,7 +459,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     return GetCertsFromPKCS12(certFields);
                 case StoreType.KCVKVJKS:
                     return GetCertsFromJKS(certFields);
-
             }
 
             throw new InvalidOperationException($"Cannot get certificates from filestore for storeType {_storeType}.");
@@ -466,32 +467,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private List<CurrentInventoryItem> GetCertsFromJKS(Dictionary<string, object> certFields)
         {
             // certFields should contain two entries.  The certificate with the "jks-contents" suffix, and "password"
-
-
-            throw new NotImplementedException();
-        }
-
-        private List<CurrentInventoryItem> GetCertsFromPKCS12(Dictionary<string, object> certFields)
-        {
-            // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
-
-            throw new NotImplementedException();
-        }
-
-        private List<CurrentInventoryItem> GetCertsFromPFX(Dictionary<string, object> certFields)
-        {
-            // certFields should contain two entries.  The certificate with the "pfx-contents" suffix, and "password"
             string password;
             string base64encodedCert;
             var certs = new List<CurrentInventoryItem>();
 
             try
             {
-                var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPFX));
+                var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVJKS));
 
                 if (certKey == null)
                 {
-                    throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPFX}' found");
+                    throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVJKS}' found");
                 }
                 else
                 {
@@ -507,75 +493,67 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     throw new Exception($"No password entry found for PFX store '{certKey}'.");
                 }
 
-                var pfxBytes = Convert.FromBase64String(base64encodedCert);
-                Pkcs12Store p;
-                using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
-                {
-                    p = new Pkcs12Store(pfxBytesMemoryStream,
-                        password.ToCharArray());
-                }
+                var jksBytes = Convert.FromBase64String(base64encodedCert);
+                var pkcs12Store = new JksUtility().JksToPkcs12Store(jksBytes, password);
+                certs = CurrentInventoryFromPkcs12(pkcs12Store);
+                return certs;
 
-                using (var memoryStream = new MemoryStream())
-                {
-                    using (TextWriter streamWriter = new StreamWriter(memoryStream))
-                    {
-                        logger.LogTrace("Extracting Private Key...");
-                        var pemWriter = new PemWriter(streamWriter);
-                        logger.LogTrace("Created pemWriter...");
-                        var aliases = p.Aliases.Cast<string>().Where(a => p.IsKeyEntry(a));
-                        //logger.LogTrace($"Alias = {alias}");
-                        foreach (var alias in aliases)
-                        {
-                            var certInventoryItem = new CurrentInventoryItem { Alias = alias };
-
-                            var entryCerts = new List<string>();
-                            var publicKey = p.GetCertificate(alias).Certificate.GetPublicKey();
-                            var privateKeyEntry = p.GetKey(alias);
-                            if (privateKeyEntry != null) certInventoryItem.PrivateKeyEntry = true;
-                            pemWriter.WriteObject(publicKey);
-                            streamWriter.Flush();
-                            var publicKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
-                                .Replace("\r", "").Replace("\0", "");
-                            entryCerts.Add(publicKeyString);                            
-                            var pemChain = new List<string>();
-                            var chain = p.GetCertificateChain(alias).ToList();
-
-                            chain.ForEach(c =>
-                            {
-                                var cert = c.Certificate.GetEncoded();
-                                var encoded = Pemify(Convert.ToBase64String(cert));
-                                pemChain.Add(encoded);
-                            });
-
-                            if (chain.Count() > 0)
-                            {
-                                certInventoryItem.UseChainLevel = true;
-                                entryCerts.AddRange(pemChain);
-                            }
-                            certInventoryItem.Certificates = pemChain;
-                            certs.Add(certInventoryItem);
-                        }
-                        memoryStream.Close();
-                        streamWriter.Close();
-                    }
-                    return certs;
-                }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError("Could not read JKS file", ex);
                 throw;
             }
         }
 
+        private List<CurrentInventoryItem> GetCertsFromPKCS12(Dictionary<string, object> certFields)
+        {
+            // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
 
-        // go through each alias and add the cert (and chain) to inventory 
-        //var aliases = p.Aliases.Cast<string>();
 
-        //foreach (var alias in aliases) {
-        //   var publicKey = p.GetCertificate(alias).Certificate.GetPublicKey();
-        //}
+            throw new NotImplementedException();
+        }
 
+        private List<CurrentInventoryItem> GetCertsFromPFX(Dictionary<string, object> certFields)
+        {
+            // certFields should contain two entries.  The certificate with the "pfx-contents" suffix, and "password"
+            string password;
+            string base64encodedCert;
+            var certs = new List<CurrentInventoryItem>();
+
+
+            var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPFX));
+
+            if (certKey == null)
+            {
+                throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPFX}' found");
+            }
+            else
+            {
+                base64encodedCert = certFields[certKey].ToString();
+            }
+
+            if (certFields.TryGetValue("password", out object filePasswordObj))
+            {
+                password = filePasswordObj.ToString();
+            }
+            else
+            {
+                throw new Exception($"No password entry found for PFX store '{certKey}'.");
+            }
+
+            var pfxBytes = Convert.FromBase64String(base64encodedCert);
+            Pkcs12Store p;
+            using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
+            {
+                Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
+                p = storeBuilder.Build();
+                p.Load(pfxBytesMemoryStream, password.ToCharArray());
+            }
+
+            certs = CurrentInventoryFromPkcs12(p);
+            return certs;
+        }
 
         private async Task<List<string>> GetSubPaths(string storagePath)
         {
@@ -616,5 +594,64 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             return header + FormatBase64(base64Cert) + footer;
         };
+
+        private List<CurrentInventoryItem> CurrentInventoryFromPkcs12(Pkcs12Store store)
+        {
+            var certs = new List<CurrentInventoryItem>();
+
+            try
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    using (TextWriter streamWriter = new StreamWriter(memoryStream))
+                    {
+                        logger.LogTrace("Extracting Private Key...");
+                        var pemWriter = new PemWriter(streamWriter);
+                        logger.LogTrace("Created pemWriter...");
+                        var aliases = store.Aliases.Cast<string>().Where(a => store.IsKeyEntry(a));
+                        //logger.LogTrace($"Alias = {alias}");
+                        foreach (var alias in aliases)
+                        {
+                            var certInventoryItem = new CurrentInventoryItem { Alias = alias };
+
+                            var entryCerts = new List<string>();
+                            var publicKey = store.GetCertificate(alias).Certificate.GetPublicKey();
+                            var privateKeyEntry = store.GetKey(alias);
+                            if (privateKeyEntry != null) certInventoryItem.PrivateKeyEntry = true;
+                            pemWriter.WriteObject(publicKey);
+                            streamWriter.Flush();
+                            var publicKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
+                                .Replace("\r", "").Replace("\0", "");
+                            entryCerts.Add(publicKeyString);
+                            var pemChain = new List<string>();
+                            var chain = store.GetCertificateChain(alias).ToList();
+
+                            chain.ForEach(c =>
+                            {
+                                var cert = c.Certificate.GetEncoded();
+                                var encoded = Pemify(Convert.ToBase64String(cert));
+                                pemChain.Add(encoded);
+                            });
+
+                            if (chain.Count() > 0)
+                            {
+                                certInventoryItem.UseChainLevel = true;
+                                entryCerts.AddRange(pemChain);
+                            }
+                            certInventoryItem.Certificates = pemChain;
+                            certs.Add(certInventoryItem);
+                        }
+                        memoryStream.Close();
+                        streamWriter.Close();
+                    }
+                    return certs;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+                throw;
+            }
+        }
     }
 }

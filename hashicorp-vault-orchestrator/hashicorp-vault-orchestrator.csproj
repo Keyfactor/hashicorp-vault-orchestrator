@@ -33,6 +33,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
 		<PackageReference Include="Keyfactor.Logging" Version="1.1.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
@@ -49,7 +50,6 @@
 		</PackageReference>
 		<PackageReference Include="NLog" Version="5.2.3" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.3" />
-		<PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
 		<PackageReference Include="System.Linq" Version="4.3.0">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>

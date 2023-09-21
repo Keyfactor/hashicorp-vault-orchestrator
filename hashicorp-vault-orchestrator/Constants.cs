@@ -25,7 +25,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
     static class StoreType
     {
         public const string HCVKVPEM = "HCVKVPEM";
-        public const string KCVKVJKS = "KCVKVJKS";
+        public const string KCVKVJKS = "HCVKVJKS";
         public const string HCVKVPKCS12 = "HCVKVPKCS12";
         public const string HCVKVPFX = "HCVKVPFX";
         public const string HCVPKI = "HCVPKI";        
