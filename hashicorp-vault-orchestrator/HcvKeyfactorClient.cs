@@ -132,7 +132,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return certs;
         }
 
-        public Task<IEnumerable<string>> GetVaults()
+        public Task<List<string>> GetVaults(string storePath)
         {
             throw new NotSupportedException();
         }

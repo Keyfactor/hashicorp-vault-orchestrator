@@ -15,10 +15,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Management : JobBase, IManagementJobExtension
     {
-        readonly ILogger logger = LogHandler.GetClassLogger<Management>();
-
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger<Management>();
+
             InitializeStore(config);
 
             JobResult complete = new JobResult()
@@ -65,11 +65,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     if (ex.GetType() == typeof(NotSupportedException))
                     {
                         logger.LogError("Attempt to Add Certificate on unsupported Secrets Engine backend.");
-                        complete.FailureMessage = $"{SecretsEngine} does not support adding certificates via the Orchestrator.";
+                        complete.FailureMessage = $"{StoreType} does not support adding certificates via the Orchestrator.";
                     }
                     else
                     {
-                        complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
+                        complete.FailureMessage = $"An error occured while adding {alias} to {StorePath}: " + ex.Message;
 
                         if (ex.InnerException != null)
                             complete.FailureMessage += " - " + ex.InnerException.Message;
@@ -114,12 +114,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 if (ex.GetType() == typeof(NotSupportedException))
                 {
                     logger.LogError("Attempt to Delete Certificate on unsupported Secrets Engine backend.");
-                    complete.FailureMessage = $"{SecretsEngine} does not support removing certificates via the Orchestrator.";
+                    complete.FailureMessage = $"{StoreType} does not support removing certificates via the Orchestrator.";
                 }
                 else
                 {
                     logger.LogError("Error deleting cert from Vault", ex);
-                    complete.FailureMessage = $"An error occured while removing {alias} from {ExtensionName}: " + ex.Message;
+                    complete.FailureMessage = $"An error occured while removing {alias} from {StorePath}: " + ex.Message;
                 }
             }
             return complete;

@@ -17,10 +17,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Inventory : JobBase, IInventoryJobExtension
     {
-        ILogger logger = LogHandler.GetClassLogger<Inventory>();
-
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventoryUpdate)
         {
+            logger = LogHandler.GetClassLogger<Inventory>();
+     
             InitializeStore(config);
 
             IEnumerable<CurrentInventoryItem> certs = null;

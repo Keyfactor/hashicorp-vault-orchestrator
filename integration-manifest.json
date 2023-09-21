@@ -32,8 +32,8 @@
       "store_types": [
         {
           "Name": "Hashicorp Vault Key-Value",
-          "ShortName": "HCVKV",
-          "Capability": "HCVKV",
+          "ShortName": "HCVKVPEM",
+          "Capability": "HCVKVPEM",
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,

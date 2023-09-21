@@ -5,7 +5,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 
+using System;
+using System.Collections.Generic;
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
@@ -13,12 +17,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     public abstract class JobBase
     {
         public string ExtensionName => "HCV";
-
+        
         public string StorePath { get; set; }
 
         public string VaultToken { get; set; }
 
-        public string SecretsEngine { get; set; } // "PKI", "Keyfactor", "Key Value"
+        public string ClientMachine { get; set; }
 
         public string VaultServerUrl { get; set; }
         
@@ -26,62 +30,82 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         public bool IncludeCertChain { get; set; }
 
-        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV
+        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV by Vault if not provided.
 
-        public string RoleName { get; set; }
+        internal protected IHashiClient VaultClient { get; set; }        
+        internal protected string StoreType { get; set; }
+        internal protected ILogger logger { get; set; }
+        internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
-        internal protected IHashiClient VaultClient { get; set; }
-
-        const string KEY_VALUE_ENGINE = "KV";
-        const string KEYFACTOR_ENGINE = "Keyfactor";
-        const string PKI_ENGINE = "Hashicorp PKI";
 
         public void InitializeStore(InventoryJobConfiguration config)
-        {
-            var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            //var props = Jsonconfig.CertificateStoreDetails.Properties;
+        {            
+            ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
-            StorePath = config.CertificateStoreDetails?.StorePath ?? null;
-            StorePath = StorePath.TrimStart('/');
-            StorePath = StorePath.TrimEnd('/');
-            StorePath = StorePath == null ? null : StorePath + "/"; //enforce single trailing slash for path
+            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
+            // ClientSecret can be omitted for managed identities, required for service principal auth
+            VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
+
+            StorePath = config.CertificateStoreDetails.StorePath;
+            ClientMachine = config.CertificateStoreDetails.ClientMachine;
+
+            var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
+            
             InitProps(props, config.Capability);
         }
 
         public void InitializeStore(DiscoveryJobConfiguration config)
         {
-            var props = config.JobProperties;
-            InitProps(props, config.Capability);
+            ClientMachine = config.ClientMachine;
+
+            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
+
+            // ClientSecret can be omitted for managed identities, required for service principal auth
+            VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
+
+            InitProps(config.JobProperties, config.Capability);
         }
         public void InitializeStore(ManagementJobConfiguration config)
         {
-            var props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
-            StorePath = config.CertificateStoreDetails?.StorePath ?? null;
-            StorePath = StorePath.TrimStart('/');
-            StorePath = StorePath.TrimEnd('/');
-            StorePath = StorePath == null ? null : StorePath + "/"; //enforce single trailing slash for path
+            ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
+            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
+
+            // ClientSecret can be omitted for managed identities, required for service principal auth
+            VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
+
+            StorePath = config.CertificateStoreDetails.StorePath;
+            ClientMachine = config.CertificateStoreDetails.ClientMachine;
+
+            var props = (Dictionary<string, object>)JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
             InitProps(props, config.Capability);
         }
 
-        private void InitProps(dynamic props, string capability)
-        {
-            if (props == null) throw new System.Exception("Properties is null", props);
+        private void InitProps(IDictionary<string, object> props, string capability)
+        {            
+            if (props == null) throw new Exception("Properties is null");
 
-            VaultToken = props["VaultToken"];
-            VaultServerUrl = props["VaultServerUrl"];
-            SecretsEngine = props["SecretsEngine"];
-            MountPoint = props["MountPoint"] ?? null;
+            if (props.TryGetValue("StorePath", out var p)) {
+                StorePath = p.ToString();
+                StorePath = StorePath.TrimStart('/');
+                StorePath = StorePath.TrimEnd('/');
+                StorePath += "/"; //ensure single trailing slash for path
+            }
 
-            SubfolderInventory = props["SubfolderInventory"] ?? false;
-            IncludeCertChain = props["IncludeCertChain"] ?? false;
+            MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+            SubfolderInventory = props.ContainsKey("SubfolderInventory") ? Boolean.Parse(props["SubfolderInventory"].ToString()) : false;
+            IncludeCertChain = props.ContainsKey("IncludeCertChain") ? Boolean.Parse(props["IncludeCertChain"].ToString()) : false;
+            StoreType = capability;
 
-            var isPki = capability.Contains("HCVPKI");
+            var isPki = StoreType.Contains("HCVPKI");
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, SubfolderInventory);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, StoreType, SubfolderInventory);
             }
             else
             {

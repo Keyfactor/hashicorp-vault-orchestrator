@@ -13,12 +13,28 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public const string PKI_STORE_TYPE = "HCV"; //same for Keyfactor plugin store type
     }
 
-    static class JobTypes
+    static class JobType
     {
         public const string CREATE = "Create";
         public const string DISCOVERY = "Discovery";
         public const string INVENTORY = "Inventory";
         public const string MANAGEMENT = "Management";
         public const string REENROLLMENT = "Enrollment";
+    }
+
+    static class StoreType
+    {
+        public const string HCVKVPEM = "HCVKVPEM";
+        public const string KCVKVJKS = "KCVKVJKS";
+        public const string HCVKVPKCS12 = "HCVKVPKCS12";
+        public const string HCVKVPFX = "HCVKVPFX";
+        public const string HCVPKI = "HCVPKI";        
+    }
+
+    static class StoreFileExtensions {
+        public const string HCVKVJKS = "jks-contents";
+        public const string HCVKVPKCS12 = "p12-contents";
+        public const string HCVKVPFX = "pfx-contents";
+        public const string HCVKVPEM = "certificate";
     }
 }

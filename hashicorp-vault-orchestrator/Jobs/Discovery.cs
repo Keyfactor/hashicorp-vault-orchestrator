@@ -17,17 +17,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Discovery : JobBase, IDiscoveryJobExtension
     {
-        ILogger logger = LogHandler.GetClassLogger<Discovery>();
-
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate submitDiscoveryUpdate)
         {
+            logger = LogHandler.GetClassLogger<Discovery>();
+
             InitializeStore(config);
 
-            List<string> vaults = new List<string>();
+            List<string> vaults;
 
             try
             {
-                vaults = VaultClient.GetVaults().Result.ToList();
+                vaults = VaultClient.GetVaults(string.Empty).Result.ToList();
             }
             catch (Exception ex)
             {
@@ -41,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 {
                     logger.LogError("Attempt to perform discovery on unsupported Secrets Engine backend.");
 
-                    result.FailureMessage = $"{SecretsEngine} does not support Discovery jobs.";
+                    result.FailureMessage = $"{StoreType} does not support Discovery jobs.";
                 }
                 else
                 {

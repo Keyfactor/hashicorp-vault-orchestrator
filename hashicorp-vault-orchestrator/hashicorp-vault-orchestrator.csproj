@@ -36,23 +36,24 @@
 		<PackageReference Include="Keyfactor.Logging" Version="1.1.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.1.2">
+		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.6.0" />
+		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.7.0" />
+		<PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1">
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="NLog" Version="5.0.0" />
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.0.0" />
+		<PackageReference Include="NLog" Version="5.2.3" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.3" />
 		<PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
 		<PackageReference Include="System.Linq" Version="4.3.0">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="VaultSharp" Version="1.7.0.4">
+		<PackageReference Include="VaultSharp" Version="1.13.0.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
