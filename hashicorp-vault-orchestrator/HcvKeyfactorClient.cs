@@ -103,6 +103,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
+            logger.MethodEntry();
+
             var getKeysPath = $"{ _vaultUrl }/certs?list=true";
             var certs = new List<CurrentInventoryItem>();
             var certNames = new List<string>();
@@ -113,9 +115,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 req.Headers.Add("X-Vault-Request", "true");
                 req.Headers.Add("X-Vault-Token", _vaultToken);
                 req.Method = WebRequestMethods.Http.Get;
+                
+                logger.LogTrace("sending request to vault for certs", req);
+                
                 var res = await req.GetResponseAsync();
+                
+                logger.LogTrace("parsing response", res);
+
                 var content = JsonConvert.DeserializeObject<ListResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
                 string[] certKeys;
+
 
                 content.data.TryGetValue("keys", out certKeys);
 

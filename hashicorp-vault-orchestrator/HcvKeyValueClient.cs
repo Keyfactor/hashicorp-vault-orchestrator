@@ -56,6 +56,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<CurrentInventoryItem> GetCertificate(string key)
         {
+            logger.MethodEntry();
+
             VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData;
@@ -66,20 +68,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 try
                 {
-                    if (_mountPoint == null)
+                    if (string.IsNullOrEmpty(_mountPoint))
                     {
-                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath));
+                        res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath);
                     }
                     else
                     {
-                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint));
+                        res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogError($"Error getting certificate {fullPath}", ex);
-
-                    return null;
+                    throw;                    
                 }
 
                 certData = (Dictionary<string, object>)res.Data.Data;
@@ -97,7 +98,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 //Validates if the "certificate" and "private_key" keys exist in certData
                 if (certData.TryGetValue("certificate", out object publicKeyObj))
                 {
-                    certificate = publicKeyObj as string;
+                    certificate = publicKeyObj.ToString();
                 }
 
                 var certs = new List<string>() { certificate };
@@ -146,6 +147,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<List<string>> GetVaults(string storePath)
         {
+            logger.MethodEntry();
             // there are 4 store types that use the KV secrets engine.  HCVKVPEM uses the folder as the store path.  The others use the full file path (KCVKVJKS,HCVKVPKCS12,HCVKVPFX).
             string suffix = "";
             storePath = storePath ?? _storePath;
@@ -154,6 +156,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             var vaultPaths = new List<string>();
             var entryPaths = new List<string>();
+
+            logger.LogTrace("getting key suffix for store type. ", _storeType);
 
             switch (_storeType)
             {
@@ -171,10 +175,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     break;
             }
 
-            //VaultClient.V1.Auth.ResetVaultToken();
-
             try
             {
+                logger.LogTrace("sending request to Vault.");
+
                 if (_mountPoint == null)
                 {
                     var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath);
@@ -192,6 +196,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogError(ex.Message);
                 throw;
             }
+
+            logger.LogTrace("checking paths at this level.", entryPaths);
 
             for (var i = 0; i < entryPaths.Count(); i++)
             {
@@ -216,7 +222,15 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         // does it have an entry with the suffix we are looking for?
                         if (keys.Any(k => k.Key.Contains(suffix)))
                         {
-                            vaultPaths.Add(storePath + path);
+                            if (_storeType == StoreType.HCVKVPEM)
+                            {
+                                // PEM stores paths are the folder/container name rather than the entry name.  
+                                vaultPaths.Add(storePath);
+                            }
+                            else
+                            {
+                                vaultPaths.Add(storePath + path);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -231,13 +245,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     vaultPaths.AddRange(subPaths);
                 }
             }
-
+            logger.MethodExit();
+            vaultPaths = vaultPaths.Distinct().ToList();
             return vaultPaths;
         }
 
 
         public async Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
+            logger.MethodEntry();
+
             VaultClient.V1.Auth.ResetVaultToken();
 
             var certDict = new Dictionary<string, object>();
@@ -285,9 +302,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
 
             var pubCert = p.GetCertificate(alias).Certificate.GetEncoded();
+
+            logger.LogTrace("converting to PEM format.");
+
             var pubCertPem = Pemify(Convert.ToBase64String(pubCert));
 
-            // add the certs in the chain
+            logger.LogTrace("adding the chain certs");
 
             var pemChain = new List<string>();
             var chain = p.GetCertificateChain(alias).ToList();
@@ -322,6 +342,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             try
             {
+                logger.LogTrace("writing secret to vault.");
+
                 var fullPath = _storePath + certName;
 
                 if (_mountPoint == null)
@@ -338,6 +360,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogError("Error writing cert to Vault", ex);
                 throw;
             }
+            logger.MethodExit();
         }
 
         public async Task<bool> DeleteCertificate(string certName)
@@ -371,7 +394,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 return await GetCertificatesFromFileStore();
             }
-
+            // for PEM stores, the store path 
             VaultClient.V1.Auth.ResetVaultToken();
             _storePath = _storePath.TrimStart('/');
             List<string> subPaths = new List<string>();
@@ -394,10 +417,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.LogDebug($"SubInventoryEnabled: {_subfolderInventory}");
             foreach (var path in subPaths)
             {
+
                 var relative_path = path.Substring(_storePath.Length);
                 try
                 {
-
+                    var pos = _storePath.LastIndexOf("/");
+                    var parentPath = _storePath.Substring(pos);
                     if (string.IsNullOrEmpty(_mountPoint))
                     {
                         entryNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path)).Data.Keys.ToList();
@@ -425,12 +450,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesFromFileStore()
         {
-            var fullPath = _storePath;
             Secret<SecretData> res;
 
             //file stores for JKS, PKCS12 and PFX will have a "password" entry on the same level by convention.  We'll need this in order to extract the certificates for inventory.
-            var pos = fullPath.LastIndexOf("/");
-            var parentPath = fullPath.Substring(pos);
+            var pos = _storePath.LastIndexOf("/");
+            var parentPath = _storePath.Substring(pos);
 
             try
             {
@@ -466,7 +490,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private List<CurrentInventoryItem> GetCertsFromJKS(Dictionary<string, object> certFields)
         {
+            logger.MethodEntry();
             // certFields should contain two entries.  The certificate with the "jks-contents" suffix, and "password"
+
             string password;
             string base64encodedCert;
             var certs = new List<CurrentInventoryItem>();
@@ -493,9 +519,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     throw new Exception($"No password entry found for PFX store '{certKey}'.");
                 }
 
+                logger.LogTrace("converting base64 encoded cert to binary.");
                 var jksBytes = Convert.FromBase64String(base64encodedCert);
-                var pkcs12Store = new JksUtility().JksToPkcs12Store(jksBytes, password);
+                var pkcs12Store = new JksUtility().JksToPkcs12Store(jksBytes, password, logger);
                 certs = CurrentInventoryFromPkcs12(pkcs12Store);
+                logger.MethodExit();
                 return certs;
 
             }
@@ -508,6 +536,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private List<CurrentInventoryItem> GetCertsFromPKCS12(Dictionary<string, object> certFields)
         {
+            logger.MethodEntry();
             string password;
             string base64encodedCert;
             var certs = new List<CurrentInventoryItem>();
@@ -535,17 +564,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
 
                 // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
+                logger.LogTrace("converting base64 encoded cert to binary.");
                 var bytes = Convert.FromBase64String(base64encodedCert);
-                
+
                 Pkcs12Store pkcs12Store;
-                
+
                 using (var stream = new MemoryStream(bytes))
                 {
+                    logger.LogTrace("creating pkcs12 store for working with the certificate.");
                     Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
                     pkcs12Store = storeBuilder.Build();
                     pkcs12Store.Load(stream, password.ToCharArray());
                 }
                 certs = CurrentInventoryFromPkcs12(pkcs12Store);
+                logger.MethodExit();
                 return certs;
             }
             catch (Exception ex)
@@ -557,6 +589,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private List<CurrentInventoryItem> GetCertsFromPFX(Dictionary<string, object> certFields)
         {
+            logger.MethodEntry();
             // certFields should contain two entries.  The certificate with the "pfx-contents" suffix, and "password"
             string password;
             string base64encodedCert;
@@ -582,27 +615,34 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 throw new Exception($"No password entry found for PFX store '{certKey}'.");
             }
+            logger.LogTrace("converting base64 encoded cert to binary format.");
 
             var pfxBytes = Convert.FromBase64String(base64encodedCert);
             Pkcs12Store p;
             using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
             {
+                logger.LogTrace("creating pkcs12 store for working with the certificate.");
                 Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
                 p = storeBuilder.Build();
                 p.Load(pfxBytesMemoryStream, password.ToCharArray());
             }
 
             certs = CurrentInventoryFromPkcs12(p);
+            logger.MethodExit();
             return certs;
         }
 
         private async Task<List<string>> GetSubPaths(string storagePath)
         {
+            logger.MethodEntry();
+
             VaultClient.V1.Auth.ResetVaultToken();
             List<string> componentPaths = new List<string> { };
             try
             {
-                Secret<ListInfo> listInfo = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint));
+                logger.LogTrace("getting secret and path entries at this level.", storagePath);
+
+                Secret<ListInfo> listInfo = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint);
 
                 foreach (var path in listInfo.Data.Keys)
                 {
@@ -622,6 +662,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 logger.LogWarning($"Error while listing component paths: {ex}");
             }
+            logger.MethodExit();
             return componentPaths;
         }
 
@@ -638,6 +679,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private List<CurrentInventoryItem> CurrentInventoryFromPkcs12(Pkcs12Store store)
         {
+            logger.MethodEntry();
             var certs = new List<CurrentInventoryItem>();
 
             try
@@ -656,6 +698,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                             var certInventoryItem = new CurrentInventoryItem { Alias = alias };
 
                             var entryCerts = new List<string>();
+                            logger.LogTrace("extracting public key");
                             var publicKey = store.GetCertificate(alias).Certificate.GetPublicKey();
                             var privateKeyEntry = store.GetKey(alias);
                             if (privateKeyEntry != null) certInventoryItem.PrivateKeyEntry = true;
@@ -664,7 +707,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                             var publicKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
                                 .Replace("\r", "").Replace("\0", "");
                             entryCerts.Add(publicKeyString);
+
                             var pemChain = new List<string>();
+
+                            logger.LogTrace("getting chain certs");
+
                             var chain = store.GetCertificateChain(alias).ToList();
 
                             chain.ForEach(c =>
@@ -685,12 +732,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         memoryStream.Close();
                         streamWriter.Close();
                     }
+                    logger.MethodExit();
                     return certs;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError("error extracting certs from pkcs12", ex);
                 throw;
             }
         }

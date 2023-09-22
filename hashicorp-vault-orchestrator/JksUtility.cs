@@ -4,14 +4,15 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.X509;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
     public class JksUtility
     {
-        public Pkcs12Store JksToPkcs12Store(byte[] storeContents, string storePassword)
+        public Pkcs12Store JksToPkcs12Store(byte[] storeContents, string storePassword, ILogger logger)
         {
-           // Logger.MethodEntry(LogLevel.Debug);
+            logger.LogTrace("Entering method to convert JKS store to PKCS12 to work with the contents.");
 
             Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
             Pkcs12Store pkcs12Store = storeBuilder.Build();
@@ -21,6 +22,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             using (MemoryStream ms = new MemoryStream(storeContents))
             {
+                logger.LogTrace("loading the contents into a jks store");
                 jksStore.Load(ms, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
             }
 
@@ -28,8 +30,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 if (jksStore.IsKeyEntry(alias))
                 {
+                    logger.LogTrace("extracting key pair");
                     AsymmetricKeyParameter keyParam = jksStore.GetKey(alias, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
                     AsymmetricKeyEntry keyEntry = new AsymmetricKeyEntry(keyParam);
+
+                    logger.LogTrace("extracting certificate chain");
 
                     X509Certificate[] certificateChain = jksStore.GetCertificateChain(alias);
                     List<X509CertificateEntry> certificateChainEntries = new List<X509CertificateEntry>();
@@ -37,11 +42,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     {
                         certificateChainEntries.Add(new X509CertificateEntry(certificate));
                     }
-
+                    logger.LogTrace("setting keys on the pkcs12 store.");
                     pkcs12Store.SetKeyEntry(alias, keyEntry, certificateChainEntries.ToArray());
                 }
                 else
                 {
+                    logger.LogTrace("setting certificates on the pkcs12 store");
                     pkcs12Store.SetCertificateEntry(alias, new X509CertificateEntry(jksStore.GetCertificate(alias)));
                 }
             }
@@ -53,8 +59,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             ms2.Position = 0;
 
             pkcs12StoreNew.Load(ms2, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
-
-            //logger.MethodExit(LogLevel.Debug);
+            
             return pkcs12StoreNew;
         }
     }
