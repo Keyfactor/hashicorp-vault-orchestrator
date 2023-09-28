@@ -31,42 +31,18 @@
       },
       "store_types": [
         {
-          "Name": "Hashicorp Vault Key-Value",
+          "Name": "Hashicorp Vault Key-Value PEM",
           "ShortName": "HCVKVPEM",
           "Capability": "HCVKVPEM",
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,
-            "Create": true,
+            "Create": false,
             "Discovery": true,
             "Enrollment": false,
             "Remove": true
           },
           "Properties": [
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "VaultToken",
-              "DisplayName": "Vault Token",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "VaultServerUrl",
-              "DisplayName": "Vault Server URL",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
             {
               "Name": "SubfolderInventory",
               "DisplayName": "Subfolder Inventory",
@@ -77,11 +53,43 @@
             },
             {
               "Name": "IncludeCertChain",
-              "DisplayName": "Include Cert Chain",
+              "DisplayName": "Include Certificate Chain",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "MountPoint",
+              "DisplayName": "Mount Point",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUsername",
+              "DisplayName": "Server Username",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerPassword",
+              "DisplayName": "Server Password",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUseSsl",
+              "DisplayName": "Use SSL",
               "Type": "Bool",
               "DependsOn": "",
               "DefaultValue": "true",
-              "Required": false
+              "Required": true
             }
           ],
           "EntryParameters": null,
@@ -94,7 +102,7 @@
           "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
-          "ServerRequired": false,
+          "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
           "CustomAliasAllowed": "Optional"
@@ -151,8 +159,238 @@
           "PowerShell": false,
           "BlueprintAllowed": false,
           "CustomAliasAllowed": "Optional"
+        },
+        {
+          "Name": "Hashicorp Vault Key-Value JKS",
+          "ShortName": "HCVKVJKS",
+          "Capability": "HCVKVJKS",
+          "LocalStore": false,
+          "SupportedOperations": {
+            "Add": false,
+            "Create": false,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": false
+          },
+          "Properties": [
+            {
+              "Name": "SubfolderInventory",
+              "DisplayName": "Sub-folder Inventory",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "IncludeCertChain",
+              "DisplayName": "Include Certificate Chain",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "MountPoint",
+              "DisplayName": "Mount Point",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUsername",
+              "DisplayName": "Server Username",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerPassword",
+              "DisplayName": "Server Password",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUseSsl",
+              "DisplayName": "Use SSL",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "true",
+              "Required": true
+            }
+          ],
+          "EntryParameters": null,
+          "PasswordOptions": {
+            "EntrySupported": false,
+            "StoreRequired": false,
+            "Style": "Default"
+          },
+          "StorePathType": "",
+          "StorePathValue": "",
+          "PrivateKeyAllowed": "Optional",
+          "JobProperties": [],
+          "ServerRequired": true,
+          "PowerShell": false,
+          "BlueprintAllowed": false,
+          "CustomAliasAllowed": "Optional"
+        },
+        {
+          "Name": "Hashicorp Vault Key-Value PKCS12",
+          "ShortName": "HCVKVP12",
+          "Capability": "HCVKVP12",
+          "LocalStore": false,
+          "SupportedOperations": {
+            "Add": false,
+            "Create": false,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": false
+          },
+          "Properties": [
+            {
+              "Name": "SubfolderInventory",
+              "DisplayName": "Sub-folder Inventory",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "MountPoint",
+              "DisplayName": "Mount Point",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "IncludeCertChain",
+              "DisplayName": "Include Certificate Chain",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "ServerUsername",
+              "DisplayName": "Server Username",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerPassword",
+              "DisplayName": "Server Password",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUseSsl",
+              "DisplayName": "Use SSL",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "true",
+              "Required": true
+            }
+          ],
+          "EntryParameters": null,
+          "PasswordOptions": {
+            "EntrySupported": false,
+            "StoreRequired": false,
+            "Style": "Default"
+          },
+          "StorePathType": "",
+          "StorePathValue": "",
+          "PrivateKeyAllowed": "Optional",
+          "JobProperties": [],
+          "ServerRequired": true,
+          "PowerShell": false,
+          "BlueprintAllowed": false,
+          "CustomAliasAllowed": "Optional"
+        },
+        {
+          "Name": "Hashicorp Vault Key-Value PFX",
+          "ShortName": "HCVKVPFX",
+          "Capability": "HCVKVPFX",
+          "LocalStore": false,
+          "SupportedOperations": {
+            "Add": false,
+            "Create": false,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": false
+          },
+          "Properties": [
+            {
+              "Name": "SubfolderInventory",
+              "DisplayName": "Sub-folder Inventory",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "IncludeCertChain",
+              "DisplayName": "Include Certificate Chain",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "false",
+              "Required": false
+            },
+            {
+              "Name": "MountPoint",
+              "DisplayName": "Mount Point",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUsername",
+              "DisplayName": "Server Username",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerPassword",
+              "DisplayName": "Server Password",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
+              "Name": "ServerUseSsl",
+              "DisplayName": "Use SSL",
+              "Type": "Bool",
+              "DependsOn": "",
+              "DefaultValue": "true",
+              "Required": true
+            }
+          ],
+          "EntryParameters": null,
+          "PasswordOptions": {
+            "EntrySupported": false,
+            "StoreRequired": false,
+            "Style": "Default"
+          },
+          "StorePathType": "",
+          "StorePathValue": "",
+          "PrivateKeyAllowed": "Optional",
+          "JobProperties": [],
+          "ServerRequired": true,
+          "PowerShell": false,
+          "BlueprintAllowed": false,
+          "CustomAliasAllowed": "Optional"
         }
-
       ]
     }
   }
