@@ -44,6 +44,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, long jobHistoryId)
         {
+            logger.MethodEntry();
+
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
             if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
@@ -55,8 +57,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }
 
                 try
-                {
-                    // uploadCollection is either not null or an exception was thrown.
+                {                    
                     var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
                     complete.Result = OrchestratorJobStatusJobResult.Success;
                 }

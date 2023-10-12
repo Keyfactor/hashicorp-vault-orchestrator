@@ -41,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("/", string.Empty) }";
         }
 
-        public async Task<CurrentInventoryItem> GetCertificate(string key)
+        public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
         {
             var fullPath = $"{ _vaultUrl }/cert/{ key }";
 
@@ -130,7 +130,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 certKeys.ToList().ForEach(k =>
                 {
-                    var cert = GetCertificate(k).Result;
+                    var cert = GetCertificateFromPemStore(k).Result;
                     if (cert != null) certs.Add(cert);
                 });
             }

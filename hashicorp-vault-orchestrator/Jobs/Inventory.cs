@@ -20,13 +20,26 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventoryUpdate)
         {
             logger = LogHandler.GetClassLogger<Inventory>();
-     
+
             InitializeStore(config);
 
             IEnumerable<CurrentInventoryItem> certs = null;
             try
             {
                 certs = VaultClient.GetCertificates().Result;
+                var success = submitInventoryUpdate.Invoke(certs.ToList());
+
+                if (!success)
+                {
+                    logger.LogTrace("failure submitting results to the platform.");
+                }
+
+                return new JobResult
+                {
+                    Result = success ? OrchestratorJobStatusJobResult.Success : OrchestratorJobStatusJobResult.Failure,
+                    JobHistoryId = config.JobHistoryId,
+                    FailureMessage = success ? string.Empty : "Error executing SubmitInventoryUpdate"
+                };
             }
             catch (Exception ex)
             {
@@ -39,15 +52,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     FailureMessage = ex.Message
                 };
             }
-
-            var success = submitInventoryUpdate.Invoke(certs.ToList());
-
-            return new JobResult
-            {
-                Result = success ? OrchestratorJobStatusJobResult.Success : OrchestratorJobStatusJobResult.Failure,
-                JobHistoryId = config.JobHistoryId,
-                FailureMessage = success ? string.Empty : "Error executing SubmitInventoryUpdate"
-            };
         }
     }
 }

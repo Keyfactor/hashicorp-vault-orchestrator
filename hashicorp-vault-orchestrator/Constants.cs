@@ -32,9 +32,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
     }
 
     static class StoreFileExtensions {
-        public const string HCVKVJKS = "jks-contents";
-        public const string HCVKVPKCS12 = "p12-contents";
-        public const string HCVKVPFX = "pfx-contents";
+        public const string HCVKVJKS = "_jks";
+        public const string HCVKVPKCS12 = "_p12";
+        public const string HCVKVPFX = "_pfx";
         public const string HCVKVPEM = "certificate";
     }
 }
