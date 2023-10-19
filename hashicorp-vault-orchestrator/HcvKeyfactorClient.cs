@@ -151,7 +151,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             throw new NotSupportedException();
         }
 
-        public Task<bool> DeleteCertificate(string certName)
+        public Task<bool> RemoveCertificate(string certName)
         {
             throw new NotSupportedException();
         }

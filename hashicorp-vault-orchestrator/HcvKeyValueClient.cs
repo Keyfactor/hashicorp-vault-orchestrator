@@ -277,7 +277,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             logger.MethodExit();
         }
-        public async Task PutCertificateIntoPemStore(string certName, string contents, string pfxPassword, bool includeChain)
+        private async Task PutCertificateIntoPemStore(string certName, string contents, string pfxPassword, bool includeChain)
         {
             var certDict = new Dictionary<string, object>();
             var pfxBytes = Convert.FromBase64String(contents);
@@ -494,7 +494,138 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<bool> DeleteCertificate(string certName)
+        public async Task<bool> RemoveCertificate(string certName)
+        {
+            logger.MethodEntry();
+            try
+            {
+                if (_storeType != StoreType.HCVKVPEM)
+                {
+                    await RemoveCertificateFromFileStore(certName);
+                    return true;
+                }
+                // for PEM stores, the store path is the container name, not entry name as with file stores
+
+                await RemoveCertificateFromPemStore(certName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error when removing the certificate with alias {certName}.");
+                throw;
+            }
+            logger.MethodExit();
+            return true;
+        }
+
+        public async Task RemoveCertificateFromFileStore(string certName)
+        {
+            logger.MethodEntry();
+
+            IFileStore fileStore;
+            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            logger.LogTrace($"parent path = {parentPath}");
+            Secret<SecretData> res;
+            Dictionary<string, object> certData;
+
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            try
+            {
+                // first get entry contents and passphrase
+                logger.LogTrace("getting all secrets in the parent container for the store.");
+
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath);
+                }
+                else
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
+                }
+                certData = (Dictionary<string, object>)res.Data.Data;
+                logger.LogTrace("got secret data.", certData);
+
+                string certStoreContents = null;
+                string passphrase = null;
+
+                //Validates if the "certificate" and "private_key" keys exist in certData
+
+                var key = _storePath.Substring(_storePath.LastIndexOf("/"));
+                key = key.TrimStart('/');
+
+                logger.LogTrace($"getting the contents of {key}");
+
+                if (!certData.TryGetValue(key, out object certFileObj))
+                {
+                    throw new DirectoryNotFoundException($"entry named {key} not found at {parentPath}");
+                }
+                certStoreContents = certFileObj.ToString();
+
+                if (!certData.TryGetValue("passphrase", out object passphraseObj))
+                {
+                    throw new DirectoryNotFoundException($"no passphrase entry found at {parentPath}");
+                }
+                passphrase = passphraseObj.ToString();
+
+                logger.LogTrace("got passphrase and certificate store secrets from vault.");
+
+                logger.LogTrace("calling method to remove certificate from store file.");
+                // get new store entry
+                var newEntry = fileStore.RemoveCertificate(certName, passphrase, certStoreContents);
+                logger.LogTrace("got new store file.");
+                // write new store entry
+                try
+                {
+                    logger.LogTrace("writing file store sans certificate to vault.");
+                    VaultClient.V1.Auth.ResetVaultToken();
+
+                    var newData = new Dictionary<string, object> { { key, newEntry } };
+                    var patchReq = new PatchSecretDataRequest() { Data = newData };
+
+                    // temporary debugging code
+                    var stringContent = new StringContent(JsonSerializer.Serialize(newData), Encoding.UTF8);
+                    //
+
+                    if (string.IsNullOrEmpty(_mountPoint))
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq);
+                    }
+                    else
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq, _mountPoint);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Error writing file to Vault", ex);
+                    throw;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error removing certificate {certName} from {_storeType}: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task RemoveCertificateFromPemStore(string certName)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
@@ -513,10 +644,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error removing cert from Vault", ex);
+                logger.LogError(ex, "Error removing cert from Vault");
                 throw;
-            }
-            return true;
+            }            
         }
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
@@ -644,150 +774,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        //private List<CurrentInventoryItem> GetCertsFromJKS(Dictionary<string, object> certFields)
-        //{
-        //    logger.MethodEntry();
-        //    // certFields should contain two entries.  The certificate with the "_jks" suffix, and "passphrase"
-
-        //    string password;
-        //    string base64encodedCert;
-        //    var certs = new List<CurrentInventoryItem>();
-
-        //    try
-        //    {
-        //        var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVJKS));
-
-        //        if (certKey == null)
-        //        {
-        //            throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVJKS}' found");
-        //        }
-        //        else
-        //        {
-        //            base64encodedCert = certFields[certKey].ToString();
-        //        }
-
-        //        if (certFields.TryGetValue("password", out object filePasswordObj))
-        //        {
-        //            password = filePasswordObj.ToString();
-        //        }
-        //        else
-        //        {
-        //            throw new Exception($"No password entry found for PFX store '{certKey}'.");
-        //        }
-
-        //        logger.LogTrace("converting base64 encoded cert to binary.");
-        //        var jksBytes = Convert.FromBase64String(base64encodedCert);
-        //        var pkcs12Store = new JksUtility().JksToPkcs12Store(jksBytes, password, logger);
-        //        certs = CurrentInventoryFromPkcs12(pkcs12Store);
-        //        logger.MethodExit();
-        //        return certs;
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError("Could not read JKS file", ex);
-        //        throw;
-        //    }
-        //}
-
-        //private List<CurrentInventoryItem> GetCertsFromPKCS12(Dictionary<string, object> certFields)
-        //{
-        //    logger.MethodEntry();
-        //    string password;
-        //    string base64encodedCert;
-        //    var certs = new List<CurrentInventoryItem>();
-
-        //    try
-        //    {
-        //        var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPKCS12));
-
-        //        if (certKey == null)
-        //        {
-        //            throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPKCS12}' found");
-        //        }
-        //        else
-        //        {
-        //            base64encodedCert = certFields[certKey].ToString();
-        //        }
-
-        //        if (certFields.TryGetValue("passphrase", out object filePasswordObj))
-        //        {
-        //            password = filePasswordObj.ToString();
-        //        }
-        //        else
-        //        {
-        //            throw new Exception($"No password entry found for PKCS12 store '{certKey}'.");
-        //        }
-
-        //        // certFields should contain two entries.  The certificate with the "p12-contents" suffix, and "password"
-        //        logger.LogTrace("converting base64 encoded cert to binary.");
-        //        var bytes = Convert.FromBase64String(base64encodedCert);
-
-        //        Pkcs12Store pkcs12Store;
-
-        //        using (var stream = new MemoryStream(bytes))
-        //        {
-        //            logger.LogTrace("creating pkcs12 store for working with the certificate.");
-        //            Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
-        //            pkcs12Store = storeBuilder.Build();
-        //            pkcs12Store.Load(stream, password.ToCharArray());
-        //        }
-        //        certs = CurrentInventoryFromPkcs12(pkcs12Store);
-        //        logger.MethodExit();
-        //        return certs;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError("Unable to read PKCS12 file.", ex);
-        //        throw;
-        //    }
-        //}
-
-        //private List<CurrentInventoryItem> GetCertsFromPFX(Dictionary<string, object> certFields)
-        //{
-        //    logger.MethodEntry();
-        //    // certFields should contain two entries.  The certificate with the "pfx-contents" suffix, and "password"
-        //    string password;
-        //    string base64encodedCert;
-        //    var certs = new List<CurrentInventoryItem>();
-
-
-        //    var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPFX));
-
-        //    if (certKey == null)
-        //    {
-        //        throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPFX}' found");
-        //    }
-        //    else
-        //    {
-        //        base64encodedCert = certFields[certKey].ToString();
-        //    }
-
-        //    if (certFields.TryGetValue("password", out object filePasswordObj))
-        //    {
-        //        password = filePasswordObj.ToString();
-        //    }
-        //    else
-        //    {
-        //        throw new Exception($"No password entry found for PFX store '{certKey}'.");
-        //    }
-        //    logger.LogTrace("converting base64 encoded cert to binary format.");
-
-        //    var pfxBytes = Convert.FromBase64String(base64encodedCert);
-        //    Pkcs12Store p;
-        //    using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
-        //    {
-        //        logger.LogTrace("creating pkcs12 store for working with the certificate.");
-        //        Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
-        //        p = storeBuilder.Build();
-        //        p.Load(pfxBytesMemoryStream, password.ToCharArray());
-        //    }
-
-        //    certs = CurrentInventoryFromPkcs12(p);
-        //    logger.MethodExit();
-        //    return certs;
-        //}
-
         private async Task<List<string>> GetSubPaths(string storagePath)
         {
             logger.MethodEntry();
@@ -821,82 +807,5 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.MethodExit();
             return componentPaths;
         }
-
-        //private static Func<string, string> Pemify = base64Cert =>
-        //{
-        //    string FormatBase64(string ss) =>
-        //        ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + FormatBase64(ss.Substring(64));
-
-        //    string header = "-----BEGIN CERTIFICATE-----\n";
-        //    string footer = "\n-----END CERTIFICATE-----";
-
-        //    return header + FormatBase64(base64Cert) + footer;
-        //};
-
-        //private List<CurrentInventoryItem> CurrentInventoryFromPkcs12(Pkcs12Store store)
-        //{
-        //    logger.MethodEntry();
-        //    var certs = new List<CurrentInventoryItem>();
-
-        //    try
-        //    {
-        //        using (var memoryStream = new MemoryStream())
-        //        {
-        //            using (TextWriter streamWriter = new StreamWriter(memoryStream))
-        //            {
-        //                logger.LogTrace("Extracting Private Key...");
-        //                var pemWriter = new PemWriter(streamWriter);
-        //                logger.LogTrace("Created pemWriter...");
-        //                var aliases = store.Aliases.Cast<string>().Where(a => store.IsKeyEntry(a));
-        //                //logger.LogTrace($"Alias = {alias}");
-        //                foreach (var alias in aliases)
-        //                {
-        //                    var certInventoryItem = new CurrentInventoryItem { Alias = alias };
-
-        //                    var entryCerts = new List<string>();
-        //                    logger.LogTrace("extracting public key");
-        //                    var publicKey = store.GetCertificate(alias).Certificate.GetPublicKey();
-        //                    var privateKeyEntry = store.GetKey(alias);
-        //                    if (privateKeyEntry != null) certInventoryItem.PrivateKeyEntry = true;
-        //                    pemWriter.WriteObject(publicKey);
-        //                    streamWriter.Flush();
-        //                    var publicKeyString = Encoding.ASCII.GetString(memoryStream.GetBuffer()).Trim()
-        //                        .Replace("\r", "").Replace("\0", "");
-        //                    entryCerts.Add(publicKeyString);
-
-        //                    var pemChain = new List<string>();
-
-        //                    logger.LogTrace("getting chain certs");
-
-        //                    var chain = store.GetCertificateChain(alias).ToList();
-
-        //                    chain.ForEach(c =>
-        //                    {
-        //                        var cert = c.Certificate.GetEncoded();
-        //                        var encoded = Pemify(Convert.ToBase64String(cert));
-        //                        pemChain.Add(encoded);
-        //                    });
-
-        //                    if (chain.Count() > 0)
-        //                    {
-        //                        certInventoryItem.UseChainLevel = true;
-        //                        entryCerts.AddRange(pemChain);
-        //                    }
-        //                    certInventoryItem.Certificates = pemChain;
-        //                    certs.Add(certInventoryItem);
-        //                }
-        //                memoryStream.Close();
-        //                streamWriter.Close();
-        //            }
-        //            logger.MethodExit();
-        //            return certs;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError("error extracting certs from pkcs12", ex);
-        //        throw;
-        //    }
-        //}
     }
 }

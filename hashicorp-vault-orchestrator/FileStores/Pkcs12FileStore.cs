@@ -82,7 +82,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
         }
 
-        public void RemoveCertificate(string alias)
+        public string RemoveCertificate(string alias, string passphrase, string storeFileContent)
         {
             throw new NotImplementedException();
         }

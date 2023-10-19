@@ -99,7 +99,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             try
             {
-                var success = VaultClient.DeleteCertificate(alias).Result;
+                var success = VaultClient.RemoveCertificate(alias).Result;
 
                 if (!success)
                 {

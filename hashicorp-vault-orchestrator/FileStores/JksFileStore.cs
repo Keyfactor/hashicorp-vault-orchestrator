@@ -101,9 +101,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
         }
 
-        public void RemoveCertificate(string alias)
+        public string RemoveCertificate(string alias, string passphrase, string storeFileContent)
         {
-            throw new NotImplementedException();
+            logger.MethodEntry();
+            logger.LogTrace("converting base64 encoded jks store to binary.");
+            var jksBytes = Convert.FromBase64String(storeFileContent);
+
+            logger.LogTrace("removing the certificate, and getting the new JKS store bytes.");
+            var newJksBytes = AddOrRemoveCert(alias, null, null, jksBytes, passphrase, true);
+
+            return Convert.ToBase64String(newJksBytes);
         }
 
         private byte[] AddOrRemoveCert(string alias, string newCertPassword, byte[] newCertBytes, byte[] existingStore, string existingStorePassword, bool remove = false)
@@ -115,20 +122,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             var newJksStore = new JksStore();
             var createdNewStore = false;
 
-            //var hashedNewCertPassword = GetSha256Hash(newCertPassword);
-            //var hashedExistingStorePassword = GetSha256Hash(existingStorePassword);
-
-            //logger.LogTrace("newCertPassword: {Pass}", hashedNewCertPassword ?? "null");
-            //logger.LogTrace("alias: {Alias}", alias);
-            //logger.LogTrace("existingStorePassword: {Pass}", hashedExistingStorePassword ?? "null");
-
             // If existingStore is not null, load it into jksStore
             if (existingStore != null)
             {
                 logger.LogDebug("Loading existing JKS store");
                 using (var ms = new MemoryStream(existingStore))
                 {
-
                     try
                     {
                         existingJksStore.Load(ms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
@@ -245,23 +244,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 {
                     logger.LogDebug("Setting certificate entry for existing JKS store, alias '{Alias}'", alias);
                     existingJksStore.SetCertificateEntry(alias, newCert.GetCertificate(alias).Certificate);
-
-
                 }
             }
 
             using (var outStream = new MemoryStream())
             {
-
                 logger.LogDebug("Saving existing JKS store to outStream");
                 existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
 
-                // Return existingJksStore as byte[]
-                logger.LogDebug("Returning JKS store as byte[]");
-                var bytes = outStream.ToArray();
-                outStream.Flush();
-                outStream.Dispose();
-                return bytes;
+                logger.LogDebug("Returning updated JKS store as byte[]");
+                return outStream.ToArray();
             }
         }
 
