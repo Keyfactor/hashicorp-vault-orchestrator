@@ -17,6 +17,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
     {
         internal protected ILogger logger { get; set; }
 
+        public JksFileStore()
+        {
+            logger = LogHandler.GetClassLogger<JksFileStore>();
+        }
 
         public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
         {
@@ -26,7 +30,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             var jksBytes = Convert.FromBase64String(storeFileContent);
 
             logger.LogTrace("converting JKS to PKCS12 store for manipulation");
-                                    
+
             var newCertBytes = Convert.FromBase64String(entryContents);
 
             logger.LogTrace("adding the new certificate, and getting the new JKS store bytes.");
@@ -40,11 +44,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             // Create new Pkcs12Store from newPkcs12Bytes
             var newStore = new JksStore();
 
-            using var outstream = new MemoryStream();
-            logger.LogDebug("Created new JKS store, saving it to outStream");
+            using (var outstream = new MemoryStream())
+            {
+                logger.LogDebug("Created new JKS store, saving it to outStream");
 
-            newStore.Save(outstream, password.ToCharArray());
-            return outstream.ToArray();
+                newStore.Save(outstream, password.ToCharArray());
+                return outstream.ToArray();
+            }
         }
 
         public IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields)
@@ -120,17 +126,18 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             if (existingStore != null)
             {
                 logger.LogDebug("Loading existing JKS store");
-                using var ms = new MemoryStream(existingStore);
-
-                try
+                using (var ms = new MemoryStream(existingStore))
                 {
-                    existingJksStore.Load(ms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, $"Error loading existing JKS store: {ex.Message}");
-                }
 
+                    try
+                    {
+                        existingJksStore.Load(ms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Error loading existing JKS store: {ex.Message}");
+                    }
+                }
                 if (existingJksStore.ContainsAlias(alias))
                 {
                     // If alias exists, delete it from existingJksStore
@@ -140,19 +147,23 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                     {
                         // If remove is true, save existingJksStore and return
                         logger.LogDebug("This is a removal operation, saving existing JKS store");
-                        using var mms = new MemoryStream();
-                        existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
-                        logger.LogDebug("Returning existing JKS store");
-                        return mms.ToArray();
+                        using (var mms = new MemoryStream())
+                        {
+                            existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+                            logger.LogDebug("Returning existing JKS store");
+                            return mms.ToArray();
+                        }
                     }
                 }
                 else if (remove)
                 {
                     // If alias does not exist and remove is true, return existingStore
                     logger.LogDebug("Alias '{Alias}' does not exist in existing JKS store and this is a removal operation, returning existing JKS store as-is", alias);
-                    using var mms = new MemoryStream();
-                    existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
-                    return mms.ToArray();
+                    using (var mms = new MemoryStream())
+                    {
+                        existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+                        return mms.ToArray();
+                    }
                 }
             }
             else
@@ -168,8 +179,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             try
             {
                 logger.LogDebug("Loading new Pkcs12Store from newPkcs12Bytes");
-                using var pkcs12Ms = new MemoryStream(newCertBytes);
-                newCert.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
+                using (var pkcs12Ms = new MemoryStream(newCertBytes))
+                {
+                    newCert.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
+                }
             }
             catch (Exception)
             {
@@ -237,15 +250,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 }
             }
 
-            using var outStream = new MemoryStream();
-            
-            logger.LogDebug("Saving existing JKS store to outStream");
-            existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
-            
-            // Return existingJksStore as byte[]
-            logger.LogDebug("Returning JKS store as byte[]");
-            return outStream.ToArray();
+            using (var outStream = new MemoryStream())
+            {
 
+                logger.LogDebug("Saving existing JKS store to outStream");
+                existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+
+                // Return existingJksStore as byte[]
+                logger.LogDebug("Returning JKS store as byte[]");
+                var bytes = outStream.ToArray();
+                outStream.Flush();
+                outStream.Dispose();
+                return bytes;
+            }
         }
 
         private Pkcs12Store JksToPkcs12Store(byte[] storeContents, string storePassword)

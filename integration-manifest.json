@@ -166,11 +166,11 @@
           "Capability": "HCVKVJKS",
           "LocalStore": false,
           "SupportedOperations": {
-            "Add": false,
-            "Create": false,
+            "Add": true,
+            "Create": true,
             "Discovery": true,
             "Enrollment": false,
-            "Remove": false
+            "Remove": true
           },
           "Properties": [
             {

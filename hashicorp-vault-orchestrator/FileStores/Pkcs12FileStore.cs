@@ -13,6 +13,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
     {
         internal protected ILogger logger { get; set; }
 
+        public Pkcs12FileStore()
+        {
+            logger = LogHandler.GetClassLogger<Pkcs12FileStore>();
+        }
+
         public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
         {
             throw new NotImplementedException();

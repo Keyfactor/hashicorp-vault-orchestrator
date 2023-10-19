@@ -59,6 +59,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 try
                 {                    
                     var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
+                    cert.Wait();
                     complete.Result = OrchestratorJobStatusJobResult.Success;
                 }
                 catch (Exception ex)
@@ -66,7 +67,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     if (ex.GetType() == typeof(NotSupportedException))
                     {
                         logger.LogError("Attempt to Add Certificate on unsupported Secrets Engine backend.");
-                        complete.FailureMessage = $"{StoreType} does not support adding certificates via the Orchestrator.";
+                        complete.FailureMessage = $"{_storeType} does not support adding certificates via the Orchestrator.";
                     }
                     else
                     {
@@ -115,7 +116,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 if (ex.GetType() == typeof(NotSupportedException))
                 {
                     logger.LogError("Attempt to Delete Certificate on unsupported Secrets Engine backend.");
-                    complete.FailureMessage = $"{StoreType} does not support removing certificates via the Orchestrator.";
+                    complete.FailureMessage = $"{_storeType} does not support removing certificates via the Orchestrator.";
                 }
                 else
                 {

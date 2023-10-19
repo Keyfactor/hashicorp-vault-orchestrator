@@ -13,6 +13,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
     {
         internal protected ILogger logger { get; set; }
 
+        public PfxFileStore()
+        {
+            logger = LogHandler.GetClassLogger<PfxFileStore>();
+        }
+
         public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
         {
             throw new NotImplementedException();
@@ -27,7 +32,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
         {
             logger = LogHandler.GetClassLogger<PfxFileStore>();
             logger.MethodEntry();
-            // certFields should contain two entries.  The certificate with the "pfx-contents" suffix, and "password"
+            // certFields should contain two entries.  The certificate with the "_pfx" suffix, and "passphrase"
             string password;
             string base64encodedCert;
             var certs = new List<CurrentInventoryItem>();
@@ -44,7 +49,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 base64encodedCert = certFields[certKey].ToString();
             }
 
-            if (certFields.TryGetValue("password", out object filePasswordObj))
+            if (certFields.TryGetValue("passphrase", out object filePasswordObj))
             {
                 password = filePasswordObj.ToString();
             }

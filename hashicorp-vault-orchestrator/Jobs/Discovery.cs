@@ -41,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 {
                     logger.LogError("Attempt to perform discovery on unsupported Secrets Engine backend.");
 
-                    result.FailureMessage = $"{StoreType} does not support Discovery jobs.";
+                    result.FailureMessage = $"{_storeType} does not support Discovery jobs.";
                 }
                 else
                 {

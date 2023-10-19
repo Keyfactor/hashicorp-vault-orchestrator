@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.1</TargetFramework>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
 		<AssemblyName>Keyfactor.Extensions.Orchestrator.HCV</AssemblyName>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -25,7 +25,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<DefineConstants></DefineConstants>
 		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
 		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
 		<Optimize>false</Optimize>
@@ -45,14 +45,12 @@
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="NLog" Version="5.2.3" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.3" />
 		<PackageReference Include="System.Linq" Version="4.3.0">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
 		<PackageReference Include="VaultSharp" Version="1.13.0.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>

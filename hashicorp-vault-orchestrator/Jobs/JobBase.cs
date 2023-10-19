@@ -33,7 +33,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV by Vault if not provided.
 
         internal protected IHashiClient VaultClient { get; set; }        
-        internal protected string StoreType { get; set; }
+        internal protected string _storeType { get; set; }
         internal protected ILogger logger { get; set; }
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
@@ -80,32 +80,34 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             StorePath = config.CertificateStoreDetails.StorePath;
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
-
-            var props = (Dictionary<string, object>)JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties);
+            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());            
             InitProps(props, config.Capability);
         }
 
-        private void InitProps(IDictionary<string, object> props, string capability)
-        {            
+        private void InitProps(dynamic props, string capability)
+        {
+            _storeType = capability;
+
             if (props == null) throw new Exception("Properties is null");
 
-            if (props.TryGetValue("StorePath", out var p)) {
-                StorePath = p.ToString();
+            if (props.ContainsKey("StorePath")) {
+                StorePath = props["StorePath"].ToString();
                 StorePath = StorePath.TrimStart('/');
                 StorePath = StorePath.TrimEnd('/');
-                StorePath += "/"; //ensure single trailing slash for path
+                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI)) {
+                    StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
+                }                
             }
 
             MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-            SubfolderInventory = props.ContainsKey("SubfolderInventory") ? Boolean.Parse(props["SubfolderInventory"].ToString()) : false;
-            IncludeCertChain = props.ContainsKey("IncludeCertChain") ? Boolean.Parse(props["IncludeCertChain"].ToString()) : false;
-            StoreType = capability;
-
-            var isPki = StoreType.Contains("HCVPKI");
+            SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
+            IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
+            
+            var isPki = _storeType.Contains("HCVPKI");
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, StoreType, SubfolderInventory);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, _storeType, SubfolderInventory);
             }
             else
             {
