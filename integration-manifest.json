@@ -37,7 +37,7 @@
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,
-            "Create": false,
+            "Create": true,
             "Discovery": true,
             "Enrollment": false,
             "Remove": true
@@ -243,11 +243,11 @@
           "Capability": "HCVKVP12",
           "LocalStore": false,
           "SupportedOperations": {
-            "Add": false,
-            "Create": false,
+            "Add": true,
+            "Create": true,
             "Discovery": true,
             "Enrollment": false,
-            "Remove": false
+            "Remove": true
           },
           "Properties": [
             {
@@ -320,11 +320,11 @@
           "Capability": "HCVKVPFX",
           "LocalStore": false,
           "SupportedOperations": {
-            "Add": false,
-            "Create": false,
+            "Add": true,
+            "Create": true,
             "Discovery": true,
             "Enrollment": false,
-            "Remove": false
+            "Remove": true
           },
           "Properties": [
             {

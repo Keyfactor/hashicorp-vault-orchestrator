@@ -22,23 +22,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             logger = LogHandler.GetClassLogger<JksFileStore>();
         }
 
-        public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
-        {
-            logger.MethodEntry();
-
-            logger.LogTrace("converting base64 encoded jks store to binary.");
-            var jksBytes = Convert.FromBase64String(storeFileContent);
-
-            logger.LogTrace("converting JKS to PKCS12 store for manipulation");
-
-            var newCertBytes = Convert.FromBase64String(entryContents);
-
-            logger.LogTrace("adding the new certificate, and getting the new JKS store bytes.");
-            var newJksBytes = AddOrRemoveCert(alias, pfxPassword, newCertBytes, jksBytes, passphrase);
-
-            return Convert.ToBase64String(newJksBytes);
-        }
-
         public byte[] CreateFileStore(string password)
         {
             var newStore = new JksStore();
@@ -51,10 +34,35 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
         }
 
+        public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
+        {
+            logger.MethodEntry();
+
+            logger.LogTrace("converting base64 encoded jks store to binary.");
+            var jksBytes = Convert.FromBase64String(storeFileContent);
+
+            var newCertBytes = Convert.FromBase64String(entryContents);
+
+            logger.LogTrace("adding the new certificate, and getting the new JKS store bytes.");
+            var newJksBytes = AddOrRemoveCert(alias, pfxPassword, newCertBytes, jksBytes, passphrase);
+
+            return Convert.ToBase64String(newJksBytes);
+        }
+
+        public string RemoveCertificate(string alias, string passphrase, string storeFileContent)
+        {
+            logger.MethodEntry();
+            logger.LogTrace("converting base64 encoded jks store to binary.");
+            var jksBytes = Convert.FromBase64String(storeFileContent);
+
+            logger.LogTrace("removing the certificate, and getting the new JKS store bytes.");
+            var newJksBytes = AddOrRemoveCert(alias, null, null, jksBytes, passphrase, true);
+
+            return Convert.ToBase64String(newJksBytes);
+        }
+
         public IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields)
         {
-            logger = LogHandler.GetClassLogger<JksFileStore>();
-
             logger.MethodEntry();
             // certFields should contain two entries.  The certificate with the "_jks" suffix, and "passphrase"
 
@@ -97,18 +105,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 logger.LogError("Could not read JKS file", ex);
                 throw;
             }
-        }
-
-        public string RemoveCertificate(string alias, string passphrase, string storeFileContent)
-        {
-            logger.MethodEntry();
-            logger.LogTrace("converting base64 encoded jks store to binary.");
-            var jksBytes = Convert.FromBase64String(storeFileContent);
-
-            logger.LogTrace("removing the certificate, and getting the new JKS store bytes.");
-            var newJksBytes = AddOrRemoveCert(alias, null, null, jksBytes, passphrase, true);
-
-            return Convert.ToBase64String(newJksBytes);
         }
 
         private byte[] AddOrRemoveCert(string alias, string newCertPassword, byte[] newCertBytes, byte[] existingStore, string existingStorePassword, bool remove = false)
