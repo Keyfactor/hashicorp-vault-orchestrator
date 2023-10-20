@@ -19,20 +19,19 @@ The following operations are supported by this integration for all of the Key-Va
 
 1. Discovery - Discovery all file repositories for the type
 1. Inventory - Inventory all certificates in the path
-
-Additionally, the following operations are supported by this integration **only** for the Key-Value PEM secrets engine (*HCVKVPEM*).
-
 1. Management (Add) - Add a certificate to a defined certificate store.
 1. Management (Remove) - Remove a certificate from a defined certificate store.
+1. Create - Create a new, empty certificate store at the path defined in Store Path.
+
 
 Excluding *HCVKVPEM*, the discovery process requires that:
 1. The entry for the certificate contain the base64 encoded certificate file.
-1. The name (key) for the entry contains the suffix corresponding to the certificate store type:
- 1. *HCVKVJKS* - `*jks-contents` 
- 1. *HCVKVPFX* - `*pfx-contents`
- 1. *HCVKVP12* - `*p12-contents`
+1. The name (key) for the entry ends with the suffix corresponding to the certificate store type:
+ 1. *HCVKVJKS* - `*_jks` 
+ 1. *HCVKVPFX* - `*_pfx`
+ 1. *HCVKVP12* - `*_p12`
  1. *HCVKVPEM* - `certificate`
-1. For all except *HCVKVPEM*, there be an entry named `password` that contains the password for the store.
+1. For all except *HCVKVPEM*, there be an entry named `passphrase` that contains the password for the store.
 1. For *HCVKVPEM*, there be an entry named `private_key` containing the private key portion of the key-pair.
 
 **Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
