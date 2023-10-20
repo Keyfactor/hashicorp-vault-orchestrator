@@ -1,3 +1,13 @@
+## 3.0.0
+
+* Added support for JKS, PKCS12 and PFX file stores in the Hashicorp Vault Key-Value secrets engine.
+* Added PAM support for server credentials.
+
+* **Breaking Changes**
+    * The server url and Vault Token have been moved to the server username and server password fields of server credentials, respectively.
+    * The HCVKV store type for PEM files has been renamed to HCVKVPEM
+    
+
 ## 2.0.0
 
 * Added support for storing certs in sub-paths

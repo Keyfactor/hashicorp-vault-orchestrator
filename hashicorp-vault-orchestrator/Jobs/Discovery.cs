@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 // Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,17 +17,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Discovery : JobBase, IDiscoveryJobExtension
     {
-        ILogger logger = LogHandler.GetClassLogger<Discovery>();
-
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate submitDiscoveryUpdate)
         {
+            logger = LogHandler.GetClassLogger<Discovery>();
+
             InitializeStore(config);
 
-            List<string> vaults = new List<string>();
+            List<string> vaults;
 
             try
             {
-                vaults = VaultClient.GetVaults().Result.ToList();
+                vaults = VaultClient.GetVaults(string.Empty).Result.ToList();
             }
             catch (Exception ex)
             {
@@ -41,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 {
                     logger.LogError("Attempt to perform discovery on unsupported Secrets Engine backend.");
 
-                    result.FailureMessage = $"{SecretsEngine} does not support Discovery jobs.";
+                    result.FailureMessage = $"{_storeType} does not support Discovery jobs.";
                 }
                 else
                 {
