@@ -138,7 +138,24 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         }
         private async Task CreatePemStore()
         {
-            throw new NotImplementedException();
+            //without a certificate, the only thing to do is create the secret path in Vault with empty values
+            var newData = new Dictionary<string, object> { { "certificate", string.Empty }, { "private_key", string.Empty } };
+
+            try
+            {
+                if (_mountPoint == null)
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData, mountPoint: _mountPoint);
+                }
+            }
+            catch (Exception ex) {
+                logger.LogError(ex, $"Error creating the PEM certificate store at path {_storePath}");
+                throw;
+            }
         }
 
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
