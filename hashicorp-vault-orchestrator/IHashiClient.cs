@@ -18,5 +18,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         Task<List<string>> GetVaults(string storePath);
         Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain);
         Task<bool> RemoveCertificate(string certName);
+        Task CreateCertStore();
     }
 }

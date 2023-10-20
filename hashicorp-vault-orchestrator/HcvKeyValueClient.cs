@@ -42,8 +42,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private bool _subfolderInventory { get; set; }
         private string _storeType { get; set; }
 
-        //private VaultClientSettings clientSettings { get; set; }
-
         public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, string storeType, bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
@@ -56,6 +54,91 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _vaultClient = new VaultClient(clientSettings);
             _subfolderInventory = SubfolderInventory;
             _storeType = storeType?.Split('.')[1];
+        }
+
+        public async Task CreateCertStore()
+        {
+            logger.MethodEntry();
+            try
+            {
+                if (_storeType != StoreType.HCVKVPEM)
+                {
+                    await CreateFileStore();
+                    return;
+                }
+                // for PEM stores, the store path is the container name, not entry name as with file stores
+
+                await CreatePemStore();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error when adding the new certificate.");
+                throw;
+            }
+            logger.MethodExit();
+
+        }
+
+        private async Task CreateFileStore()
+        {
+            IFileStore fileStore;
+            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            logger.LogTrace($"parent path = {parentPath}");
+            var entryName = _storePath.Substring(_storePath.LastIndexOf("/"));
+            entryName = entryName.TrimStart('/');
+
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            logger.LogTrace("generating a random string for the new store password.");
+            var passphrase = CertUtility.GenerateRandomString(16);
+
+            logger.LogTrace("Creating the new filestore with the generated passphrase.");
+            var newStoreBytes = fileStore.CreateFileStore(passphrase);
+
+            logger.LogTrace("Writing the passphrase and store file to the location in the store path.");
+
+            try
+            {
+
+                VaultClient.V1.Auth.ResetVaultToken();
+
+                var newData = new Dictionary<string, object> { { entryName, Convert.ToBase64String(newStoreBytes) }, { "passphrase", passphrase } };                
+
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData, null, _mountPoint);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error writing cert to Vault", ex);
+                throw;
+            }
+
+        }
+        private async Task CreatePemStore()
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
@@ -175,7 +258,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     suffix = StoreFileExtensions.HCVKVPKCS12;
                     break;
                 default:
-                    suffix = "certificate";
+                    suffix = "certificate"; //PEM store
                     break;
             }
 
@@ -646,7 +729,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 logger.LogError(ex, "Error removing cert from Vault");
                 throw;
-            }            
+            }
         }
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()

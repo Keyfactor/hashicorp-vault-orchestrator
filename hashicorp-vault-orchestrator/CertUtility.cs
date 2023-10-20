@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
@@ -91,5 +92,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             return header + FormatBase64(base64Cert) + footer;
         };
+
+        public static string GenerateRandomString(int length)
+        {
+            using (Aes crypto = Aes.Create())
+            {
+                crypto.GenerateKey();
+                return Convert.ToBase64String(crypto.Key).Substring(0, length);
+            }
+        }
     }
 }

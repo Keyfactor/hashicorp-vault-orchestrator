@@ -39,15 +39,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             return Convert.ToBase64String(newJksBytes);
         }
 
-        public byte[] CreateFileStore(string name, string password)
+        public byte[] CreateFileStore(string password)
         {
-            // Create new Pkcs12Store from newPkcs12Bytes
             var newStore = new JksStore();
 
             using (var outstream = new MemoryStream())
             {
                 logger.LogDebug("Created new JKS store, saving it to outStream");
-
                 newStore.Save(outstream, password.ToCharArray());
                 return outstream.ToArray();
             }

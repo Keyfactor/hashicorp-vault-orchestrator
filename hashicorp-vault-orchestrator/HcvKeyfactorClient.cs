@@ -27,7 +27,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _vaultUrl { get; set; }
 
-        private string _vaultToken { get; set; }       
+        private string _vaultToken { get; set; }
 
         private string _mountPoint { get; set; }
 
@@ -55,10 +55,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
                     CertResponse content = JsonConvert.DeserializeObject<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
-                   
-                    content.data.TryGetValue("certificate", out object cert);                                        
-                    content.data.TryGetValue("ca_chain", out object caChain);                                        
-                    content.data.TryGetValue("private_key", out object privateKey);                                        
+
+                    content.data.TryGetValue("certificate", out object cert);
+                    content.data.TryGetValue("ca_chain", out object caChain);
+                    content.data.TryGetValue("private_key", out object privateKey);
                     content.data.TryGetValue("revocation_time", out object revokeTime);
 
                     List<string> certList = new List<string>() { cert as string };
@@ -70,7 +70,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         string fullChain = caChain.ToString();
                         certList = fullChain.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
                     }
-                    
+
                     // don't include them in inventory unless they haven't been revoked
 
                     if (revokeTime == null || Equals(revokeTime.ToString(), "0"))
@@ -115,11 +115,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 req.Headers.Add("X-Vault-Request", "true");
                 req.Headers.Add("X-Vault-Token", _vaultToken);
                 req.Method = WebRequestMethods.Http.Get;
-                
+
                 logger.LogTrace("sending request to vault for certs", req);
-                
+
                 var res = await req.GetResponseAsync();
-                
+
                 logger.LogTrace("parsing response", res);
 
                 var content = JsonConvert.DeserializeObject<ListResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
@@ -139,22 +139,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogError(ex.Message);
             }
             return certs;
-        }
-
-        public Task<List<string>> GetVaults(string storePath)
-        {
-            throw new NotSupportedException();
-        }
-
-        public Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
-        {
-            throw new NotSupportedException();
-        }
-
-        public Task<bool> RemoveCertificate(string certName)
-        {
-            throw new NotSupportedException();
-        }
+        }       
 
         public class HashiResponse
         {
@@ -174,6 +159,26 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public class ListResponse : HashiResponse
         {
             public Dictionary<string, string[]> data { get; set; }
+        }
+
+        public Task<List<string>> GetVaults(string storePath)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<bool> RemoveCertificate(string certName)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task CreateCertStore()
+        {
+            throw new NotSupportedException();
         }
     }
 }

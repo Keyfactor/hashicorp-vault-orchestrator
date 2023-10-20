@@ -30,15 +30,38 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Add:
-                    logger.LogDebug($"Begin Management > Add...");
+                    logger.LogDebug("Begin Management > Add...");
                     complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, config.JobHistoryId);
                     break;
                 case CertStoreOperationType.Remove:
-                    logger.LogDebug($"Begin Management > Remove...");
+                    logger.LogDebug("Begin Management > Remove...");
                     complete = PerformRemoval(config.JobCertificate.Alias, config.JobHistoryId);
+                    break;
+                case CertStoreOperationType.Create:
+                    logger.LogDebug("Begin Management > Create...");
+                    complete = PerformCreateCertStore(config);
                     break;
             }
 
+            return complete;
+        }
+
+        protected virtual JobResult PerformCreateCertStore(ManagementJobConfiguration config)
+        {
+            logger.MethodEntry();
+
+            var complete = new JobResult { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = config.JobHistoryId };
+
+            try
+            {
+                VaultClient.CreateCertStore();
+                complete.Result = OrchestratorJobStatusJobResult.Success;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error when trying to create the new certificate store.");
+                complete.FailureMessage = $"Error when trying to create the new certificate store.  {ex.Message}";
+            }
             return complete;
         }
 
@@ -57,7 +80,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }
 
                 try
-                {                    
+                {
                     var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
                     cert.Wait();
                     complete.Result = OrchestratorJobStatusJobResult.Success;

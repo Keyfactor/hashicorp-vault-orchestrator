@@ -23,7 +23,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             throw new NotImplementedException();
         }
 
-        public byte[] CreateFileStore(string name, string password)
+        public byte[] CreateFileStore(string password)
         {
             throw new NotImplementedException();
         }
