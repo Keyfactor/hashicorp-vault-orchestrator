@@ -6,18 +6,15 @@
 // and limitations under the License.
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Keyfactor.Orchestrators.Extensions;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
-    public interface IHashiClient
+    public interface IFileStore
     {
-        Task<IEnumerable<CurrentInventoryItem>> GetCertificates();
-        Task<CurrentInventoryItem> GetCertificateFromPemStore(string key);
-        Task<List<string>> GetVaults(string storePath);
-        Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain);
-        Task<bool> RemoveCertificate(string certName);
-        Task CreateCertStore();
+        string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string certContent, string passphrase);
+        string RemoveCertificate(string alias, string passphrase, string storeFileContent);
+        byte[] CreateFileStore(string passphrase);
+        IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields);
     }
 }

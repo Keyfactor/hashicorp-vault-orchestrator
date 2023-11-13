@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 // Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -9,8 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -22,6 +25,7 @@ using VaultSharp;
 using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
+using VaultSharp.V1.SecretsEngines.KeyValue.V2;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
@@ -36,10 +40,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private string _storePath { get; set; }
         private string _mountPoint { get; set; }
         private bool _subfolderInventory { get; set; }
+        private string _storeType { get; set; }
 
-        //private VaultClientSettings clientSettings { get; set; }
-
-        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, bool SubfolderInventory = false)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, string storeType, bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
@@ -47,65 +50,141 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             // Initialize settings. You can also set proxies, custom delegates etc. here.
             var clientSettings = new VaultClientSettings(serverUrl, authMethod);
             _mountPoint = mountPoint;
-            _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
+            _storePath = (!string.IsNullOrEmpty(storePath) && !storePath.StartsWith("/")) ? "/" + storePath.Trim() : storePath?.Trim();
             _vaultClient = new VaultClient(clientSettings);
             _subfolderInventory = SubfolderInventory;
+            _storeType = storeType?.Split('.')[1];
         }
-        public async Task<List<string>> ListComponentPathsAsync(string storagePath)
+
+        public async Task CreateCertStore()
         {
-            VaultClient.V1.Auth.ResetVaultToken();
-            List<string> componentPaths = new List<string> { };
+            logger.MethodEntry();
             try
             {
-                Secret<ListInfo> listInfo = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint));
-
-                foreach (var path in listInfo.Data.Keys)
+                if (_storeType != StoreType.HCVKVPEM)
                 {
-                    if (!path.EndsWith("/"))
-                    {
-                        continue;
-                    }
+                    await CreateFileStore();
+                    return;
+                }
+                // for PEM stores, the store path is the container name, not entry name as with file stores
 
-                    string fullPath = $"{storagePath}{path}";
-                    componentPaths.Add(fullPath);
+                await CreatePemStore();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error when adding the new certificate.");
+                throw;
+            }
+            logger.MethodExit();
 
-                    List<string> subPaths = await ListComponentPathsAsync(fullPath);
-                    componentPaths.AddRange(subPaths);
+        }
+
+        private async Task CreateFileStore()
+        {
+            IFileStore fileStore;
+            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            logger.LogTrace($"parent path = {parentPath}");
+            var entryName = _storePath.Substring(_storePath.LastIndexOf("/"));
+            entryName = entryName.TrimStart('/');
+
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            logger.LogTrace("generating a random string for the new store password.");
+            var passphrase = CertUtility.GenerateRandomString(16);
+
+            logger.LogTrace("Creating the new filestore with the generated passphrase.");
+            var newStoreBytes = fileStore.CreateFileStore(passphrase);
+
+            logger.LogTrace("Writing the passphrase and store file to the location in the store path.");
+
+            try
+            {
+
+                VaultClient.V1.Auth.ResetVaultToken();
+
+                var newData = new Dictionary<string, object> { { entryName, Convert.ToBase64String(newStoreBytes) }, { "passphrase", passphrase } };                
+
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData, null, _mountPoint);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning($"Error while listing component paths: {ex}");
+                logger.LogError("Error writing cert to Vault", ex);
+                throw;
             }
-            return componentPaths;
+
         }
-        public async Task<CurrentInventoryItem> GetCertificate(string key)
+        private async Task CreatePemStore()
         {
+            //without a certificate, the only thing to do is create the secret path in Vault with empty values
+            var newData = new Dictionary<string, object> { { "certificate", string.Empty }, { "private_key", string.Empty } };
+
+            try
+            {
+                if (_mountPoint == null)
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData);
+                }
+                else
+                {
+                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData, mountPoint: _mountPoint);
+                }
+            }
+            catch (Exception ex) {
+                logger.LogError(ex, $"Error creating the PEM certificate store at path {_storePath}");
+                throw;
+            }
+        }
+
+        public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
+        {
+            logger.MethodEntry();
+
             VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData;
             Secret<SecretData> res;
             var fullPath = _storePath + key;
-            var relativePath = fullPath.Substring(_storePath.Length);
 
             try
             {
                 try
                 {
-                    if (_mountPoint == null)
+                    if (string.IsNullOrEmpty(_mountPoint))
                     {
-                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath));
+                        res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath);
                     }
                     else
                     {
-                        res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint));
+                        res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogError($"Error getting certificate {fullPath}", ex);
-
-                    return null;
+                    throw;
                 }
 
                 certData = (Dictionary<string, object>)res.Data.Data;
@@ -118,12 +197,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                string certificate = null;                
+                string certificate = null;
 
                 //Validates if the "certificate" and "private_key" keys exist in certData
-                if (certData.TryGetValue("certificate", out object publicKeyObj))
+                if (certData.TryGetValue(StoreFileExtensions.HCVKVPEM, out object publicKeyObj))
                 {
-                    certificate = publicKeyObj as string;
+                    certificate = publicKeyObj.ToString();
                 }
 
                 var certs = new List<string>() { certificate };
@@ -131,16 +210,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 certData.TryGetValue("private_key", out object privateKeyObj);
 
                 // if either field is missing, don't include it in inventory
-                
-                if (publicKeyObj == null || privateKeyObj == null) return null; 
+
+                if (publicKeyObj == null || privateKeyObj == null) return null;
 
                 //split the chain entries (if chain is included)
 
                 var certFooter = "\n-----END CERTIFICATE-----";
 
                 certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                                
-                for (int i = 0; i<certs.Count(); i++) {
+
+                for (int i = 0; i < certs.Count(); i++)
+                {
                     certs[i] = certs[i] + certFooter;
                 }
 
@@ -164,49 +244,150 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error parsing cert data", ex);
+                logger.LogError(ex, "Error parsing certificate data");
                 throw;
             }
         }
 
-        public async Task<IEnumerable<string>> GetVaults()
+        public async Task<List<string>> GetVaults(string storePath)
         {
-            VaultClient.V1.Auth.ResetVaultToken();
+            logger.MethodEntry();
+            // there are 4 store types that use the KV secrets engine.  HCVKVPEM uses the folder as the store path.  The others (KCVKVJKS,HCVKVPKCS12,HCVKVPFX) use the full file path.
+            string suffix = "";
+            storePath = storePath ?? _storePath;
 
-            var vaults = new List<string>();
+            if (string.IsNullOrEmpty(storePath)) { storePath = "/"; }
+
+            var vaultPaths = new List<string>();
+            var entryPaths = new List<string>();
+
+            logger.LogTrace("getting key suffix for store type. ", _storeType);
+
+            switch (_storeType)
+            {
+                case StoreType.KCVKVJKS:
+                    suffix = StoreFileExtensions.HCVKVJKS;
+                    break;
+                case StoreType.HCVKVPFX:
+                    suffix = StoreFileExtensions.HCVKVPFX;
+                    break;
+                case StoreType.HCVKVPKCS12:
+                    suffix = StoreFileExtensions.HCVKVPKCS12;
+                    break;
+                default:
+                    suffix = "certificate"; //PEM store
+                    break;
+            }
 
             try
             {
+                logger.LogTrace("sending request to Vault.");
+
                 if (_mountPoint == null)
                 {
-                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath)).Data.Keys.ToList();
+                    var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath);
+                    entryPaths = res.Data.Keys.ToList();
                 }
                 else
                 {
-                    vaults = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(_storePath, _mountPoint)).Data.Keys.ToList();
+                    var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
+                    entryPaths = res.Data.Keys.ToList();
                 }
 
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
+                throw;
             }
 
-            return vaults;
+            logger.LogTrace("checking paths at this level.", entryPaths);
+
+            for (var i = 0; i < entryPaths.Count(); i++)
+            {
+                var path = entryPaths[i];
+                if (!path.EndsWith("/"))
+                { // it is a secret, not a folder
+                  // get the sub-keys for the secret entry
+
+                    IDictionary<string, object> keys;
+                    try
+                    {
+                        if (_mountPoint == null)
+                        {
+                            var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path);
+                            keys = res.Data.Subkeys;
+                        }
+                        else
+                        {
+                            var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
+                            keys = res.Data.Subkeys;
+                        }
+                        // does it have an entry with the suffix we are looking for?
+                        var key = keys.FirstOrDefault(k => k.Key.EndsWith(suffix));
+                        if (key.Key != null)
+                        {
+                            if (_storeType == StoreType.HCVKVPEM)
+                            {
+                                // PEM stores paths are the folder/container name rather than the entry name.  
+                                vaultPaths.Add(storePath);
+                            }
+                            else
+                            {
+                                vaultPaths.Add(storePath + path + "/" + key.Key);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError("Error reading secret keys.", ex);
+                        throw;
+                    }
+                }
+                else
+                { //it is a sub-folder.  Recurse.
+                    var subPaths = await GetVaults(storePath + path);
+                    vaultPaths.AddRange(subPaths);
+                }
+            }
+            logger.MethodExit();
+            vaultPaths = vaultPaths.Distinct().ToList();
+            return vaultPaths;
         }
+
 
         public async Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
         {
-            VaultClient.V1.Auth.ResetVaultToken();
+            logger.MethodEntry();
+            try
+            {
+                if (_storeType != StoreType.HCVKVPEM)
+                {
+                    await PutCertificateIntoFileStore(certName, contents, pfxPassword, includeChain);
+                    return;
+                }
+                // for PEM stores, the store path is the container name, not entry name as with file stores
 
+                await PutCertificateIntoPemStore(certName, contents, pfxPassword, includeChain);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error when adding the new certificate.");
+                throw;
+            }
+            logger.MethodExit();
+        }
+        private async Task PutCertificateIntoPemStore(string certName, string contents, string pfxPassword, bool includeChain)
+        {
             var certDict = new Dictionary<string, object>();
-
             var pfxBytes = Convert.FromBase64String(contents);
             Pkcs12Store p;
+
             using (var pfxBytesMemoryStream = new MemoryStream(pfxBytes))
             {
-                p = new Pkcs12Store(pfxBytesMemoryStream,
-                    pfxPassword.ToCharArray());
+                Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
+                p = storeBuilder.Build();
+                p.Load(pfxBytesMemoryStream, pfxPassword.ToCharArray());
             }
 
             // Extract private key
@@ -243,9 +424,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
 
             var pubCert = p.GetCertificate(alias).Certificate.GetEncoded();
-            var pubCertPem = Pemify(Convert.ToBase64String(pubCert));
 
-            // add the certs in the chain
+            logger.LogTrace("converting to PEM format.");
+
+            var pubCertPem = CertUtility.Pemify(Convert.ToBase64String(pubCert));
+
+            logger.LogTrace("adding the chain certs");
 
             var pemChain = new List<string>();
             var chain = p.GetCertificateChain(alias).ToList();
@@ -253,7 +437,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             chain.ForEach(c =>
             {
                 var cert = c.Certificate.GetEncoded();
-                var encoded = Pemify(Convert.ToBase64String(cert));
+                var encoded = CertUtility.Pemify(Convert.ToBase64String(cert));
                 pemChain.Add(encoded);
             });
 
@@ -266,10 +450,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 if (includeChain)
                 {
 
-                    certDict.Add("certificate", String.Join("\n", pemChain));
+                    certDict.Add(StoreFileExtensions.HCVKVPEM, String.Join("\n", pemChain));
                 }
-                else {
-                    certDict.Add("certificate", pubCertPem);
+                else
+                {
+                    certDict.Add(StoreFileExtensions.HCVKVPEM, pubCertPem);
                 }
             }
             catch (Exception ex)
@@ -279,6 +464,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             try
             {
+                logger.LogTrace("writing secret to vault.");
+                VaultClient.V1.Auth.ResetVaultToken();
+
                 var fullPath = _storePath + certName;
 
                 if (_mountPoint == null)
@@ -295,9 +483,249 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogError("Error writing cert to Vault", ex);
                 throw;
             }
+            logger.MethodExit();
         }
 
-        public async Task<bool> DeleteCertificate(string certName)
+        private async Task PutCertificateIntoFileStore(string certName, string contents, string pfxPassword, bool includeChain)
+        {
+            logger.MethodEntry();
+
+            IFileStore fileStore;
+            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            logger.LogTrace($"parent path = {parentPath}");
+            Secret<SecretData> res;
+            Dictionary<string, object> certData;
+
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            try
+            {
+                // first get entry contents and passphrase
+                logger.LogTrace("getting all secrets in the parent container for the store.");
+
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath);
+                }
+                else
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
+                }
+                certData = (Dictionary<string, object>)res.Data.Data;
+                logger.LogTrace("got secret data.", certData);
+
+                string certificate = null;
+                string passphrase = null;
+
+                //Validates if the "certificate" and "private_key" keys exist in certData
+
+                var key = _storePath.Substring(_storePath.LastIndexOf("/"));
+                key = key.TrimStart('/');
+
+                logger.LogTrace($"getting the contents of {key}");
+
+                if (!certData.TryGetValue(key, out object certFileObj))
+                {
+                    throw new DirectoryNotFoundException($"entry named {key} not found at {parentPath}");
+                }
+                certificate = certFileObj.ToString();
+
+                if (!certData.TryGetValue("passphrase", out object passphraseObj))
+                {
+                    throw new DirectoryNotFoundException($"no passphrase entry found at {parentPath}");
+                }
+                passphrase = passphraseObj.ToString();
+
+                logger.LogTrace("got passphrase and certificate store secrets from vault.");
+
+                logger.LogTrace("calling method to add certificate to store file.");
+                // get new store entry
+                var newEntry = fileStore.AddCertificate(certName, pfxPassword, contents, includeChain, certificate, passphrase);
+                logger.LogTrace("got new store file.");
+                // write new store entry
+                try
+                {
+                    logger.LogTrace("writing file store with new certificate to vault.");
+                    VaultClient.V1.Auth.ResetVaultToken();
+
+                    var newData = new Dictionary<string, object> { { key, newEntry } };
+                    var patchReq = new PatchSecretDataRequest() { Data = newData };
+
+                    // temporary debugging code
+                    var stringContent = new StringContent(JsonSerializer.Serialize(newData), Encoding.UTF8);
+                    //
+
+                    if (string.IsNullOrEmpty(_mountPoint))
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq);
+                    }
+                    else
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq, _mountPoint);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Error writing cert to Vault", ex);
+                    throw;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error adding certificate to {_storeType}: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> RemoveCertificate(string certName)
+        {
+            logger.MethodEntry();
+            try
+            {
+                if (_storeType != StoreType.HCVKVPEM)
+                {
+                    await RemoveCertificateFromFileStore(certName);
+                    return true;
+                }
+                // for PEM stores, the store path is the container name, not entry name as with file stores
+
+                await RemoveCertificateFromPemStore(certName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error when removing the certificate with alias {certName}.");
+                throw;
+            }
+            logger.MethodExit();
+            return true;
+        }
+
+        public async Task RemoveCertificateFromFileStore(string certName)
+        {
+            logger.MethodEntry();
+
+            IFileStore fileStore;
+            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            logger.LogTrace($"parent path = {parentPath}");
+            Secret<SecretData> res;
+            Dictionary<string, object> certData;
+
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            try
+            {
+                // first get entry contents and passphrase
+                logger.LogTrace("getting all secrets in the parent container for the store.");
+
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath);
+                }
+                else
+                {
+                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
+                }
+                certData = (Dictionary<string, object>)res.Data.Data;
+                logger.LogTrace("got secret data.", certData);
+
+                string certStoreContents = null;
+                string passphrase = null;
+
+                //Validates if the "certificate" and "private_key" keys exist in certData
+
+                var key = _storePath.Substring(_storePath.LastIndexOf("/"));
+                key = key.TrimStart('/');
+
+                logger.LogTrace($"getting the contents of {key}");
+
+                if (!certData.TryGetValue(key, out object certFileObj))
+                {
+                    throw new DirectoryNotFoundException($"entry named {key} not found at {parentPath}");
+                }
+                certStoreContents = certFileObj.ToString();
+
+                if (!certData.TryGetValue("passphrase", out object passphraseObj))
+                {
+                    throw new DirectoryNotFoundException($"no passphrase entry found at {parentPath}");
+                }
+                passphrase = passphraseObj.ToString();
+
+                logger.LogTrace("got passphrase and certificate store secrets from vault.");
+
+                logger.LogTrace("calling method to remove certificate from store file.");
+                // get new store entry
+                var newEntry = fileStore.RemoveCertificate(certName, passphrase, certStoreContents);
+                logger.LogTrace("got new store file.");
+                // write new store entry
+                try
+                {
+                    logger.LogTrace("writing file store sans certificate to vault.");
+                    VaultClient.V1.Auth.ResetVaultToken();
+
+                    var newData = new Dictionary<string, object> { { key, newEntry } };
+                    var patchReq = new PatchSecretDataRequest() { Data = newData };
+
+                    // temporary debugging code
+                    var stringContent = new StringContent(JsonSerializer.Serialize(newData), Encoding.UTF8);
+                    //
+
+                    if (string.IsNullOrEmpty(_mountPoint))
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq);
+                    }
+                    else
+                    {
+                        await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq, _mountPoint);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Error writing file to Vault", ex);
+                    throw;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error removing certificate {certName} from {_storeType}: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task RemoveCertificateFromPemStore(string certName)
         {
             VaultClient.V1.Auth.ResetVaultToken();
 
@@ -316,51 +744,69 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error removing cert from Vault", ex);
+                logger.LogError(ex, "Error removing cert from Vault");
                 throw;
             }
-            return true;
         }
 
         public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
         {
+            if (_storeType != StoreType.HCVKVPEM)
+            {
+                return await GetCertificatesFromFileStore();
+            }
+            // for PEM stores, the store path is the container name, not entry name as with file stores
+
+            return await GetCertificatesFromPemStore();
+        }
+
+        private async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesFromPemStore()
+        {
+            logger.MethodEntry();
+
             VaultClient.V1.Auth.ResetVaultToken();
-            _storePath = _storePath.TrimStart('/');
             List<string> subPaths = new List<string>();
+            var certs = new List<CurrentInventoryItem>();
+            var entryNames = new List<string>();
+
             //Grabs the list of subpaths to get certificates from, if SubFolder Inventory is turned on.
             //Otherwise just define the single path _storePath
+            logger.LogDebug($"SubInventoryEnabled: {_subfolderInventory}");
+
             if (_subfolderInventory == true)
             {
-                subPaths = (await ListComponentPathsAsync(_storePath));
+                logger.LogTrace("getting all sub-paths for container");
+                subPaths = await GetSubPaths(_storePath);
                 subPaths.Add(_storePath);
             }
             else
             {
                 subPaths.Add(_storePath);
             }
-            var certs = new List<CurrentInventoryItem>();
-            var certNames = new List<string>();
-            logger.LogDebug($"SubInventoryEnabled: {_subfolderInventory}");
+
+            logger.LogTrace($"got all subpaths for container {_storePath}", subPaths);
+
+
             foreach (var path in subPaths)
             {
+
                 var relative_path = path.Substring(_storePath.Length);
                 try
                 {
-
                     if (string.IsNullOrEmpty(_mountPoint))
                     {
-                        certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path)).Data.Keys.ToList();
+                        entryNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path)).Data.Keys.ToList();
                     }
                     else
                     {
-                        certNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, mountPoint: _mountPoint)).Data.Keys.ToList();
+                        entryNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, mountPoint: _mountPoint)).Data.Keys.ToList();
                     }
 
-                    certNames.ForEach(k =>
-                {
-                    var cert = GetCertificate($"{relative_path}{k}").Result;
-                    if (cert != null) certs.Add(cert);
-                });
+                    entryNames.ForEach(k =>
+                    {
+                        var cert = GetCertificateFromPemStore($"{relative_path}{k}").Result;
+                        if (cert != null) certs.Add(cert);
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -370,15 +816,96 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             return certs;
         }
-        private static Func<string, string> Pemify = base64Cert =>
+
+        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesFromFileStore()
         {
-            string FormatBase64(string ss) =>
-                ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + FormatBase64(ss.Substring(64));
+            Secret<SecretData> res;
 
-            string header = "-----BEGIN CERTIFICATE-----\n";
-            string footer = "\n-----END CERTIFICATE-----";
+            //file stores for JKS, PKCS12 and PFX will have a "passphrase" entry on the same level by convention.  We'll need this in order to extract the certificates for inventory.
+            var pos = _storePath.LastIndexOf("/");
+            var parentPath = _storePath.Substring(0, pos);
 
-            return header + FormatBase64(base64Cert) + footer;
-        };
+            try
+            {
+                if (string.IsNullOrEmpty(_mountPoint))
+                {
+                    res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath));
+                }
+                else
+                {
+                    res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint));
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error getting certificate data from {parentPath}", ex);
+                return null;
+            }
+
+            var certFields = (Dictionary<string, object>)res.Data.Data;
+
+            IFileStore fileStore;
+            switch (_storeType)
+            {
+                case StoreType.HCVKVPFX:
+                    fileStore = new PfxFileStore();
+                    break;
+
+                case StoreType.HCVKVPKCS12:
+                    fileStore = new Pkcs12FileStore();
+                    break;
+
+                case StoreType.KCVKVJKS:
+                    fileStore = new JksFileStore();
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"unrecognized store type value {_storeType}");
+            }
+
+            try
+            {
+                return fileStore.GetInventory(certFields);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error performing inventory on store type {_storeType}: {ex.Message}");
+                throw;
+            }
+        }
+
+        private async Task<List<string>> GetSubPaths(string storagePath)
+        {
+            logger.MethodEntry();
+
+            VaultClient.V1.Auth.ResetVaultToken();
+            List<string> componentPaths = new List<string> { };
+            try
+            {
+                logger.LogTrace("getting secret and path entries at this level.", storagePath);
+
+                Secret<ListInfo> listInfo = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint);
+
+                foreach (var path in listInfo.Data.Keys)
+                {
+                    if (!path.EndsWith("/"))
+                    {
+                        continue;
+                    }
+
+                    string fullPath = $"{storagePath}{path}";
+                    componentPaths.Add(fullPath);
+
+                    List<string> subPaths = await GetSubPaths(fullPath);
+                    componentPaths.AddRange(subPaths);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning($"Error while listing component paths: {ex}");
+            }
+            logger.MethodExit();
+            return componentPaths;
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 // Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Management : JobBase, IManagementJobExtension
     {
-        readonly ILogger logger = LogHandler.GetClassLogger<Management>();
-
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger<Management>();
+
             InitializeStore(config);
 
             JobResult complete = new JobResult()
@@ -30,20 +30,45 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Add:
-                    logger.LogDebug($"Begin Management > Add...");
+                    logger.LogDebug("Begin Management > Add...");
                     complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, config.JobHistoryId);
                     break;
                 case CertStoreOperationType.Remove:
-                    logger.LogDebug($"Begin Management > Remove...");
+                    logger.LogDebug("Begin Management > Remove...");
                     complete = PerformRemoval(config.JobCertificate.Alias, config.JobHistoryId);
+                    break;
+                case CertStoreOperationType.Create:
+                    logger.LogDebug("Begin Management > Create...");
+                    complete = PerformCreateCertStore(config);
                     break;
             }
 
             return complete;
         }
 
+        protected virtual JobResult PerformCreateCertStore(ManagementJobConfiguration config)
+        {
+            logger.MethodEntry();
+
+            var complete = new JobResult { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = config.JobHistoryId };
+
+            try
+            {
+                VaultClient.CreateCertStore();
+                complete.Result = OrchestratorJobStatusJobResult.Success;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error when trying to create the new certificate store.");
+                complete.FailureMessage = $"Error when trying to create the new certificate store.  {ex.Message}";
+            }
+            return complete;
+        }
+
         protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, long jobHistoryId)
         {
+            logger.MethodEntry();
+
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
             if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
@@ -56,8 +81,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
                 try
                 {
-                    // uploadCollection is either not null or an exception was thrown.
                     var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
+                    cert.Wait();
                     complete.Result = OrchestratorJobStatusJobResult.Success;
                 }
                 catch (Exception ex)
@@ -65,11 +90,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     if (ex.GetType() == typeof(NotSupportedException))
                     {
                         logger.LogError("Attempt to Add Certificate on unsupported Secrets Engine backend.");
-                        complete.FailureMessage = $"{SecretsEngine} does not support adding certificates via the Orchestrator.";
+                        complete.FailureMessage = $"{_storeType} does not support adding certificates via the Orchestrator.";
                     }
                     else
                     {
-                        complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
+                        complete.FailureMessage = $"An error occured while adding {alias} to {StorePath}: " + ex.Message;
 
                         if (ex.InnerException != null)
                             complete.FailureMessage += " - " + ex.InnerException.Message;
@@ -97,7 +122,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             try
             {
-                var success = VaultClient.DeleteCertificate(alias).Result;
+                var success = VaultClient.RemoveCertificate(alias).Result;
 
                 if (!success)
                 {
@@ -114,12 +139,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 if (ex.GetType() == typeof(NotSupportedException))
                 {
                     logger.LogError("Attempt to Delete Certificate on unsupported Secrets Engine backend.");
-                    complete.FailureMessage = $"{SecretsEngine} does not support removing certificates via the Orchestrator.";
+                    complete.FailureMessage = $"{_storeType} does not support removing certificates via the Orchestrator.";
                 }
                 else
                 {
                     logger.LogError("Error deleting cert from Vault", ex);
-                    complete.FailureMessage = $"An error occured while removing {alias} from {ExtensionName}: " + ex.Message;
+                    complete.FailureMessage = $"An error occured while removing {alias} from {StorePath}: " + ex.Message;
                 }
             }
             return complete;

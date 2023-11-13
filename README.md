@@ -14,14 +14,11 @@ The Universal Orchestrator is part of the Keyfactor software distribution and is
 The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
 
 
-
-
 ## Support for Orchestrator Extension for Hashicorp Vault
 
 Orchestrator Extension for Hashicorp Vault is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative.
 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
-
 
 
 ---
@@ -62,17 +59,39 @@ This integration supports 3 Hashicorp Secrets Engines; PKI, Key-Value store, and
 
 ### The Key-Value secrets engine
 
-The Following operations are supported by this integration **only** for the Key-Value secrets engine.
+For the Key-Value secrets engine, we have 4 store types that can be used.  
 
-1. Discovery - Discover all sub-paths containing certificate.
-1. Inventory - Return all certificates stored in a path.
+- *HCVKVJKS* - For JKS certificate files, treats each file as it's own store.
+- *HCVKVPFX* - For PFX certificate files, treats each file as it's own store.
+- *HCVKVP12* - For PKCS12 certificate files, treats each file as it's own store.
+- *HCVKVPEM* - For PEM encoded certificates, treats each _path_ as it's own store.  Each certificate exists in a sub-path from the store path.
+
+The following operations are supported by this integration for all of the Key-Value secrets engine types:
+
+1. Discovery - Discovery all file repositories for the type
+1. Inventory - Inventory all certificates in the path
 1. Management (Add) - Add a certificate to a defined certificate store.
 1. Management (Remove) - Remove a certificate from a defined certificate store.
+1. Create - Create a new, empty certificate store at the path defined in Store Path.
+
+
+Excluding *HCVKVPEM*, the discovery process requires that:
+1. The entry for the certificate contain the base64 encoded certificate file.
+1. The name (key) for the entry ends with the suffix corresponding to the certificate store type:
+ 1. *HCVKVJKS* - `*_jks` 
+ 1. *HCVKVPFX* - `*_pfx`
+ 1. *HCVKVP12* - `*_p12`
+ 1. *HCVKVPEM* - `certificate`
+1. For all except *HCVKVPEM*, there be an entry named `passphrase` that contains the password for the store.
+1. For *HCVKVPEM*, there be an entry named `private_key` containing the private key portion of the key-pair.
+
+**Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
 
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
-Both the Hashicorp PKI and Keyfactor plugin are designed to allow managing certifications directly on the Hashicorp Vault instance.
-This integration does support the following in order to view your certificates from the platform:
+Both the Hashicorp PKI and Keyfactor Secrets Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.
+The store type for the PKI and/or the Keyfactor secrets engine is the same; `HCVPKI`.
+This integration supports the following in order to view your certificates from the platform:
 
 1. Inventory - Return all certificates stored in a path.
 
@@ -90,13 +109,6 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
 
-1. For the Key-Value secrets engine, the certificates are stored as an entry with these fields.  
-
-- `certificate` - The PEM formatted certificate and intermediate CA chain (if selected)
-- `private_key` - The certificate private key
-
-**Note**: Key/Value secrets that do not include the keys `certificate` and `private_key` will be ignored during inventory scans. 
-
 ## Extension Configuration
 
 ### On the Orchestrator Agent Machine
@@ -111,7 +123,7 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 ### In the Keyfactor Platform
 
-#### Add a new Certificate Store Type - **Key-Value Secrets Engine**
+#### Add a new Certificate Store Type - **Hashicorp Vault Key-Value PEM**
 
 - Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
 - Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
@@ -120,9 +132,11 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 ![](images/store_type_add.png)
 
 - Set the following values in the "Basic" tab:
-  - **Name:** "Hashicorp Vault Key-Value" (or another preferred name)
-  - **Short Name:** "HCVKV"
+  - **Name:** "Hashicorp Vault Key-Value PEM" (or another preferred name)
+  - **Short Name:** "HCVKVPEM"
   - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
+    - **NOTE** If you are setting up "`HCVKVJKS`, `HCVKVPFX`, or `HCVKVP12` the supported job types will be "Inventory, Discovery".
+  - **Needs Server** - should be checked (true).
 
 ![](images/store-type-kv.PNG)
 
@@ -134,12 +148,13 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - type: *string*
-  - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *secret*, *required*
   - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
   - **IncludeCertChain** - type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
 
 ![](images/store_type_fields.png)
+
+**Note**
+The 3 highlighted fields above will be added automatically by the platform, you will not need to include them when creating the certificate store type.
 
 - Click **Save** to save the new Store Type.
 
@@ -154,15 +169,18 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 
 ![](images/cert_store_fields.png)
 
-- **Client Machine** - Enter the URL for the Vault host machine
+- **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
 - **Store Path** - This is the path after mount point where the certs will be stored.
   - example: `kv-v2\kf-secrets\certname` would use the path "\kf-secrets"
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-- **Vault Token** - This is the access token that will be used by the orchestrator for requests to Vault.
-- **Vault Server Url** - the full url and port of the Vault server instance
 - **Subfolder Inventory** - Set to 'True' if it is a requirement to inventory secrets at the subfolder/component level. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+
+#### Set the server name and password
+
+- The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- The server password should be the Vault token that will be used for authenticating.
 
 ### For the Keyfactor and PKI plugins
 
