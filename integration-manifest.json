@@ -5,6 +5,7 @@
   "status": "production",
   "link_github": true,
   "update_catalog": true,
+  "release_dir": "hashicorp-vault-orchestrator/bin/Release",
   "support_level": "kf-supported",
   "description": "The Hashicorp Vault Orchestrator extension allows you to manage certificates in Hashicorp Vault KeyValue secrets engine and perform inventory on certificates stored in the PKI or Keyfactor secrets engines.",
   "about": {
