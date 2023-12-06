@@ -38,6 +38,10 @@ Excluding *HCVKVPEM*, the discovery process requires that:
 
 > :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "directories to search" field in order for discovery to work.*
 
+> *refer to the below image for an example*
+
+![](images/discovery.PNG)
+
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
 Both the Hashicorp PKI and Keyfactor Secrets Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.
