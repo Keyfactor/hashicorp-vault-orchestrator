@@ -66,16 +66,23 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
+            var dirs = config.JobProperties?["dirs"] as string;
+            // Discovery jobs need to pass the mount-point/namespace in this field.
+            // if nothing is provided, we default to mount point: "kv-v2" and no namespace.
+            if (!string.IsNullOrEmpty(dirs)) {
+                MountPoint = dirs.Trim();
+            }
+
+            logger.LogTrace($"Directories to search: {dirs}");
+
             InitProps(config.JobProperties, config.Capability);
         }
         public void InitializeStore(ManagementJobConfiguration config)
         {
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             StorePath = config.CertificateStoreDetails.StorePath;
@@ -99,7 +106,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }                
             }
 
-            MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+
+            MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : MountPoint;
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
             
