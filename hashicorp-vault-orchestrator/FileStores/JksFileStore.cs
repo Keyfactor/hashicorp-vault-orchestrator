@@ -112,6 +112,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Error reading entry for {certKey} in vault.");
+
                 throw;
             }
         }
@@ -123,6 +124,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             // If existingStore is null, create a new store
             var existingJksStore = new JksStore();
             Pkcs12Store existingPKCS12Store = null;
+
             var newJksStore = new JksStore();
             var createdNewStore = false;
 
@@ -197,6 +199,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                         {
                             existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
                         }
+
                         return mms.ToArray();
                     }
                 }
@@ -300,8 +303,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             {
                 logger.LogDebug("Saving existing JKS store to outStream");
                 if (isPKCS12Format) existingPKCS12Store.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
-                else
-                    existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+                else existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
 
                 logger.LogDebug("Returning updated JKS store as byte[]");
                 return outStream.ToArray();
