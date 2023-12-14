@@ -69,7 +69,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             var dirs = config.JobProperties?["dirs"] as string;
             // Discovery jobs need to pass the mount-point/namespace in this field.
             // if nothing is provided, we default to mount point: "kv-v2" and no namespace.
-            if (!string.IsNullOrEmpty(dirs)) {
+            if (!string.IsNullOrEmpty(dirs) && dirs.Trim() != "/" && dirs.Trim() != "\\") {
                 MountPoint = dirs.Trim();
             }
 
