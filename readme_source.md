@@ -42,6 +42,7 @@ Excluding *HCVKVPEM*, the discovery process requires that:
 
 ![](images/discovery.PNG)
 
+
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
 Both the Hashicorp PKI and Keyfactor Secrets Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.

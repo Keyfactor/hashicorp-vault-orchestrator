@@ -1,7 +1,7 @@
 ## 3.1.0
+
 * Added support for enterprise namespaces and alternate mount-points during discovery by allowing the value to be entered in the "directories to search" field.
 * When error occurs attempting to load a JKS format certificate store, we will now attempt to load it as PKCS12 before failing.
-
 
 ## 3.0.0
 
