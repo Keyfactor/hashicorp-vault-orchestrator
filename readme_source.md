@@ -36,7 +36,7 @@ Excluding *HCVKVPEM*, the discovery process requires that:
 
 **Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
 
-> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "directories to search" field in order for discovery to work.*
+> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
 
 > *refer to the below image for an example*
 
