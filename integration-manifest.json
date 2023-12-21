@@ -224,6 +224,8 @@
             "StoreRequired": false,
             "Style": "Default"
           },
+          "StorePathType": "",
+          "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,
@@ -299,6 +301,8 @@
             "StoreRequired": false,
             "Style": "Default"
           },
+          "StorePathType": "",
+          "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,
@@ -374,6 +378,9 @@
             "StoreRequired": false,
             "Style": "Default"
           },
+
+          "StorePathType": "",
+          "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,

@@ -16,7 +16,7 @@ The Universal Orchestrator is the successor to the Windows Orchestrator. This Or
 
 ## Support for Orchestrator Extension for Hashicorp Vault
 
-Orchestrator Extension for Hashicorp Vault is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative.
+Orchestrator Extension for Hashicorp Vault is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket via the Keyfactor Support Portal at https://support.keyfactor.com
 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
 
@@ -86,6 +86,13 @@ Excluding *HCVKVPEM*, the discovery process requires that:
 1. For *HCVKVPEM*, there be an entry named `private_key` containing the private key portion of the key-pair.
 
 **Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
+
+> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
+
+> *refer to the below image for an example*
+
+![](images/discovery.PNG)
+
 
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
