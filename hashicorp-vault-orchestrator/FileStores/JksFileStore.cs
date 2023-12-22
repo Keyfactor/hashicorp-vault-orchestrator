@@ -132,32 +132,35 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             if (existingStore != null)
             {
                 logger.LogDebug("Loading existing JKS store");
-                using (var ms = new MemoryStream(existingStore))
+                try
                 {
-                    try
+                    using (var ms = new MemoryStream(existingStore))
                     {
                         existingJksStore.Load(ms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
                     }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(ex, "error loading store as JKS, attempting to load as PKCS12");
+                    try
                     {
-                        logger.LogDebug(ex, "error loading store as JKS, attempting to load as PKCS12");
-                        try
+                        using (var ms = new MemoryStream(existingStore))
                         {
-
                             logger.LogTrace("creating pkcs12 store for working with the certificate.");
                             Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
                             existingPKCS12Store = pkcs12storeBuilder.Build();
                             existingPKCS12Store.Load(ms, existingStorePassword.ToCharArray());
                             isPKCS12Format = true;
                         }
-                        catch (Exception innerEx)
-                        {
-                            logger.LogError(innerEx, $"Unable to load store as JKS or PKCS12: {innerEx.Message}");
-                            isPKCS12Format = false;
-                            throw;
-                        }
+                    }
+                    catch (Exception innerEx)
+                    {
+                        logger.LogError(innerEx, $"Unable to load store as JKS or PKCS12: {innerEx.Message}");
+                        isPKCS12Format = false;
+                        throw;
                     }
                 }
+
                 if ((!isPKCS12Format && existingJksStore.ContainsAlias(alias)) || (isPKCS12Format && existingPKCS12Store.ContainsAlias(alias)))
                 {
                     // If alias exists, delete it from existingJksStore
@@ -319,7 +322,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             Pkcs12Store pkcs12StoreNew = storeBuilder.Build();
             Pkcs12Store existingPKCS12Store = null;
             JksStore jksStore = new JksStore();
-
 
             logger.LogTrace("loading the contents into a jks store");
             try
