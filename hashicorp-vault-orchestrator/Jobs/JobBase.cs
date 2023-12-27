@@ -114,8 +114,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
                 }                
             }
-            var mp = props["MountPoint"]?.ToString();
-
+            
+            var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+            
             MountPoint = !string.IsNullOrEmpty(mp) ? mp : MountPoint;
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;

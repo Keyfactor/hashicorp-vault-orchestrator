@@ -76,7 +76,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 throw;
             }
             logger.MethodExit();
-
         }
 
         private async Task CreateFileStore()
@@ -115,19 +114,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-
                 VaultClient.V1.Auth.ResetVaultToken();
 
                 var newData = new Dictionary<string, object> { { entryName, Convert.ToBase64String(newStoreBytes) }, { "passphrase", passphrase } };
 
-                if (string.IsNullOrEmpty(_mountPoint))
-                {
-                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData);
-                }
-                else
-                {
-                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData, null, _mountPoint);
-                }
+                await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData, null, _mountPoint);
             }
             catch (Exception ex)
             {
