@@ -244,7 +244,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             if (!storePath.StartsWith("/")) storePath = "/" + storePath;
             if (!storePath.EndsWith("/")) storePath = storePath + "/";
 
-
+            logger.LogTrace($"starting search in path: {storePath}");
             var vaultPaths = new List<string>();
             var entryPaths = new List<string>();
 
@@ -271,6 +271,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogTrace("sending request to Vault.");
                 var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
                 entryPaths = res.Data.Keys.ToList();
+                logger.LogTrace($"paths to check: ");
+                entryPaths.ForEach(ep => { logger.LogTrace(ep); });
             }
             catch (Exception ex)
             {
@@ -278,8 +280,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 throw;
             }
 
-            logger.LogTrace("checking paths at this level.", entryPaths);
-
+            logger.LogTrace($"checking paths at this level. paths = {string.Join(", ", entryPaths)}");
             for (var i = 0; i < entryPaths.Count(); i++)
             {
                 var path = entryPaths[i];
@@ -310,7 +311,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError("Error reading secret keys.", ex);
+                        logger.LogError($"Error reading secret keys. {ex.Message}", ex);
                         throw;
                     }
                 }
@@ -704,26 +705,32 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 subPaths.Add(_storePath);
             }
 
-            logger.LogTrace($"got all subpaths for container {_storePath}", subPaths);
+            logger.LogTrace($"got all subpaths for container {_storePath}");
+            logger.LogTrace($"subPaths = {string.Join(", ", subPaths)}");
 
 
             foreach (var path in subPaths)
             {
-
+                logger.LogTrace($"checking for entries at {path}");
                 var relative_path = path.Substring(_storePath.Length);
+
                 try
                 {
                     entryNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, mountPoint: _mountPoint)).Data.Keys.ToList();
+                    entryNames.RemoveAll(en => en.EndsWith("/"));
 
+                    logger.LogTrace($"got entry names in {path}, {string.Join(", ", entryNames)}");
                     entryNames.ForEach(k =>
                     {
+                        logger.LogTrace($"calling getCertificateFromPemStore, passing path: {relative_path}{k}");
                         var cert = GetCertificateFromPemStore($"{relative_path}{k}").Result;
                         if (cert != null) certs.Add(cert);
+
                     });
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex.Message);
+                    logger.LogError($"error getting PEM certificate from {relative_path}, exception message = {ex.Message}");
                     throw ex;
                 }
             }
@@ -794,16 +801,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 foreach (var path in listInfo.Data.Keys)
                 {
-                    if (!path.EndsWith("/"))
+                    if (path.EndsWith("/"))
                     {
-                        continue;
+                        string fullPath = $"{storagePath}{path}";
+                        componentPaths.Add(fullPath);
+
+                        List<string> subPaths = await GetSubPaths(fullPath);
+                        componentPaths.AddRange(subPaths);
                     }
-
-                    string fullPath = $"{storagePath}{path}";
-                    componentPaths.Add(fullPath);
-
-                    List<string> subPaths = await GetSubPaths(fullPath);
-                    componentPaths.AddRange(subPaths);
                 }
             }
             catch (Exception ex)
