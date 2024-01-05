@@ -43,7 +43,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, $"error performing inventory: {ex.Message}");
 
                 return new JobResult
                 {
