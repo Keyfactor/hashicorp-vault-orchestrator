@@ -65,6 +65,13 @@ Consequently you are able to define a single HCVKVPEM store as the root path, an
 
 :warning: _Avoid having the same certificate appearing in multiple stores by setting Sub-Folder inventory to "False" on any HCVKVPEM certificate stores where the path is a parent to another HCVKVPEM store's path that is defined in the platform._
 
+### Base64 encoding
+
+For all of the store types in the Key-Value secrets engine, they should be stored in a base64 encoded format.  
+One way to encode a binary certificate store is to use the following command in a windows powershell or linux/macOs terminal window:
+
+`c:\> cat <cert store file path> | base64`
+
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
 Both the Hashicorp PKI and Keyfactor Secrets Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.
