@@ -291,6 +291,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     IDictionary<string, object> keys;
                     try
                     {
+                        logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");
                         var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
                         keys = res.Data.Subkeys;
 
