@@ -27,7 +27,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             try
             {
-                vaults = VaultClient.GetVaults(string.Empty).Result.ToList();
+                vaults = VaultClient.GetVaults(StorePath).Result.ToList();
             }
             catch (Exception ex)
             {
