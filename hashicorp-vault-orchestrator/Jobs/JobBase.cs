@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -38,8 +39,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
 
-        public void InitializeStore(InventoryJobConfiguration config)
-        {            
+        public void Initialize(InventoryJobConfiguration config)
+        {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
             MountPoint = "kv-v2"; // default
 
@@ -57,8 +60,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             InitProps(props, config.Capability);
         }
 
-        public void InitializeStore(DiscoveryJobConfiguration config)
+        public void Initialize(DiscoveryJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
             ClientMachine = config.ClientMachine;
 
             // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
@@ -76,18 +80,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             StorePath = "/";
             if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\") {
-                MountPoint = mp;
+                MountPoint = mp.Trim();
             }
             if (!string.IsNullOrEmpty(subPath)) {
-                StorePath = subPath;
+                StorePath = subPath.Trim();
             }
 
             logger.LogTrace($"Directories to search (mount point): {mp}");
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
             InitProps(config.JobProperties, config.Capability);
         }
-        public void InitializeStore(ManagementJobConfiguration config)
+        public void Initialize(ManagementJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);

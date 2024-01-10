@@ -17,9 +17,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
-            logger = LogHandler.GetClassLogger<Management>();
-
-            InitializeStore(config);
+            Initialize(config);
 
             JobResult complete = new JobResult()
             {

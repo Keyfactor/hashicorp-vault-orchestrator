@@ -9,9 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores;
 using Keyfactor.Logging;
@@ -153,30 +151,21 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
         {
             logger.MethodEntry();
-
             VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData;
             Secret<SecretData> res;
             var fullPath = _storePath + key;
 
+
             try
             {
-                try
-                {
-                    res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError($"Error getting certificate {fullPath}", ex);
-                    throw;
-                }
-
+                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
                 certData = (Dictionary<string, object>)res.Data.Data;
             }
             catch (Exception ex)
             {
-                logger.LogError("Error getting certificate from Vault", ex);
+                logger.LogError(ex, $"Error reading PEM store certificate at {fullPath}.  Exception message: `{ex.Message}`");
                 throw;
             }
 
@@ -196,10 +185,18 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 // if either field is missing, don't include it in inventory
 
-                if (publicKeyObj == null || privateKeyObj == null) return null;
+                if (publicKeyObj == null || privateKeyObj == null)
+                {
+                    if (publicKeyObj != null || privateKeyObj != null) // logging cases where it has one, but not the other.
+                    {
+                        logger.LogDebug($"PEM certificate located at {fullPath} is missing {(publicKeyObj == null ? StoreFileExtensions.HCVKVPEM + ", " : string.Empty)} {(privateKeyObj == null ? "private_key" : string.Empty)}");
+                    }
+                    return null;
+                }
+
 
                 //split the chain entries (if chain is included)
-
+                logger.LogTrace("splitting the entries in the PEM certificate file.");
                 var certFooter = "\n-----END CERTIFICATE-----";
 
                 certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -209,7 +206,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     certs[i] = certs[i].Trim() + certFooter;
                 }
 
-                // if the certs have not been revoked, include them
+                logger.LogTrace($"Found {certs.Count()} certificates in the entry.");
 
                 if (certs.Count() > 0)
                 {
@@ -224,12 +221,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 else
                 {
+                    logger.LogTrace($"No valid certificate data found in {fullPath}.");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error parsing certificate data");
+                logger.LogError(ex, $"Error parsing certificate data for PEM store certificate located at {fullPath}.  Exception message: `{ex.Message}`");
                 throw;
             }
         }
@@ -313,7 +311,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     catch (Exception ex)
                     {
                         logger.LogError($"Error reading secret keys. {ex.Message}", ex);
-                        throw;
+                        throw;                        
                     }
                 }
                 else
@@ -671,18 +669,18 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
+        public async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificates()
         {
             if (_storeType != StoreType.HCVKVPEM)
             {
                 return await GetCertificatesFromFileStore();
             }
-            // for PEM stores, the store path is the container name, not entry name as with file stores
 
+            // for PEM stores, the store path is the container name, not entry name as with file stores
             return await GetCertificatesFromPemStore();
         }
 
-        private async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesFromPemStore()
+        private async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificatesFromPemStore()
         {
             logger.MethodEntry();
 
@@ -690,6 +688,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             List<string> subPaths = new List<string>();
             var certs = new List<CurrentInventoryItem>();
             var entryNames = new List<string>();
+            List<string> inventoryExceptions = new List<string>();
 
             //Grabs the list of subpaths to get certificates from, if SubFolder Inventory is turned on.
             //Otherwise just define the single path _storePath
@@ -731,14 +730,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"error getting PEM certificate from {relative_path}, exception message = {ex.Message}");
-                    throw ex;
+                    var warning = $"error getting PEM certificate from {relative_path}, exception message = {ex.Message}";
+                    logger.LogWarning(warning);
+                    inventoryExceptions.Add(warning);
+
+                    // continuing on exception during inventory
                 }
             }
-            return certs;
+            return (certs, inventoryExceptions);
         }
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesFromFileStore()
+        public async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificatesFromFileStore()
         {
             Secret<SecretData> res;
 
@@ -753,7 +755,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             catch (Exception ex)
             {
                 logger.LogError($"Error getting certificate data from {parentPath}", ex);
-                return null;
+                return (null, null);
             }
 
             var certFields = (Dictionary<string, object>)res.Data.Data;
@@ -779,7 +781,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                return fileStore.GetInventory(certFields);
+                return (fileStore.GetInventory(certFields).ToList(), null);
             }
             catch (Exception ex)
             {
