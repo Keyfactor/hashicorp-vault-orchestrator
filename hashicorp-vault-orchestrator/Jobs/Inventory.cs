@@ -19,14 +19,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventoryUpdate)
         {
-            logger = LogHandler.GetClassLogger<Inventory>();
-
-            InitializeStore(config);
-
             IEnumerable<CurrentInventoryItem> certs = null;
+            var warnings = new List<string>();
+            Initialize(config);
+
             try
             {
-                certs = VaultClient.GetCertificates().Result;
+                (certs, warnings) = VaultClient.GetCertificates().Result;
                 var success = submitInventoryUpdate.Invoke(certs.ToList());
 
                 if (!success)
@@ -43,7 +42,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, $"error performing inventory: {ex.Message}");
 
                 return new JobResult
                 {

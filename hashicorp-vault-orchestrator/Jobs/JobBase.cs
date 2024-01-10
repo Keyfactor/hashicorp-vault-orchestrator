@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -38,9 +39,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
 
-        public void InitializeStore(InventoryJobConfiguration config)
-        {            
+        public void Initialize(InventoryJobConfiguration config)
+        {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
+            MountPoint = "kv-v2"; // default
 
             // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
@@ -56,8 +60,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             InitProps(props, config.Capability);
         }
 
-        public void InitializeStore(DiscoveryJobConfiguration config)
+        public void Initialize(DiscoveryJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
             ClientMachine = config.ClientMachine;
 
             // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
@@ -66,16 +71,33 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
+            var subPath = config.JobProperties?["dirs"] as string;
+            var mp = config.JobProperties?["extensions"] as string;
+
+            // Discovery jobs need to pass the sub-paths in the "directories to search" field.
+            // The mount point and namespace should be passed in the "Extensions" field.
+            // if nothing is provided, we default to mount point: "kv-v2" and no namespace.
+
+            StorePath = "/";
+            if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\") {
+                MountPoint = mp.Trim();
+            }
+            if (!string.IsNullOrEmpty(subPath)) {
+                StorePath = subPath.Trim();
+            }
+
+            logger.LogTrace($"Directories to search (mount point): {mp}");
+            logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
             InitProps(config.JobProperties, config.Capability);
         }
-        public void InitializeStore(ManagementJobConfiguration config)
+        public void Initialize(ManagementJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             StorePath = config.CertificateStoreDetails.StorePath;
@@ -98,8 +120,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
                 }                
             }
-
-            MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+            
+            var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+            
+            MountPoint = !string.IsNullOrEmpty(mp) ? mp : MountPoint;
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
             
