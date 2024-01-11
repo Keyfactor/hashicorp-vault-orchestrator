@@ -19,15 +19,15 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate submitDiscoveryUpdate)
         {
-            logger = LogHandler.GetClassLogger<Discovery>();
+            
 
-            InitializeStore(config);
+            Initialize(config);
 
             List<string> vaults;
 
             try
             {
-                vaults = VaultClient.GetVaults(string.Empty).Result.ToList();
+                vaults = VaultClient.GetVaults(StorePath).Result.ToList();
             }
             catch (Exception ex)
             {
