@@ -31,7 +31,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         public bool IncludeCertChain { get; set; }
 
-        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV by Vault if not provided.
+        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to kv-v2 if not provided.
+
+        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point. "namespace/mountpoint"
 
         internal protected IHashiClient VaultClient { get; set; }        
         internal protected string _storeType { get; set; }
@@ -79,14 +81,26 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             // if nothing is provided, we default to mount point: "kv-v2" and no namespace.
 
             StorePath = "/";
+            logger.LogTrace($"parsing the passed in mountpoint value: {mp}");
+
             if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\") {
-                MountPoint = mp.Trim();
+                var splitmp = mp.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                if (splitmp.Length > 1) {
+                    logger.LogTrace($"detected an included namespace {splitmp[0]}, storing for authentication.");
+                    Namespace = splitmp[0].Trim();
+                    MountPoint = splitmp[1].Trim();
+                }
+                else {
+                    MountPoint = mp.Trim();
+                }                
             }
             if (!string.IsNullOrEmpty(subPath)) {
                 StorePath = subPath.Trim();
             }
 
-            logger.LogTrace($"Directories to search (mount point): {mp}");
+            logger.LogTrace($"Directories to search (mount point): {MountPoint}");
+            logger.LogTrace($"Enterprise Namespace: {Namespace}");
+
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
             InitProps(config.JobProperties, config.Capability);
         }
@@ -131,7 +145,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, _storeType, SubfolderInventory);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, Namespace, StorePath, _storeType, SubfolderInventory);
             }
             else
             {

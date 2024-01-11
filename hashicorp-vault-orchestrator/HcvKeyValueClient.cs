@@ -20,6 +20,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using VaultSharp;
+using VaultSharp.Core;
 using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
@@ -40,13 +41,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private bool _subfolderInventory { get; set; }
         private string _storeType { get; set; }
 
-        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string storePath, string storeType, bool SubfolderInventory = false)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string ns, string storePath, string storeType, bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
 
+            //split namespace and mount point
+            
+
             // Initialize settings. You can also set proxies, custom delegates etc. here.
-            var clientSettings = new VaultClientSettings(serverUrl, authMethod);
+            var clientSettings = new VaultClientSettings(serverUrl, authMethod) { Namespace = ns };
             _mountPoint = mountPoint;
             _storePath = (!string.IsNullOrEmpty(storePath) && !storePath.StartsWith("/")) ? "/" + storePath.Trim() : storePath?.Trim();
             _vaultClient = new VaultClient(clientSettings);
@@ -246,7 +250,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             var vaultPaths = new List<string>();
             var entryPaths = new List<string>();
 
-            logger.LogTrace("getting key suffix for store type. ", _storeType);
+            logger.LogTrace($"getting key suffix for store type {_storeType}");
 
             switch (_storeType)
             {
@@ -266,15 +270,21 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                logger.LogTrace("sending request to Vault.");
+                logger.LogTrace($"sending request to Vault to list contents of {_mountPoint + storePath}");
                 var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
                 entryPaths = res.Data.Keys.ToList();
                 logger.LogTrace($"paths to check: ");
                 entryPaths.ForEach(ep => { logger.LogTrace(ep); });
             }
-            catch (Exception ex)
+            catch (VaultApiException ex)
             {
-                logger.LogError(ex.Message);
+                if (ex.StatusCode == 404) {
+                    logger.LogError($"received 404 error response from vault.  Unable to read path {_mountPoint + storePath}");                
+                }
+                var apiErrors = string.Join(", ", ex.ApiErrors);
+
+                logger.LogError(ex, $"Received error response from Vault. \nstatus code is {ex.StatusCode}\nexception message is: {ex.Message} API errors: {apiErrors}");
+
                 throw;
             }
 
@@ -308,9 +318,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                             }
                         }
                     }
-                    catch (Exception ex)
+                    catch (VaultApiException ex)
                     {
-                        logger.LogError($"Error reading secret keys. {ex.Message}", ex);
+                        var apiErrors = string.Join(", ", ex.ApiErrors);
+
+                        logger.LogError(ex, $"Received error response from Vault. \nstatus code is {ex.StatusCode}\nexception message is: {ex.Message} API errors: {apiErrors}");
+
                         throw;                        
                     }
                 }
