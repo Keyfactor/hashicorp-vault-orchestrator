@@ -12,6 +12,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Serialization;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
@@ -19,14 +20,27 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate submitInventoryUpdate)
         {
+            var failureMessage = "Error executing inventory";
+            var resultStatus = OrchestratorJobStatusJobResult.Failure;
             IEnumerable<CurrentInventoryItem> certs = null;
             var warnings = new List<string>();
+
             Initialize(config);
 
             try
             {
                 (certs, warnings) = VaultClient.GetCertificates().Result;
                 var success = submitInventoryUpdate.Invoke(certs.ToList());
+                
+                if (success) {
+                    resultStatus = OrchestratorJobStatusJobResult.Success;
+                    failureMessage = $"Found {certs.Count()} valid certificates.";
+                }
+
+                if (success && warnings.Count() > 0) {
+                    resultStatus = OrchestratorJobStatusJobResult.Warning;
+                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
+                }
 
                 if (!success)
                 {
@@ -35,20 +49,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
                 return new JobResult
                 {
-                    Result = success ? OrchestratorJobStatusJobResult.Success : OrchestratorJobStatusJobResult.Failure,
+                    Result = resultStatus,
                     JobHistoryId = config.JobHistoryId,
-                    FailureMessage = success ? string.Empty : "Error executing SubmitInventoryUpdate"
+                    FailureMessage = failureMessage
                 };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"error performing inventory: {ex.Message}");
+                logger.LogError(ex, $"Error performing inventory: {ex.Message}");
 
                 return new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,
                     JobHistoryId = config.JobHistoryId,
-                    FailureMessage = ex.Message
+                    FailureMessage = $"Error performing inventory: {ex.Message}"
                 };
             }
         }

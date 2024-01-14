@@ -47,7 +47,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
 
             //split namespace and mount point
-            
+
 
             // Initialize settings. You can also set proxies, custom delegates etc. here.
             var clientSettings = new VaultClientSettings(serverUrl, authMethod) { Namespace = ns };
@@ -157,7 +157,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.MethodEntry();
             VaultClient.V1.Auth.ResetVaultToken();
 
-            Dictionary<string, object> certData;
+            Dictionary<string, object> certData = new Dictionary<string, object>();
             Secret<SecretData> res;
             var fullPath = _storePath + key;
 
@@ -167,15 +167,24 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
                 certData = (Dictionary<string, object>)res.Data.Data;
             }
-            catch (Exception ex)
+            catch (VaultApiException ex)
             {
-                logger.LogError(ex, $"Error reading PEM store certificate at {fullPath}.  Exception message: `{ex.Message}`");
-                throw;
+                if (ex.StatusCode == 404)
+                {
+                    logger.LogWarning($"No secret values exist at `{_mountPoint + fullPath}`. Vault returned '404'.  Has it been deleted?");
+                    throw new PemException($"No secret values exist at {_mountPoint + fullPath}. Vault returned '404'.  Has it been deleted?", ex);
+                }
+                else
+                {
+                    logger.LogError(ex, $"Error reading PEM store certificate at {fullPath}.  Exception message: `{ex.Message}`");
+                    throw new PemException($"Error reading PEM store certificate at {fullPath}.  Exception message: `{ex.Message}`", ex);
+                }
             }
 
             try
             {
                 string certificate = null;
+                string privateKey = null;
 
                 //Validates if the "certificate" and "private_key" keys exist in certData
                 if (certData.TryGetValue(StoreFileExtensions.HCVKVPEM, out object publicKeyObj))
@@ -183,31 +192,36 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     certificate = publicKeyObj.ToString();
                 }
 
-                var certs = new List<string>() { certificate };
+                var certs = new List<string>();
 
-                certData.TryGetValue("private_key", out object privateKeyObj);
+                if (certData.TryGetValue("private_key", out object privateKeyObj))
+                {
+                    privateKey = privateKeyObj.ToString();
+                }
 
                 // if either field is missing, don't include it in inventory
 
-                if (publicKeyObj == null || privateKeyObj == null)
+                if (string.IsNullOrEmpty(certificate) || string.IsNullOrEmpty(privateKey))
                 {
-                    if (publicKeyObj != null || privateKeyObj != null) // logging cases where it has one, but not the other.
+                    if (!string.IsNullOrEmpty(certificate) || !string.IsNullOrEmpty(privateKey)) // logging cases where it has one, but not the other.
                     {
-                        logger.LogDebug($"PEM certificate located at {fullPath} is missing {(publicKeyObj == null ? StoreFileExtensions.HCVKVPEM + ", " : string.Empty)} {(privateKeyObj == null ? "private_key" : string.Empty)}");
+                        var missing = string.IsNullOrEmpty(certificate) ? StoreFileExtensions.HCVKVPEM : "private_key";
+                        var exists = string.IsNullOrEmpty(certificate) ? "private_key" : StoreFileExtensions.HCVKVPEM;
+
+                        logger.LogWarning($"The secret entry located at `{fullPath}` is missing `{missing}` but has `{exists}`.  Inventory will continue.");
+                        throw new PemException($"The secret entry located at `{fullPath}` is missing `{missing}` but has `{exists}`");
                     }
                     return null;
                 }
 
-
                 //split the chain entries (if chain is included)
                 logger.LogTrace("splitting the entries in the PEM certificate file.");
-                var certFooter = "\n-----END CERTIFICATE-----";
 
-                certs = certificate.Split(new string[] { certFooter }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                certs = certificate.Split(new string[] { CertificateHeaders.PEM_FOOTER }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
                 for (int i = 0; i < certs.Count(); i++)
                 {
-                    certs[i] = certs[i].Trim() + certFooter;
+                    certs[i] = certs[i].Trim() + CertificateHeaders.PEM_FOOTER;
                 }
 
                 logger.LogTrace($"Found {certs.Count()} certificates in the entry.");
@@ -236,106 +250,90 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<List<string>> GetVaults(string storePath)
+        public async Task<(List<string>, List<string>)> GetVaults(string storePath)
         {
             logger.MethodEntry();
             // there are 4 store types that use the KV secrets engine.  HCVKVPEM uses the folder as the store path.  The others (KCVKVJKS,HCVKVPKCS12,HCVKVPFX) use the full file path.
-            string suffix = "";
+
             storePath = storePath ?? _storePath;
 
             if (!storePath.StartsWith("/")) storePath = "/" + storePath;
             if (!storePath.EndsWith("/")) storePath = storePath + "/";
 
-            logger.LogTrace($"starting search in path: {storePath}");
+            string suffix = StoreFileExtensions.ForStoreType(_storeType);
             var vaultPaths = new List<string>();
             var entryPaths = new List<string>();
+            var entries = new List<string>();
+            var subPaths = new List<string>();
+            var warnings = new List<string>();
 
-            logger.LogTrace($"getting key suffix for store type {_storeType}");
-
-            switch (_storeType)
-            {
-                case StoreType.KCVKVJKS:
-                    suffix = StoreFileExtensions.HCVKVJKS;
-                    break;
-                case StoreType.HCVKVPFX:
-                    suffix = StoreFileExtensions.HCVKVPFX;
-                    break;
-                case StoreType.HCVKVPKCS12:
-                    suffix = StoreFileExtensions.HCVKVPKCS12;
-                    break;
-                default:
-                    suffix = "certificate"; //PEM store
-                    break;
-            }
-
+            logger.LogTrace($"starting vault discovery search in path: {_mountPoint + storePath}");
             try
             {
-                logger.LogTrace($"sending request to Vault to list contents of {_mountPoint + storePath}");
                 var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
                 entryPaths = res.Data.Keys.ToList();
-                logger.LogTrace($"paths to check: ");
-                entryPaths.ForEach(ep => { logger.LogTrace(ep); });
+                entries = entryPaths.Where(e => !e.EndsWith("/")).ToList();
+                subPaths = entryPaths.Where(e => e.EndsWith("/")).ToList();
+
+                logger.LogTrace($"Will check contents of these paths for secret keys ending with `{suffix}`: {string.Join(", ", entryPaths)}");
             }
             catch (VaultApiException ex)
             {
-                if (ex.StatusCode == 404) {
-                    logger.LogError($"received 404 error response from vault.  Unable to read path {_mountPoint + storePath}");                
-                }
-                var apiErrors = string.Join(", ", ex.ApiErrors);
-
-                logger.LogError(ex, $"Received error response from Vault. \nstatus code is {ex.StatusCode}\nexception message is: {ex.Message} API errors: {apiErrors}");
-
-                throw;
+                logger.LogTrace($"caught exception reading the child paths at {_mountPoint + storePath}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
+                var warning = $"Error reading entry names at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
+                warning += string.Join("\n", ex.ApiErrors);
+                logger.LogWarning(ex, warning);
+                warnings.Add(warning);
+                //throw;
             }
 
-            logger.LogTrace($"checking paths at this level. paths = {string.Join(", ", entryPaths)}");
-            for (var i = 0; i < entryPaths.Count(); i++)
+            for (var i = 0; i < entries.Count(); i++)
             {
-                var path = entryPaths[i];
-                if (!path.EndsWith("/"))
-                { // it is a secret, not a folder
-                  // get the sub-keys for the secret entry
+                var path = entries[i];
 
-                    IDictionary<string, object> keys;
-                    try
+                // get the sub-keys for the secret entry
+
+                IDictionary<string, object> keys;
+                try
+                {
+                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");
+                    var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
+                    keys = res.Data.Subkeys;
+
+                    // does it have an entry with the suffix we are looking for?
+                    var key = keys.FirstOrDefault(k => k.Key.EndsWith(suffix));
+                    if (key.Key != null)
                     {
-                        logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");
-                        var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
-                        keys = res.Data.Subkeys;
-
-                        // does it have an entry with the suffix we are looking for?
-                        var key = keys.FirstOrDefault(k => k.Key.EndsWith(suffix));
-                        if (key.Key != null)
+                        if (_storeType == StoreType.HCVKVPEM)
                         {
-                            if (_storeType == StoreType.HCVKVPEM)
-                            {
-                                // PEM stores paths are the folder/container name rather than the entry name.  
-                                vaultPaths.Add(storePath);
-                            }
-                            else
-                            {
-                                vaultPaths.Add(storePath + path + "/" + key.Key);
-                            }
+                            // PEM stores paths are the folder/container name rather than the entry name.  
+                            vaultPaths.Add(storePath);
+                        }
+                        else
+                        {
+                            vaultPaths.Add(storePath + path + "/" + key.Key);
                         }
                     }
-                    catch (VaultApiException ex)
-                    {
-                        var apiErrors = string.Join(", ", ex.ApiErrors);
-
-                        logger.LogError(ex, $"Received error response from Vault. \nstatus code is {ex.StatusCode}\nexception message is: {ex.Message} API errors: {apiErrors}");
-
-                        throw;                        
-                    }
                 }
-                else
-                { //it is a sub-folder.  Recurse.
-                    var subPaths = await GetVaults(storePath + path);
-                    vaultPaths.AddRange(subPaths);
+                catch (VaultApiException ex)
+                {
+                    var warning = $"Error reading secret keys at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
+                    warning += string.Join("\n", ex.ApiErrors);
+                    logger.LogWarning(ex, warning);
+                    warnings.Add(warning);                    
                 }
             }
-            logger.MethodExit();
+
+            for (var i = 0; i < subPaths.Count(); i++)
+            {
+                var path = subPaths[i];
+                (var childStores, var childWarnings) = await GetVaults(storePath + path);
+                vaultPaths.AddRange(childStores);
+                warnings.AddRange(childWarnings);
+            }
             vaultPaths = vaultPaths.Distinct().ToList();
-            return vaultPaths;
+            
+            return (vaultPaths, warnings);
         }
 
 
@@ -731,25 +729,36 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 {
                     entryNames = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, mountPoint: _mountPoint)).Data.Keys.ToList();
                     entryNames.RemoveAll(en => en.EndsWith("/"));
-
-                    logger.LogTrace($"got entry names in {path}, {string.Join(", ", entryNames)}");
-                    entryNames.ForEach(k =>
-                    {
-                        logger.LogTrace($"calling getCertificateFromPemStore, passing path: {relative_path}{k}");
-                        var cert = GetCertificateFromPemStore($"{relative_path}{k}").Result;
-                        if (cert != null) certs.Add(cert);
-
-                    });
                 }
                 catch (Exception ex)
                 {
-                    var warning = $"error getting PEM certificate from {relative_path}, exception message = {ex.Message}";
-                    logger.LogWarning(warning);
+                    logger.LogTrace($"caught exception reading the child paths at {_mountPoint + path}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
+                    var warning = $"Error reading entry names at {_mountPoint + path}:\n";
+                    warning += string.Join("\n", (ex as VaultApiException).ApiErrors);
+                    logger.LogWarning(ex, warning);
                     inventoryExceptions.Add(warning);
-
                     // continuing on exception during inventory
                 }
+
+                logger.LogTrace($"got entry names in {path}, {string.Join(", ", entryNames)}");
+                entryNames.ForEach(k =>
+                {
+                    logger.LogTrace($"calling getCertificateFromPemStore, passing path: {relative_path}{k}");
+                    try
+                    {
+                        var cert = GetCertificateFromPemStore($"{relative_path}{k}").Result;
+                        if (cert != null) certs.Add(cert);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.InnerException?.GetType() != typeof(PemException)) throw;
+                        // if type is PemException, we continue and log a warning.
+
+                        inventoryExceptions.Add(ex.InnerException.Message);
+                    }
+                });
             }
+
             return (certs, inventoryExceptions);
         }
 
@@ -767,7 +776,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error getting certificate data from {parentPath}", ex);
+                logger.LogError(ex, $"Error getting {_storeType} certificate data from {parentPath}.  Exception message: {ex.Message}");
                 return (null, null);
             }
 

@@ -161,7 +161,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             public Dictionary<string, string[]> data { get; set; }
         }
 
-        public Task<List<string>> GetVaults(string storePath)
+        public Task<(List<string>, List<string>)> GetVaults(string storePath)
         {
             throw new NotSupportedException();
         }
