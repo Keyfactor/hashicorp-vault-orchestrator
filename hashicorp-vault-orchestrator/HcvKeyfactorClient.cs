@@ -101,7 +101,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
         }
 
-        public async Task<IEnumerable<CurrentInventoryItem>> GetCertificates()
+        public async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificates()
         {
             logger.MethodEntry();
 
@@ -136,9 +136,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError($"Error getting certificates from {getKeysPath}.  Exception message: `{ex.Message}`");
             }
-            return certs;
+            return (certs, null);
         }       
 
         public class HashiResponse
@@ -161,7 +161,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             public Dictionary<string, string[]> data { get; set; }
         }
 
-        public Task<List<string>> GetVaults(string storePath)
+        public Task<(List<string>, List<string>)> GetVaults(string storePath)
         {
             throw new NotSupportedException();
         }

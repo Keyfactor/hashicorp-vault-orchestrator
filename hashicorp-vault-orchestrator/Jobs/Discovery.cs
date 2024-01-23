@@ -19,15 +19,43 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     {
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate submitDiscoveryUpdate)
         {
-            logger = LogHandler.GetClassLogger<Discovery>();
+            var jobStatus = OrchestratorJobStatusJobResult.Failure;
+            var failureMessage = string.Empty;
 
-            InitializeStore(config);
+            Initialize(config);
 
             List<string> vaults;
+            List<string> warnings;
 
             try
             {
-                vaults = VaultClient.GetVaults(string.Empty).Result.ToList();
+                (vaults, warnings) = VaultClient.GetVaults(StorePath).Result;
+
+                if (vaults.Count() > 0) jobStatus = OrchestratorJobStatusJobResult.Success;
+
+                // if vaults were discovered, but there are warnings, the job status is "warning".
+                if (vaults.Count() > 0 && warnings.Count() > 0) {
+                    jobStatus = OrchestratorJobStatusJobResult.Warning;
+                    failureMessage = $"Discovered {vaults.Count()} vaults, but encountered {warnings.Count()} errors during discovery:\n{string.Join("\n", warnings)}";
+                }
+                // if no vaults were discovered, but there are warnings, the job status is "failure".
+
+                if (vaults.Count() == 0 && warnings?.Count() > 0) {
+                    failureMessage = $"{warnings.Count()} errors during discovery job:\n{string.Join("\n", warnings)}"; 
+                }
+
+                if (!warnings.Any()) {
+                    failureMessage = $"Completed discovery job successfully.  Discovered {vaults.Count()} vaults."; 
+                }
+                
+                submitDiscoveryUpdate.DynamicInvoke(vaults);
+
+                return new JobResult
+                {
+                    Result = jobStatus,
+                    JobHistoryId = config.JobHistoryId,
+                    FailureMessage = failureMessage
+                };
             }
             catch (Exception ex)
             {
@@ -40,24 +68,15 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 if (ex.GetType() == typeof(NotSupportedException))
                 {
                     logger.LogError("Attempt to perform discovery on unsupported Secrets Engine backend.");
-
                     result.FailureMessage = $"{_storeType} does not support Discovery jobs.";
                 }
                 else
                 {
-                    result.FailureMessage = ex.Message;
+                    logger.LogError(ex, $"Error running discovery job.\nException type:{ex.GetType().Name}\nException message: {ex.Message}\nInner exception message: {ex.InnerException?.Message}");
+                    result.FailureMessage = $"Error running discovery job. {ex.Message}";
                 }
                 return result;
             }
-
-            submitDiscoveryUpdate.DynamicInvoke(vaults);
-
-            return new JobResult
-            {
-                Result = OrchestratorJobStatusJobResult.Success,
-                JobHistoryId = config.JobHistoryId,
-                FailureMessage = string.Empty
-            };
         }
     }
 }
