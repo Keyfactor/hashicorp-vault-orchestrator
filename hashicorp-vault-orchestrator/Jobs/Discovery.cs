@@ -40,7 +40,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }
                 // if no vaults were discovered, but there are warnings, the job status is "failure".
 
-                if (vaults.Count() == 0 && warnings.Count() > 0) {
+                if (vaults.Count() == 0 && warnings?.Count() > 0) {
                     failureMessage = $"{warnings.Count()} errors during discovery job:\n{string.Join("\n", warnings)}"; 
                 }
 
