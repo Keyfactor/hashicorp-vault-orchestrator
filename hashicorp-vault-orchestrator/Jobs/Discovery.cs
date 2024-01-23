@@ -31,16 +31,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             {
                 (vaults, warnings) = VaultClient.GetVaults(StorePath).Result;
 
-                if (vaults.Count() > 0) jobStatus = OrchestratorJobStatusJobResult.Success;
+                if (vaults?.Count() > 0) jobStatus = OrchestratorJobStatusJobResult.Success;
 
                 // if vaults were discovered, but there are warnings, the job status is "warning".
-                if (vaults.Count() > 0 && warnings.Count() > 0) {
+                if (vaults?.Count() > 0 && warnings?.Count() > 0) {
                     jobStatus = OrchestratorJobStatusJobResult.Warning;
                     failureMessage = $"Discovered {vaults.Count()} vaults, but encountered {warnings.Count()} errors during discovery:\n{string.Join("\n", warnings)}";
                 }
                 // if no vaults were discovered, but there are warnings, the job status is "failure".
 
-                if (vaults.Count() == 0 && warnings?.Count() > 0) {
+                if (vaults?.Count() == 0 && warnings?.Count() > 0) {
                     failureMessage = $"{warnings.Count()} errors during discovery job:\n{string.Join("\n", warnings)}"; 
                 }
 

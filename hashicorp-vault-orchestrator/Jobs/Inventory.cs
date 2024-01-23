@@ -23,7 +23,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             var failureMessage = "Error executing inventory";
             var resultStatus = OrchestratorJobStatusJobResult.Failure;
             IEnumerable<CurrentInventoryItem> certs = null;
-            var warnings = new List<string>();
+            List<string> warnings;
 
             Initialize(config);
 
@@ -39,7 +39,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
                 if (success && warnings?.Count() > 0) {
                     resultStatus = OrchestratorJobStatusJobResult.Warning;
-                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
+                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings?.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
                 }
 
                 if (!success)
