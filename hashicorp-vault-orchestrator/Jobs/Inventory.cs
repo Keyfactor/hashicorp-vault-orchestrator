@@ -37,7 +37,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     failureMessage = $"Found {certs.Count()} valid certificates.";
                 }
 
-                if (success && warnings.Count() > 0) {
+                if (success && warnings?.Count() > 0) {
                     resultStatus = OrchestratorJobStatusJobResult.Warning;
                     failureMessage = $"Found {certs.Count()} valid certificates, and {warnings.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
                 }
