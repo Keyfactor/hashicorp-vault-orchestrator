@@ -318,7 +318,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 catch (VaultApiException ex)
                 {
                     var warning = $"Error reading secret keys at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
-                    warning += string.Join("\n", ex.ApiErrors);
+                    if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                     logger.LogWarning(ex, warning);
                     warnings.Add(warning);                    
                 }
