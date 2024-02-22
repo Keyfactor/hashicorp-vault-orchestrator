@@ -281,7 +281,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 logger.LogTrace($"caught exception reading the child paths at {_mountPoint + storePath}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
                 var warning = $"Error reading entry names at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
-                warning += string.Join("\n", ex.ApiErrors);
+                if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                 logger.LogWarning(ex, warning);
                 warnings.Add(warning);
                 //throw;
