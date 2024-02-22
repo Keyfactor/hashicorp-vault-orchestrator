@@ -13,9 +13,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
     public interface IHashiClient
     {
-        Task<IEnumerable<CurrentInventoryItem>> GetCertificates();
+        Task<(List<CurrentInventoryItem>, List<string>)> GetCertificates();
         Task<CurrentInventoryItem> GetCertificateFromPemStore(string key);
-        Task<List<string>> GetVaults(string storePath);
+        Task<(List<string>, List<string>)> GetVaults(string storePath);
         Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain);
         Task<bool> RemoveCertificate(string certName);
         Task CreateCertStore();
