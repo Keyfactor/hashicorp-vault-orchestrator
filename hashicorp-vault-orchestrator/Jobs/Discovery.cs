@@ -34,20 +34,25 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 if (vaults?.Count() > 0) jobStatus = OrchestratorJobStatusJobResult.Success;
 
                 // if vaults were discovered, but there are warnings, the job status is "warning".
-                if (vaults?.Count() > 0 && warnings?.Count() > 0) {
+                if (vaults?.Count() > 0 && warnings?.Count() > 0)
+                {
                     jobStatus = OrchestratorJobStatusJobResult.Warning;
                     failureMessage = $"Discovered {vaults.Count()} vaults, but encountered {warnings.Count()} errors during discovery:\n{string.Join("\n", warnings)}";
                 }
                 // if no vaults were discovered, but there are warnings, the job status is "failure".
 
-                if (vaults?.Count() == 0 && warnings?.Count() > 0) {
-                    failureMessage = $"{warnings.Count()} errors during discovery job:\n{string.Join("\n", warnings)}"; 
+                if (vaults?.Count() == 0 && warnings?.Count() > 0)
+                {
+                    failureMessage = $"{warnings.Count()} errors during discovery job:\n{string.Join("\n", warnings)}";
                 }
 
-                if (!warnings.Any()) {
-                    failureMessage = $"Completed discovery job successfully.  Discovered {vaults.Count()} vaults."; 
+                if (!warnings.Any())
+                {
+                    failureMessage = $"Completed discovery job successfully.  Discovered {vaults.Count()} vaults.";
                 }
-                
+
+                if (failureMessage.Length > 2000) { failureMessage = failureMessage.Substring(0, 2000) + "\n -- contents have been truncated -- \n Please check the orchestrator logs for the remaining errors."; }
+
                 submitDiscoveryUpdate.DynamicInvoke(vaults);
 
                 return new JobResult

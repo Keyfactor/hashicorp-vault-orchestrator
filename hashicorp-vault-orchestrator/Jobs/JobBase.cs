@@ -18,7 +18,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     public abstract class JobBase
     {
         public string ExtensionName => "HCV";
-        
+
         public string StorePath { get; set; }
 
         public string VaultToken { get; set; }
@@ -26,7 +26,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public string ClientMachine { get; set; }
 
         public string VaultServerUrl { get; set; }
-        
+
         public bool SubfolderInventory { get; set; }
 
         public bool IncludeCertChain { get; set; }
@@ -35,7 +35,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
         public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point. "namespace/mountpoint"
 
-        internal protected IHashiClient VaultClient { get; set; }        
+        internal protected IHashiClient VaultClient { get; set; }
         internal protected string _storeType { get; set; }
         internal protected ILogger logger { get; set; }
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
@@ -58,7 +58,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
             var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
-            
+
             InitProps(props, config.Capability);
         }
 
@@ -83,18 +83,22 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             StorePath = "/";
             logger.LogTrace($"parsing the passed in mountpoint value: {mp}");
 
-            if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\") {
+            if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\")
+            {
                 var splitmp = mp.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                if (splitmp.Length > 1) {
+                if (splitmp.Length > 1)
+                {
                     logger.LogTrace($"detected an included namespace {splitmp[0]}, storing for authentication.");
                     Namespace = splitmp[0].Trim();
                     MountPoint = splitmp[1].Trim();
                 }
-                else {
-                    MountPoint = mp.Trim();
-                }                
+                else
+                {
+                    MountPoint = mp.TrimStart(new[] { '/' });
+                }
             }
-            if (!string.IsNullOrEmpty(subPath)) {
+            if (!string.IsNullOrEmpty(subPath))
+            {
                 StorePath = subPath.Trim();
             }
 
@@ -116,7 +120,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             StorePath = config.CertificateStoreDetails.StorePath;
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
-            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());            
+            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
             InitProps(props, config.Capability);
         }
 
@@ -126,21 +130,23 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             if (props == null) throw new Exception("Properties is null");
 
-            if (props.ContainsKey("StorePath")) {
+            if (props.ContainsKey("StorePath"))
+            {
                 StorePath = props["StorePath"].ToString();
                 StorePath = StorePath.TrimStart('/');
                 StorePath = StorePath.TrimEnd('/');
-                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI)) {
+                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
+                {
                     StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
-                }                
+                }
             }
-            
+
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-            
+
             MountPoint = !string.IsNullOrEmpty(mp) ? mp : MountPoint;
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
-            
+
             var isPki = _storeType.Contains("HCVPKI");
 
             if (!isPki)

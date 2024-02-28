@@ -40,20 +40,25 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         private string _mountPoint { get; set; }
         private bool _subfolderInventory { get; set; }
         private string _storeType { get; set; }
+        private string _namespace { get; set; }
 
         public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string ns, string storePath, string storeType, bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
-
-            //split namespace and mount point
-
+            _namespace = ns;
 
             // Initialize settings. You can also set proxies, custom delegates etc. here.
-            var clientSettings = new VaultClientSettings(serverUrl, authMethod) { Namespace = ns };
+            var clientSettings = new VaultClientSettings(serverUrl, authMethod) { Namespace = _namespace, UseVaultTokenHeaderInsteadOfAuthorizationHeader = true };
+            _vaultClient = new VaultClient(clientSettings);
+
+            //logger.LogTrace("----- vault client has been initialized with these settings ------ ");
+            //logger.LogTrace($"url with port: {_vaultClient.Settings.VaultServerUriWithPort}");
+            //logger.LogTrace($"namespace: {_vaultClient.Settings.Namespace}");
+            //logger.LogTrace($"use token header?: {_vaultClient.Settings.UseVaultTokenHeaderInsteadOfAuthorizationHeader}");            
+            
             _mountPoint = mountPoint;
             _storePath = (!string.IsNullOrEmpty(storePath) && !storePath.StartsWith("/")) ? "/" + storePath.Trim() : storePath?.Trim();
-            _vaultClient = new VaultClient(clientSettings);
             _subfolderInventory = SubfolderInventory;
             _storeType = storeType?.Split('.')[1];
         }
@@ -279,7 +284,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (VaultApiException ex)
             {
-                logger.LogTrace($"caught exception reading the child paths at {_mountPoint + storePath}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
+                logger.LogTrace($"caught exception reading the child paths at {storePath} with mount point {_mountPoint}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
                 var warning = $"Error reading entry names at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
                 if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                 logger.LogWarning(ex, warning);
@@ -296,7 +301,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 IDictionary<string, object> keys;
                 try
                 {
-                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");
+                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");                   
                     var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
                     keys = res.Data.Subkeys;
 
@@ -317,7 +322,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (VaultApiException ex)
                 {
-                    var warning = $"Error reading secret keys at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
+                    var warning = $"Error reading secret keys at {storePath + path} with mount point {_mountPoint} {(!string.IsNullOrEmpty(_namespace) ? "and namespace {_namespace}" : "")}:\nStatus code: {ex.StatusCode}\n";
                     if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                     logger.LogWarning(ex, warning);
                     warnings.Add(warning);                    
