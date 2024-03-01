@@ -262,7 +262,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             storePath = storePath ?? _storePath;
 
-            if (!storePath.StartsWith("/")) storePath = "/" + storePath;
+            //if (!storePath.StartsWith("/")) storePath = "/" + storePath;
             if (!storePath.EndsWith("/")) storePath = storePath + "/";
 
             string suffix = StoreFileExtensions.ForStoreType(_storeType);
@@ -322,7 +322,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (VaultApiException ex)
                 {
-                    var warning = $"Error reading secret keys at {storePath + path} with mount point {_mountPoint} {(!string.IsNullOrEmpty(_namespace) ? "and namespace {_namespace}" : "")}:\nStatus code: {ex.StatusCode}\n";
+                    var warning = $"Error reading secret keys at {storePath + path} with mount point {_mountPoint} {(!string.IsNullOrEmpty(_namespace) ? $"and namespace {_namespace}" : "")}:\nStatus code: {ex.StatusCode}\n";
                     if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                     logger.LogWarning(ex, warning);
                     warnings.Add(warning);                    

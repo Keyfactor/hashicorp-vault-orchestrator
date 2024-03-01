@@ -57,9 +57,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
     static class CertificateHeaders {
         public const string PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";
-        public const string PEM_FOOTER = "\n-----END CERTIFICATE-----";
-    
+        public const string PEM_FOOTER = "\n-----END CERTIFICATE-----";    
     }
-
-
 }

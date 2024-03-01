@@ -51,7 +51,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     failureMessage = $"Completed discovery job successfully.  Discovered {vaults.Count()} vaults.";
                 }
 
-                if (failureMessage.Length > 2000) { failureMessage = failureMessage.Substring(0, 2000) + "\n -- contents have been truncated -- \n Please check the orchestrator logs for the remaining errors."; }
+                if (failureMessage.Length > 3500) { failureMessage = failureMessage.Substring(0, 2000) + "\n -- contents have been truncated -- \n Please check the orchestrator logs for the remaining errors."; }
 
                 submitDiscoveryUpdate.DynamicInvoke(vaults);
 

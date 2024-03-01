@@ -323,38 +323,38 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             Pkcs12Store existingPKCS12Store = null;
             JksStore jksStore = new JksStore();
 
-            logger.LogTrace("loading the contents into a jks store");
+            // first, see if it is already in the pkcs12 format
             try
             {
                 using (var ms = new MemoryStream(storeContents))
                 {
-                    jksStore.Load(ms, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
+                    logger.LogTrace("creating pkcs12 store for working with the certificate.");
+                    Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
+                    existingPKCS12Store = pkcs12storeBuilder.Build();
+                    existingPKCS12Store.Load(ms, storePassword.ToCharArray());
+                    isPKCS12Format = true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                logger.LogDebug(ex, "error loading store as JKS, attempting to load as PKCS12");
+                isPKCS12Format = false;
+                logger.LogTrace("not pkcs12 format, loading the contents into a jks store");
+
                 try
                 {
                     using (var ms = new MemoryStream(storeContents))
                     {
-                        logger.LogTrace("creating pkcs12 store for working with the certificate.");
-                        Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
-                        existingPKCS12Store = pkcs12storeBuilder.Build();
-                        existingPKCS12Store.Load(ms, storePassword.ToCharArray());
-                        isPKCS12Format = true;
+                        jksStore.Load(ms, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
                     }
                 }
                 catch (Exception innerEx)
                 {
                     logger.LogError(innerEx, $"Unable to load store as JKS or PKCS12: {innerEx.Message}");
-                    isPKCS12Format = false;
                     throw;
                 }
             }
 
-
-            if (existingPKCS12Store != null) return existingPKCS12Store; //if it was already in PKCS12 format, just return it.
+            if (isPKCS12Format) return existingPKCS12Store; //if it was already in PKCS12 format, just return it.
 
             foreach (string alias in jksStore.Aliases)
             {

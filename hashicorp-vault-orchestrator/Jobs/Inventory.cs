@@ -30,16 +30,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             try
             {
                 (certs, warnings) = VaultClient.GetCertificates().Result;
-                var success = submitInventoryUpdate.Invoke(certs.ToList());
+                var success = submitInventoryUpdate.Invoke(certs?.ToList());
                 
                 if (success) {
                     resultStatus = OrchestratorJobStatusJobResult.Success;
-                    failureMessage = $"Found {certs.Count()} valid certificates.";
+                    failureMessage = $"Found {certs?.Count() ?? 0} valid certificates.";
                 }
 
                 if (success && warnings?.Count() > 0) {
                     resultStatus = OrchestratorJobStatusJobResult.Warning;
-                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings?.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
+                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
                 }
 
                 if (!success)
