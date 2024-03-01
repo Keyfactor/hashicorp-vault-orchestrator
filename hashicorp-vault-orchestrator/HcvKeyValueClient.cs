@@ -258,6 +258,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<(List<string>, List<string>)> GetVaults(string storePath)
         {
             logger.MethodEntry();
+            
             // there are 4 store types that use the KV secrets engine.  HCVKVPEM uses the folder as the store path.  The others (KCVKVJKS,HCVKVPKCS12,HCVKVPFX) use the full file path.
 
             storePath = storePath ?? _storePath;
@@ -280,14 +281,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 entries = entryPaths.Where(e => !e.EndsWith("/")).ToList();
                 subPaths = entryPaths.Where(e => e.EndsWith("/")).ToList();
 
-                logger.LogTrace($"Will check contents of these paths for secret keys ending with `{suffix}`: {string.Join(", ", entryPaths)}");
+                logger.LogTrace($"Will check contents of these paths for secret keys ending with `{suffix}`: {string.Join(", ", entries)}");
             }
             catch (VaultApiException ex)
             {
                 logger.LogTrace($"caught exception reading the child paths at {storePath} with mount point {_mountPoint}, exception type = {ex.GetType().Name} inner type = {ex.InnerException?.GetType().Name}. \n exception message: {ex.Message}\n inner exception message: {ex.InnerException?.Message}\nlogging a warning and continuing with inventory.");
-                var warning = $"Error reading entry names at {_mountPoint + storePath}:\nStatus code: {ex.StatusCode}\n";
+                var warning = $"Error reading entry names at {storePath}\nStatus code: {ex.StatusCode}\n";
                 if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
-                logger.LogWarning(ex, warning);
                 warnings.Add(warning);
                 //throw;
             }
@@ -301,7 +301,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 IDictionary<string, object> keys;
                 try
                 {
-                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");                   
+                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");            
                     var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
                     keys = res.Data.Subkeys;
 
@@ -323,14 +323,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 catch (VaultApiException ex)
                 {
                     var warning = $"Error reading secret keys at {storePath + path} with mount point {_mountPoint} {(!string.IsNullOrEmpty(_namespace) ? $"and namespace {_namespace}" : "")}:\nStatus code: {ex.StatusCode}\n";
-                    if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
-                    logger.LogWarning(ex, warning);
-                    warnings.Add(warning);                    
+                    if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);                    
+                    logger.LogWarning(warning);
+                    warnings.Add(warning);
                 }
             }
-
             for (var i = 0; i < subPaths.Count(); i++)
-            {
+            {                
                 var path = subPaths[i];
                 (var childStores, var childWarnings) = await GetVaults(storePath + path);
                 vaultPaths.AddRange(childStores);
@@ -770,11 +769,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificatesFromFileStore()
         {
             Secret<SecretData> res;
-
+            
             //file stores for JKS, PKCS12 and PFX will have a "passphrase" entry on the same level by convention.  We'll need this in order to extract the certificates for inventory.
             var pos = _storePath.LastIndexOf("/");
             var parentPath = _storePath.Substring(0, pos);
-
+            logger.LogTrace($"reading secrets at path {parentPath}, which should include the key and certificate for {_storePath}");
+            
             try
             {
                 res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint));
@@ -786,6 +786,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
 
             var certFields = (Dictionary<string, object>)res.Data.Data;
+
+            logger.LogTrace("retrieved the following entries:");
+            certFields.Keys?.ToList()?.ForEach(key =>
+            {
+                logger.LogTrace($"key: `{key}`, value: {certFields[key].ToString().Length} character long string (redacted).");
+            });
 
             IFileStore fileStore;
             switch (_storeType)

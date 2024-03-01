@@ -30,7 +30,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             try
             {
                 (certs, warnings) = VaultClient.GetCertificates().Result;
-                var success = submitInventoryUpdate.Invoke(certs?.ToList());
+                var success = submitInventoryUpdate.Invoke(certs?.ToList() ?? new List<CurrentInventoryItem>());
                 
                 if (success) {
                     resultStatus = OrchestratorJobStatusJobResult.Success;

@@ -12,6 +12,7 @@ using System.Linq;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using NLog.Config;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
@@ -81,6 +82,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 
             try
             {
+                logger.LogTrace($"checking these keys for one that ends in {StoreFileExtensions.HCVKVJKS}");
+                certFields.Keys.ToList().ForEach(key => logger.LogTrace(key));
+
                 certKey = certFields.Keys.First(f => f.EndsWith(StoreFileExtensions.HCVKVJKS));
 
                 if (certKey == null)
@@ -88,13 +92,15 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                     throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVJKS}' found");
                 }
                 else
-                {
+                {                    
                     base64EncodedJksStore = certFields[certKey].ToString();
+                    logger.LogTrace($"reading the base64 encoded file store.  It is {base64EncodedJksStore.Length} characters in size.");
                 }
 
                 if (certFields.TryGetValue("passphrase", out object filePasswordObj))
                 {
                     password = filePasswordObj.ToString();
+                    logger.LogTrace($"retreived the store passphrase.  it is {password.Length} characters.");
                 }
                 else
                 {
@@ -111,7 +117,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error reading entry for {certKey} in vault.");
+                logger.LogError(ex, $"Error reading entry for {certKey} in vault. {ex.Message}");
 
                 throw;
             }
