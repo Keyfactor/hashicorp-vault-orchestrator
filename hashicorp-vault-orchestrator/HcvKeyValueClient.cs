@@ -263,7 +263,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             storePath = storePath ?? _storePath;
 
-            //if (!storePath.StartsWith("/")) storePath = "/" + storePath;
+            if (!storePath.StartsWith("/")) storePath = "/" + storePath;
             if (!storePath.EndsWith("/")) storePath = storePath + "/";
 
             string suffix = StoreFileExtensions.ForStoreType(_storeType);
