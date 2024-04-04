@@ -39,8 +39,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
                 if (success && warnings?.Count() > 0) {
                     resultStatus = OrchestratorJobStatusJobResult.Warning;
-                    failureMessage = $"Found {certs.Count()} valid certificates, and {warnings.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
+                    failureMessage = $"Found {certs?.Count() ?? 0} valid certificates, and {warnings?.Count()} entries that were unable to be included.\n{ string.Join("\n", warnings)}";
                 }
+
+                if (certs?.Count() == 0 && warnings?.Count() > 0)
+                {
+                    failureMessage = $"{warnings?.Count()} errors during inventory job:\n{string.Join("\n", warnings)}";
+                    resultStatus = OrchestratorJobStatusJobResult.Failure;
+                }
+
+                if (failureMessage.Length > 3500) { failureMessage = failureMessage.Substring(0, 2000) + "\n -- contents have been truncated -- \n Please check the orchestrator logs for the remaining errors."; }
 
                 if (!success)
                 {
