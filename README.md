@@ -143,7 +143,10 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 ## Security Considerations
 
-1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
+1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum path and permissions necessary to perform the intended operations.
+1. The capabilities required to perform all operations on a cert store within vault are `["read", "list", "create", "update", "patch", "delete"]`
+1. These capabilities should apply to the parent folder on file stores.
+1. The token will also need `"list"` capability on the `<mount point>/metadata` path to perform basic operations.
 
 ## Extension Configuration
 
