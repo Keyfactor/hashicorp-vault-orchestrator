@@ -40,6 +40,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         internal protected ILogger logger { get; set; }
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
+        public JobBase(IPAMSecretResolver resolver) {
+            PamSecretResolver = resolver;
+        }
 
         public void Initialize(InventoryJobConfiguration config)
         {
@@ -47,11 +50,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
             MountPoint = "kv-v2"; // default
-
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+                       
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             StorePath = config.CertificateStoreDetails.StorePath;
@@ -67,10 +68,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger = LogHandler.GetClassLogger(GetType());
             ClientMachine = config.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             var subPath = config.JobProperties?["dirs"] as string;
