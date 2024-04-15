@@ -28,13 +28,35 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public const string KCVKVJKS = "HCVKVJKS";
         public const string HCVKVPKCS12 = "HCVKVP12";
         public const string HCVKVPFX = "HCVKVPFX";
-        public const string HCVPKI = "HCVPKI";        
+        public const string HCVPKI = "HCVPKI";
     }
 
-    static class StoreFileExtensions {
+    static class StoreFileExtensions
+    {
         public const string HCVKVJKS = "_jks";
         public const string HCVKVPKCS12 = "_p12";
         public const string HCVKVPFX = "_pfx";
         public const string HCVKVPEM = "certificate";
+        public static string ForStoreType(string type)
+        {
+            switch (type)
+            {
+                case StoreType.HCVKVPEM:
+                    return HCVKVPEM;
+                case StoreType.HCVKVPFX:
+                    return HCVKVPFX;
+                case StoreType.HCVKVPKCS12:
+                    return HCVKVPKCS12;
+                case StoreType.KCVKVJKS:
+                    return HCVKVJKS;
+                default:
+                    return string.Empty;
+            }
+        }
+    }
+
+    static class CertificateHeaders {
+        public const string PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";
+        public const string PEM_FOOTER = "\n-----END CERTIFICATE-----";    
     }
 }

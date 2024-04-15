@@ -94,10 +94,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             string FormatBase64(string ss) =>
                 ss.Length <= 64 ? ss : ss.Substring(0, 64) + "\n" + FormatBase64(ss.Substring(64));
 
-            string header = "-----BEGIN CERTIFICATE-----\n";
-            string footer = "\n-----END CERTIFICATE-----";
-
-            return header + FormatBase64(base64Cert) + footer;
+            return CertificateHeaders.PEM_HEADER + FormatBase64(base64Cert) + CertificateHeaders.PEM_FOOTER;
         };
 
         public static string GenerateRandomString(int length)
