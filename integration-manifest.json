@@ -380,7 +380,6 @@
             "StoreRequired": false,
             "Style": "Default"
           },
-
           "StorePathType": "",
           "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",

@@ -170,6 +170,11 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
 - The server password should be the Vault token that will be used for authenticating.
 
+#### Set the server name and password
+
+- The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- The server password should be the Vault token that will be used for authenticating.
+
 ### For the Keyfactor and PKI plugins
 
 - Add a new Certificate Store Type
