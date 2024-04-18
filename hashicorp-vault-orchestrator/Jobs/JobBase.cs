@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
     public abstract class JobBase
     {
         public string ExtensionName => "HCV";
-        
+
         public string StorePath { get; set; }
 
         public string VaultToken { get; set; }
@@ -25,62 +26,100 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public string ClientMachine { get; set; }
 
         public string VaultServerUrl { get; set; }
-        
+
         public bool SubfolderInventory { get; set; }
 
         public bool IncludeCertChain { get; set; }
 
-        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to KV by Vault if not provided.
+        public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to kv-v2 if not provided.
 
-        internal protected IHashiClient VaultClient { get; set; }        
+        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point. "namespace/mountpoint"
+
+        internal protected IHashiClient VaultClient { get; set; }
         internal protected string _storeType { get; set; }
         internal protected ILogger logger { get; set; }
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
+        public JobBase(IPAMSecretResolver resolver) {
+            PamSecretResolver = resolver;
+        }
 
-        public void InitializeStore(InventoryJobConfiguration config)
-        {            
+        public void Initialize(InventoryJobConfiguration config)
+        {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
-
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            MountPoint = "kv-v2"; // default
+                       
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             StorePath = config.CertificateStoreDetails.StorePath;
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
             var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
-            
+
             InitProps(props, config.Capability);
         }
 
-        public void InitializeStore(DiscoveryJobConfiguration config)
+        public void Initialize(DiscoveryJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
             ClientMachine = config.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
+            var subPath = config.JobProperties?["dirs"] as string;
+            var mp = config.JobProperties?["extensions"] as string;
+
+            // Discovery jobs need to pass the sub-paths in the "directories to search" field.
+            // The mount point and namespace should be passed in the "Extensions" field.
+            // if nothing is provided, we default to mount point: "kv-v2" and no namespace.
+
+            StorePath = "/";
+            logger.LogTrace($"parsing the passed in mountpoint value: {mp}");
+
+            if (!string.IsNullOrEmpty(mp) && mp.Trim() != "/" && mp.Trim() != "\\")
+            {
+                var splitmp = mp.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                if (splitmp.Length > 1)
+                {
+                    logger.LogTrace($"detected an included namespace {splitmp[0]}, storing for authentication.");
+                    Namespace = splitmp[0].Trim();
+                    MountPoint = splitmp[1].Trim();
+                }
+                else
+                {
+                    MountPoint = mp.TrimStart(new[] { '/' });
+                }
+            }
+            if (!string.IsNullOrEmpty(subPath))
+            {
+                StorePath = subPath.Trim();
+            }
+
+            logger.LogTrace($"Directories to search (mount point): {MountPoint}");
+            logger.LogTrace($"Enterprise Namespace: {Namespace}");
+
+            logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
             InitProps(config.JobProperties, config.Capability);
         }
-        public void InitializeStore(ManagementJobConfiguration config)
+        public void Initialize(ManagementJobConfiguration config)
         {
+            logger = LogHandler.GetClassLogger(GetType());
+
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            // ClientSecret can be omitted for managed identities, required for service principal auth
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
             StorePath = config.CertificateStoreDetails.StorePath;
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
-            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());            
+            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
             InitProps(props, config.Capability);
         }
 
@@ -90,24 +129,28 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             if (props == null) throw new Exception("Properties is null");
 
-            if (props.ContainsKey("StorePath")) {
+            if (props.ContainsKey("StorePath"))
+            {
                 StorePath = props["StorePath"].ToString();
                 StorePath = StorePath.TrimStart('/');
                 StorePath = StorePath.TrimEnd('/');
-                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI)) {
+                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
+                {
                     StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
-                }                
+                }
             }
 
-            MountPoint = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+            var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
+
+            MountPoint = !string.IsNullOrEmpty(mp) ? mp : MountPoint;
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
-            
+
             var isPki = _storeType.Contains("HCVPKI");
 
             if (!isPki)
             {
-                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, StorePath, _storeType, SubfolderInventory);
+                VaultClient = new HcvKeyValueClient(VaultToken, VaultServerUrl, MountPoint, Namespace, StorePath, _storeType, SubfolderInventory);
             }
             else
             {
