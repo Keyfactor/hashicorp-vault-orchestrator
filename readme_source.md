@@ -23,7 +23,6 @@ The following operations are supported by this integration for all of the Key-Va
 1. Management (Remove) - Remove a certificate from a defined certificate store.
 1. Create - Create a new, empty certificate store at the path defined in Store Path.
 
-
 Excluding *HCVKVPEM*, the discovery process requires that:
 1. The entry for the certificate contain the base64 encoded certificate file.
 1. The name (key) for the entry ends with the suffix corresponding to the certificate store type:
@@ -35,6 +34,43 @@ Excluding *HCVKVPEM*, the discovery process requires that:
 1. For *HCVKVPEM*, there be an entry named `private_key` containing the private key portion of the key-pair.
 
 **Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
+
+> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
+
+> *refer to the below image for an example*
+
+![](images/discovery.PNG)
+
+
+
+### Important note on PEM (HCVKVPEM) Sub-Folder Inventory
+> While HCVKVJKS, HCVKVPFX and HCVKVP12 point to a single file store, the HCVKVPEM is structured differently.   Each certificate and private key in a PEM store is in a specific sub-folder under the defined store path.
+Consequently you are able to define a single HCVKVPEM store as the root path, and have any number of sub-paths beneath it.  These sub-paths could be their own certificate store defined in the platform, or logical containers that don't require a seperate store be set up for each in the Command platform.
+
+> Example: 
+
+ ![](images/PEM-vault-example-1.PNG)
+
+> In the "testpem" path above, there exist both a secret entry (toplevelcert), with a properly formatted and named certificate, and a subpath/ path.
+
+![](images/PEM-vault-example-2.PNG)
+
+> The subpath/ path contains two certificate entries.
+
+![](images/PEM-vault-example-3.PNG)
+
+> - If we define our HCVKVPEM store in the platform to have the path "testpem/", and set "Sub-folder Inventory" to "False", then the inventory job should return the single "toplevelcert" entry.
+> - If we define the store with "Sub-Folder Inventory" set to "True", then the inventory job should return 3 entries: "toplevelcert", "cert1", and "testaddexistingcert".
+> - If we define another store with the path "testpem/subpath/", then it's inventory will contain "cert1" and "testaddexistingcert".  
+
+:warning: _Avoid having the same certificate appearing in multiple stores by setting Sub-Folder inventory to "False" on any HCVKVPEM certificate stores where the path is a parent to another HCVKVPEM store's path that is defined in the platform._
+
+### Base64 encoding
+
+For all of the store types in the Key-Value secrets engine, they should be stored in a base64 encoded format.  
+One way to encode a binary certificate store is to use the following command in a windows powershell or linux/macOs terminal window:
+
+`c:\> cat <cert store file path> | base64`
 
 ### The Hashicorp PKI and Keyfactor Plugin secrets engines
 
@@ -56,7 +92,10 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 
 ## Security Considerations
 
-1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum permissions necessary to perform the intended operations.
+1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum path and permissions necessary to perform the intended operations.
+1. The capabilities required to perform all operations on a cert store within vault are `["read", "list", "create", "update", "patch", "delete"]`
+1. These capabilities should apply to the parent folder on file stores.
+1. The token will also need `"list"` capability on the `<mount point>/metadata` path to perform basic operations.
 
 ## Extension Configuration
 
@@ -124,7 +163,12 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-- **Subfolder Inventory** - Set to 'True' if it is a requirement to inventory secrets at the subfolder/component level. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+- **Subfolder Inventory** - Set to 'True' if all of the certificates . The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+
+#### Set the server name and password
+
+- The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- The server password should be the Vault token that will be used for authenticating.
 
 #### Set the server name and password
 

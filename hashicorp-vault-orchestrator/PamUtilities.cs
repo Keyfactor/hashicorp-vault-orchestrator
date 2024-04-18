@@ -14,7 +14,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
     {
         internal static string ResolvePAMField(IPAMSecretResolver resolver, ILogger logger, string name, string key)
         {
-            if (resolver == null) return key;
+            if (resolver == null)
+            {
+                logger.LogWarning("provided PAM resolver is null");
+                return key;
+            }
             else
             {
                 return resolver.Resolve(key);

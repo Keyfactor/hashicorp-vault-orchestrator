@@ -9,17 +9,18 @@ using System;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
     public class Management : JobBase, IManagementJobExtension
     {
+        public Management(IPAMSecretResolver resolver) : base(resolver) { }
+
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
-            logger = LogHandler.GetClassLogger<Management>();
-
-            InitializeStore(config);
+            Initialize(config);
 
             JobResult complete = new JobResult()
             {
