@@ -38,7 +38,7 @@ The Keyfactor Universal Orchestrator may be installed on either Windows or Linux
 |Supports Management Remove|&check; |&check; |
 |Supports Create Store|&check; |&check; |
 |Supports Discovery|&check; |&check; |
-|Supports Renrollment|  |  |
+|Supports Reenrollment|  |  |
 |Supports Inventory|&check; |&check; |
 
 
@@ -313,4 +313,7 @@ At this point you should be able to enroll a certificate and store it in Vault u
 ## Notes / Future Enhancements
 
 - For the Key-Value stores we operate on a single version of the Key Value secret (no versioning capabilities through the Orchesterator Extension / Keyfactor).
+
+When creating cert store type manually, that store property names and entry parameter names are case sensitive
+
 
