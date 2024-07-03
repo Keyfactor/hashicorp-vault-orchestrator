@@ -1,321 +1,533 @@
+<h1 align="center" style="border-bottom: none">
+    for Hashicorp Vault Universal Orchestrator Extension
+</h1>
 
-# Orchestrator Extension for Hashicorp Vault
+<p align="center">
+  <!-- Badges -->
+<img src="https://img.shields.io/badge/integration_status-production-3D1973?style=flat-square" alt="Integration Status: production" />
+<a href="https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases"><img src="https://img.shields.io/github/v/release/Keyfactor/hashicorp-vault-orchestrator?style=flat-square" alt="Release" /></a>
+<img src="https://img.shields.io/github/issues/Keyfactor/hashicorp-vault-orchestrator?style=flat-square" alt="Issues" />
+<img src="https://img.shields.io/github/downloads/Keyfactor/hashicorp-vault-orchestrator/total?style=flat-square&label=downloads&color=28B905" alt="GitHub Downloads (all assets, all releases)" />
+</p>
+
+<p align="center">
+  <!-- TOC -->
+  <a href="#support">
+    <b>Support</b>
+  </a>
+  ·
+  <a href="#installation">
+    <b>Installation</b>
+  </a>
+  ·
+  <a href="#license">
+    <b>License</b>
+  </a>
+  ·
+  <a href="https://github.com/orgs/Keyfactor/repositories?q=orchestrator">
+    <b>Related Integrations</b>
+  </a>
+</p>
+
+
+## Overview
+
+The Hashicorp Vault Universal Orchestrator extension allows users to manage cryptographic certificates in Hashicorp Vault through Keyfactor Command. Vault is a tool for securely accessing secrets and managing sensitive data, including certificates. This extension integrates with Keyfactor Command to facilitate the management of certificates stored in different secrets engines of Hashicorp Vault.
 
-The Hashicorp Vault Orchestrator extension allows you to manage certificates in Hashicorp Vault KeyValue secrets engine and perform inventory on certificates stored in the PKI or Keyfactor secrets engines.
+### Certificate Store Types
 
-#### Integration status: Production - Ready for use in production environments.
+This extension supports three certificate store types across two secrets engines in Hashicorp Vault: Key-Value Store and PKI/Keyfactor Plugin.
 
-## About the Keyfactor Universal Orchestrator Extension
+#### Key-Value Store
+
+The Key-Value Store type interacts with various key-value secrets engines in Vault, treating each stored file or path as a certificate store. There are four specific store types within the Key-Value Store:
 
-This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
+- **HCVKVJKS**: Manages JKS certificate files, treating each file as a separate store.
+- **HCVKVPFX**: Manages PFX certificate files, treating each file as a separate store.
+- **HCVKVP12**: Manages PKCS12 certificate files, treating each file as a separate store.
+- **HCVKVPEM**: Manages PEM-encoded certificates, treating each path as a store, with certificates located in sub-paths.
 
-The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Extensions, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Extension see below in this readme.
+The supported operations in Key-Value Store types include discovery, inventory, management (add/remove), and creating new certificate stores.
 
-The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+#### PKI/Keyfactor Plugin
 
-## Support for Orchestrator Extension for Hashicorp Vault
+The Hashicorp PKI and Keyfactor Plugin secrets engines focus on managing certificates directly on the Vault instance. The store type for these engines is `HCVPKI`, which supports inventory operations.
 
-Orchestrator Extension for Hashicorp Vault is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket via the Keyfactor Support Portal at https://support.keyfactor.com
+In summary, the primary differences between these certificate store types lie in the specific formats and structures they manage, as well as the supported operations. The Key-Value Store types handle different certificate file formats and PEM-encoded certificates within specific paths, while the PKI/Keyfactor Plugin store type is geared towards managing certificates on the Vault instance itself.
 
-###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
+## Compatibility
 
----
+This integration is compatible with Keyfactor Universal Orchestrator version 10.1 and later.
 
+## Support
+The for Hashicorp Vault Universal Orchestrator extension is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative. If you have a support issue, please open a support ticket via the Keyfactor Support Portal at https://support.keyfactor.com. 
+ 
+> To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
 
----
+## Installation
+Before installing the for Hashicorp Vault Universal Orchestrator extension, it's recommended to install [kfutil](https://github.com/Keyfactor/kfutil). Kfutil is a command-line tool that simplifies the process of creating store types, installing extensions, and instantiating certificate stores in Keyfactor Command.
 
+The for Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types. Depending on your use case, you may elect to install one, or all of these Certificate Store Types. An overview for each type is linked below:
+* [Hashicorp Vault Key-Value PEM](docs/hcvkvpem.md)
+* [Hashicorp Vault PKI](docs/hcvpki.md)
+* [Hashicorp Vault Key-Value JKS](docs/hcvkvjks.md)
+* [Hashicorp Vault Key-Value PKCS12](docs/hcvkvp12.md)
+* [Hashicorp Vault Key-Value PFX](docs/hcvkvpfx.md)
 
+<details><summary>Hashicorp Vault Key-Value PEM</summary>
 
-## Keyfactor Version Supported
 
-The minimum version of the Keyfactor Universal Orchestrator Framework needed to run this version of the extension is 10.1
-## Platform Specific Notes
+1. Follow the [requirements section](docs/hcvkvpem.md#requirements) to configure a Service Account and grant necessary API permissions.
 
-The Keyfactor Universal Orchestrator may be installed on either Windows or Linux based platforms. The certificate operations supported by a capability may vary based what platform the capability is installed on. The table below indicates what capabilities are supported based on which platform the encompassing Universal Orchestrator is running.
-| Operation | Win | Linux |
-|-----|-----|------|
-|Supports Management Add|&check; |&check; |
-|Supports Management Remove|&check; |&check; |
-|Supports Create Store|&check; |&check; |
-|Supports Discovery|&check; |&check; |
-|Supports Renrollment|  |  |
-|Supports Inventory|&check; |&check; |
+    <details><summary>Requirements</summary>
 
+    To configure the Hashicorp Vault Key-Value PEM Certificate Store Type, follow these steps:
 
+    1. **Configure Hashicorp Vault:**
+        - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
+        - Configure the Key-Value secrets engine on your Vault instance if not already done. This can be achieved by running the command:
+          ```bash
+          vault secrets enable kv-v2
+          ```
+        - Create the path where the certificates will be stored within the Key-Value secrets engine, for example:
+          ```bash
+          vault kv put kv-v2/my-cert-path private_key="<base64-encoded-private-key>" certificate="<base64-encoded-certificate>"
+          ```
 
+    2. **Service Account Creation:**
+        - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
+          ```bash
+          vault token create -policy="<your-policy>"
+          ```
+        - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your certificates, and `list` capability on the `metadata` path.
 
+    3. **Custom Fields in Keyfactor Command:**
+        - When adding the certificate store type to Keyfactor Command, use the following field configuration:
+          - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
+          - **Store Path**: The path where the PEM certificates will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
+          - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
+          - **Subfolder Inventory**: Set to `True` if inventory should include certificates in sub-paths; otherwise, set to `False`.
+        
+        ```json
+        {
+            "customFields": [
+                {"name": "MountPoint", "type": "string"},
+                {"name": "SubfolderInventory", "type": "bool", "optional": true},
+                {"name": "IncludeCertChain", "type": "bool", "optional": true}
+            ]
+        }
+        ```
+
+    4. **Configure the Orchestrator Agent Machine:**
+        - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
+        - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
+        - Restart the Orchestrator service.
 
----
+    5. **Version Requirement:**
+        - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+        - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 
 
-<!-- add integration specific information below -->
 
-This integration for the Keyfactor Universal Orchestrator has been tested against Hashicorp Vault 1.10.  It utilizes the **Key/Value** secrets engine to store certificates issues via Keyfactor Command.
+    </details>
 
-## Use Cases
+2. Create Certificate Store Types for the for Hashicorp Vault Orchestrator extension. 
 
-This integration supports 3 Hashicorp Secrets Engines; PKI, Key-Value store, and the Keyfactor Hashicorp Plugin (Keyfactor Secrets Engine).
+    * **Using kfutil**:
 
-### The Key-Value secrets engine
+        ```shell
+        # Hashicorp Vault Key-Value PEM
+        kfutil store-types create HCVKVPEM
+        ```
 
-For the Key-Value secrets engine, we have 4 store types that can be used.  
+    * **Manually**:
+        * [Hashicorp Vault Key-Value PEM](docs/hcvkvpem.md#certificate-store-type-configuration)
 
-- *HCVKVJKS* - For JKS certificate files, treats each file as it's own store.
-- *HCVKVPFX* - For PFX certificate files, treats each file as it's own store.
-- *HCVKVP12* - For PKCS12 certificate files, treats each file as it's own store.
-- *HCVKVPEM* - For PEM encoded certificates, treats each _path_ as it's own store.  Each certificate exists in a sub-path from the store path.
+3. Install the for Hashicorp Vault Universal Orchestrator extension.
+    
+    * **Using kfutil**: On the server that that hosts the Universal Orchestrator, run the following command:
 
-The following operations are supported by this integration for all of the Key-Value secrets engine types:
+        ```shell
+        # Windows Server
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions"
 
-1. Discovery - Discovery all file repositories for the type
-1. Inventory - Inventory all certificates in the path
-1. Management (Add) - Add a certificate to a defined certificate store.
-1. Management (Remove) - Remove a certificate from a defined certificate store.
-1. Create - Create a new, empty certificate store at the path defined in Store Path.
+        # Linux
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "/opt/keyfactor/orchestrator/extensions"
+        ```
 
-Excluding *HCVKVPEM*, the discovery process requires that:
-1. The entry for the certificate contain the base64 encoded certificate file.
-1. The name (key) for the entry ends with the suffix corresponding to the certificate store type:
- 1. *HCVKVJKS* - `*_jks` 
- 1. *HCVKVPFX* - `*_pfx`
- 1. *HCVKVP12* - `*_p12`
- 1. *HCVKVPEM* - `certificate`
-1. For all except *HCVKVPEM*, there be an entry named `passphrase` that contains the password for the store.
-1. For *HCVKVPEM*, there be an entry named `private_key` containing the private key portion of the key-pair.
+    * **Manually**: Follow the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions) to install the latest [for Hashicorp Vault Universal Orchestrator extension](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest).
 
-**Note**: Key/Value secrets that do not include the expected keys will be ignored during inventory scans.
+4. Create new certificate stores in Keyfactor Command for the Sample Universal Orchestrator extension.
 
-> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
+    * [Hashicorp Vault Key-Value PEM](docs/hcvkvpem.md#certificate-store-configuration)
 
-> *refer to the below image for an example*
 
-![](images/discovery.PNG)
+</details>
 
+<details><summary>Hashicorp Vault PKI</summary>
 
 
-### Important note on PEM (HCVKVPEM) Sub-Folder Inventory
-> While HCVKVJKS, HCVKVPFX and HCVKVP12 point to a single file store, the HCVKVPEM is structured differently.   Each certificate and private key in a PEM store is in a specific sub-folder under the defined store path.
-Consequently you are able to define a single HCVKVPEM store as the root path, and have any number of sub-paths beneath it.  These sub-paths could be their own certificate store defined in the platform, or logical containers that don't require a seperate store be set up for each in the Command platform.
+1. Follow the [requirements section](docs/hcvpki.md#requirements) to configure a Service Account and grant necessary API permissions.
 
-> Example: 
+    <details><summary>Requirements</summary>
 
- ![](images/PEM-vault-example-1.PNG)
+    To configure the Hashicorp Vault PKI Certificate Store Type, follow these steps:
 
-> In the "testpem" path above, there exist both a secret entry (toplevelcert), with a properly formatted and named certificate, and a subpath/ path.
+    1. **Configure Hashicorp Vault:**
+        - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
+        - Enable the PKI secret engine if it is not already enabled. This can be done using the command:
+          ```bash
+          vault secrets enable pki
+          ```
+        - Configure the PKI secret engine to generate certificates. This involves setting the URL for the CA and setting the maximum lease time for certificates:
+          ```bash
+          vault write pki/config/urls issuing_certificates="http://127.0.0.1:8200/v1/pki/ca" crl_distribution_points="http://127.0.0.1:8200/v1/pki/crl"
+          vault write pki/root/generate/internal common_name="example.com" ttl=8760h
+          ```
 
-![](images/PEM-vault-example-2.PNG)
+    2. **Service Account Creation:**
+        - Create a token with the necessary policies for accessing the PKI secret engine. Ensure to provide the least privilege required for operations:
+          ```bash
+          vault token create -policy="<your-policy>"
+          ```
+        - The policy should include the following capabilities for certificate operations: `read`, `list` on the path of your certificates.
 
-> The subpath/ path contains two certificate entries.
+    3. **Custom Fields in Keyfactor Command:**
+        - When adding the certificate store type to Keyfactor Command, use the following field configuration:
+          - **Client Machine**: The URL for the Vault host machine.
+          - **Store Path**: This should be set to `/`.
+          - **Mount Point**: The mount point name for the instance of the PKI or Keyfactor plugins. If using the PKI plugin, the default is usually `pki`. If using the Keyfactor plugin, it corresponds to the configured mount point.
+          - **Vault Token**: The access token that will be used by the orchestrator for requests to Vault.
+          - **Vault Server URL**: The full URL and port of the Vault server instance.
 
-![](images/PEM-vault-example-3.PNG)
+        ```json
+        {
+            "customFields": [
+                {"name": "MountPoint", "type": "string"},
+                {"name": "VaultServerUrl", "type": "string", "required": true},
+                {"name": "VaultToken", "type": "secret", "required": true}
+            ]
+        }
+        ```
 
-> - If we define our HCVKVPEM store in the platform to have the path "testpem/", and set "Sub-folder Inventory" to "False", then the inventory job should return the single "toplevelcert" entry.
-> - If we define the store with "Sub-Folder Inventory" set to "True", then the inventory job should return 3 entries: "toplevelcert", "cert1", and "testaddexistingcert".
-> - If we define another store with the path "testpem/subpath/", then it's inventory will contain "cert1" and "testaddexistingcert".  
+    4. **Configure the Orchestrator Agent Machine:**
+        - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
+        - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
+        - Restart the Orchestrator service.
 
-:warning: _Avoid having the same certificate appearing in multiple stores by setting Sub-Folder inventory to "False" on any HCVKVPEM certificate stores where the path is a parent to another HCVKVPEM store's path that is defined in the platform._
+    5. **Version Requirement:**
+        - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+        - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 
-### Base64 encoding
 
-For all of the store types in the Key-Value secrets engine, they should be stored in a base64 encoded format.  
-One way to encode a binary certificate store is to use the following command in a windows powershell or linux/macOs terminal window:
 
-`c:\> cat <cert store file path> | base64`
+    </details>
 
-### The Hashicorp PKI and Keyfactor Plugin secrets engines
+2. Create Certificate Store Types for the for Hashicorp Vault Orchestrator extension. 
 
-Both the Hashicorp PKI and Keyfactor Secrets Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.
-The store type for the PKI and/or the Keyfactor secrets engine is the same; `HCVPKI`.
-This integration supports the following in order to view your certificates from the platform:
+    * **Using kfutil**:
 
-1. Inventory - Return all certificates stored in a path.
+        ```shell
+        # Hashicorp Vault PKI
+        kfutil store-types create HCVPKI
+        ```
 
-[View the repository on Github](https://github.com/Keyfactor/hashicorp-vault-secretsengine) for more information about the Hashicorp Vault Keyfactor Secrets Engine plugin.
+    * **Manually**:
+        * [Hashicorp Vault PKI](docs/hcvpki.md#certificate-store-type-configuration)
 
-## Versioning
+3. Install the for Hashicorp Vault Universal Orchestrator extension.
+    
+    * **Using kfutil**: On the server that that hosts the Universal Orchestrator, run the following command:
 
-The version number of a the Hashicorp Vault Orchestrator Extension can be verified by right clicking on the `Keyfactor.Extensions.Orchestrator.HCV.dll` file in the extensions installation folder, selecting Properties, and then clicking on the Details tab.
+        ```shell
+        # Windows Server
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions"
 
-## Keyfactor Version Supported
+        # Linux
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "/opt/keyfactor/orchestrator/extensions"
+        ```
 
-This integration was built on the .NET Core 3.1 target framework and are compatible for use with the Keyfactor Universal Orchestrator and the latest version of the Keyfactor platform.
+    * **Manually**: Follow the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions) to install the latest [for Hashicorp Vault Universal Orchestrator extension](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest).
 
-## Security Considerations
+4. Create new certificate stores in Keyfactor Command for the Sample Universal Orchestrator extension.
 
-1. It is not necessary to use the Vault root token when creating a Certificate Store for HashicorpVault.  We recommend creating a token with policies that reflect the minimum path and permissions necessary to perform the intended operations.
-1. The capabilities required to perform all operations on a cert store within vault are `["read", "list", "create", "update", "patch", "delete"]`
-1. These capabilities should apply to the parent folder on file stores.
-1. The token will also need `"list"` capability on the `<mount point>/metadata` path to perform basic operations.
+    * [Hashicorp Vault PKI](docs/hcvpki.md#certificate-store-configuration)
 
-## Extension Configuration
 
-### On the Orchestrator Agent Machine
+</details>
 
-1. Stop the Orchestrator service.
-    - The service will be called "KeyfactorOrchestrator-Default" by default.
-2. Navigate to the "extensions" sub-folder of your Orchestrator installation directory
-    - example: `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions`
-3. Create a new folder called "HCV" (the name of the folder is not important)
-4. Extract the contents of the release zip file into this folder.
-5. Re-start the Orchestrator service.
+<details><summary>Hashicorp Vault Key-Value JKS</summary>
 
-### In the Keyfactor Platform
 
-#### Add a new Certificate Store Type - **Hashicorp Vault Key-Value PEM**
+1. Follow the [requirements section](docs/hcvkvjks.md#requirements) to configure a Service Account and grant necessary API permissions.
 
-- Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
-- Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
-- Click "Add" and enter the following information on the first tab:
+    <details><summary>Requirements</summary>
 
-![](images/store_type_add.png)
+    To configure the Hashicorp Vault Key-Value JKS Certificate Store Type, follow these steps:
 
-- Set the following values in the "Basic" tab:
-  - **Name:** "Hashicorp Vault Key-Value PEM" (or another preferred name)
-  - **Short Name:** "HCVKVPEM"
-  - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
-    - **NOTE** If you are setting up "`HCVKVJKS`, `HCVKVPFX`, or `HCVKVP12` the supported job types will be "Inventory, Discovery".
-  - **Needs Server** - should be checked (true).
+    1. **Configure Hashicorp Vault:**
+        - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
+        - Enable the Key-Value secrets engine if it is not already enabled. This can be done using the command:
+          ```bash
+          vault secrets enable kv-v2
+          ```
+        - Create the path where the JKS files will be stored within the Key-Value secrets engine. Each JKS file should be base64 encoded and stored with the proper key naming conventions (ending with `_jks`):
+          ```bash
+          vault kv put kv-v2/my-cert-path mycert_jks='<base64-encoded-jks>' passphrase='<store-passphrase>'
+          ```
 
-![](images/store-type-kv.PNG)
+    2. **Service Account Creation:**
+        - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
+          ```bash
+          vault token create -policy="<your-policy>"
+          ```
+        - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your JKS files, and `list` capability on the `metadata` path.
 
-- Set the following values on the "Advanced" tab:
-  - **Supports Custom Alias** - "Optional"
-  - **Private Key Handling** - "Optional"
+    3. **Custom Fields in Keyfactor Command:**
+        - When adding the certificate store type to Keyfactor Command, use the following field configuration:
+          - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
+          - **Store Path**: The path where the JKS files will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
+          - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
+          - **Passphrase**: The passphrase for accessing the JKS file. This must be included for each JKS file.
 
-![](images/cert-store-type-advanced.png)
+        ```json
+        {
+            "customFields": [
+                {"name": "MountPoint", "type": "string"},
+                {"name": "Passphrase", "type": "secret", "required": true}
+            ]
+        }
+        ```
 
-- Click the "Custom Fields" tab to add the following custom fields:
-  - **MountPoint** - type: *string*
-  - **SubfolderInventory** - type: *bool* (By default, this is set to false. Not a required field)
-  - **IncludeCertChain** - type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+    4. **Configure the Orchestrator Agent Machine:**
+        - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
+        - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
+        - Restart the Orchestrator service.
 
-![](images/store_type_fields.png)
+    5. **Version Requirement:**
+        - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+        - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 
-**Note**
-The 3 highlighted fields above will be added automatically by the platform, you will not need to include them when creating the certificate store type.
 
-- Click **Save** to save the new Store Type.
 
-#### Add the Hashicorp Vault Certificate Store - **Key-Value Secrets Engine**
+    </details>
 
-- Navigate to **Locations** > **Certificate Stores** from the main menu
-- Click **ADD** to open the new Certificate Store Dialog
+2. Create Certificate Store Types for the for Hashicorp Vault Orchestrator extension. 
 
-![](images/cert_store_add_dialog.png)
+    * **Using kfutil**:
 
-In Keyfactor Command create a new Certificate Store that resembles the one below:
+        ```shell
+        # Hashicorp Vault Key-Value JKS
+        kfutil store-types create HCVKVJKS
+        ```
 
-![](images/cert_store_fields.png)
+    * **Manually**:
+        * [Hashicorp Vault Key-Value JKS](docs/hcvkvjks.md#certificate-store-type-configuration)
 
-- **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
-- **Store Path** - This is the path after mount point where the certs will be stored.
-  - example: `kv-v2\kf-secrets\certname` would use the path "\kf-secrets"
-- **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
-  - If left blank, will default to "kv-v2".
-  - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-- **Subfolder Inventory** - Set to 'True' if all of the certificates . The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+3. Install the for Hashicorp Vault Universal Orchestrator extension.
+    
+    * **Using kfutil**: On the server that that hosts the Universal Orchestrator, run the following command:
 
-#### Set the server name and password
+        ```shell
+        # Windows Server
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions"
 
-- The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
-- The server password should be the Vault token that will be used for authenticating.
+        # Linux
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "/opt/keyfactor/orchestrator/extensions"
+        ```
 
-#### Set the server name and password
+    * **Manually**: Follow the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions) to install the latest [for Hashicorp Vault Universal Orchestrator extension](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest).
 
-- The server name should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
-- The server password should be the Vault token that will be used for authenticating.
+4. Create new certificate stores in Keyfactor Command for the Sample Universal Orchestrator extension.
 
-### For the Keyfactor and PKI plugins
+    * [Hashicorp Vault Key-Value JKS](docs/hcvkvjks.md#certificate-store-configuration)
 
-- Add a new Certificate Store Type
-  - Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
-  - Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
-  - Click "Add" and enter the following information on the first tab:
 
-![](images/store_type_add.png)
+</details>
 
-- **Name:** "Hashicorp Vault PKI" (or another preferred name)
-- **Short Name:** "HCVPKI"
-- **Supported Job Types:** "Inventory"
+<details><summary>Hashicorp Vault Key-Value PKCS12</summary>
 
-![](images/store_type_pki.PNG)
 
-- Set the following values on the "Advanced" tab:
-  - **Supports Custom Alias** - "Optional"
-  - **Private Key Handling** - "Optional"
+1. Follow the [requirements section](docs/hcvkvp12.md#requirements) to configure a Service Account and grant necessary API permissions.
 
-![](images/cert-store-type-advanced.png)
+    <details><summary>Requirements</summary>
 
-- Click the "Custom Fields" tab to add the following custom fields:
-  - **MountPoint** - type: *string*
-  - **VaultServerUrl** - type: *string*, *required*
-  - **VaultToken** - type: *secret*, *required*
+    To configure the Hashicorp Vault Key-Value PKCS12 Certificate Store Type, follow these steps:
 
-![](images/store_type_fields.png)
+    1. **Configure Hashicorp Vault:**
+        - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
+        - Enable the Key-Value secrets engine if it is not already enabled. This can be done using the command:
+          ```bash
+          vault secrets enable kv-v2
+          ```
+        - Create the path where the PKCS12 files will be stored within the Key-Value secrets engine. Each PKCS12 file should be base64 encoded and stored with the proper key naming conventions (ending with `_p12`):
+          ```bash
+          vault kv put kv-v2/my-cert-path mycert_p12='<base64-encoded-pkcs12>' passphrase='<store-passphrase>'
+          ```
 
-- Click **Save** to save the new Store Type.
+    2. **Service Account Creation:**
+        - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
+          ```bash
+          vault token create -policy="<your-policy>"
+          ```
+        - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your PKCS12 files, and `list` capability on the `metadata` path.
 
-1. Add the Hashicorp Vault Certificate Store
+    3. **Custom Fields in Keyfactor Command:**
+        - When adding the certificate store type to Keyfactor Command, use the following field configuration:
+          - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
+          - **Store Path**: The path where the PKCS12 files will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
+          - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
+          - **Passphrase**: The passphrase for accessing the PKCS12 file. This must be included for each PKCS12 file.
 
-- Navigate to **Locations** > **Certificate Stores** from the main menu
-- Click **ADD** to open the new Certificate Store Dialog
+        ```json
+        {
+            "customFields": [
+                {"name": "MountPoint", "type": "string"},
+                {"name": "Passphrase", "type": "secret", "required": true}
+            ]
+        }
+        ```
 
-In Keyfactor Command create a new Certificate Store similar to the one below:
+    4. **Configure the Orchestrator Agent Machine:**
+        - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
+        - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
+        - Restart the Orchestrator service.
 
-![](images/store_type_pki.png)
+    5. **Version Requirement:**
+        - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+        - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 
-- **Client Machine** - Enter the URL for the Vault host machine
-- **Store Path** - "/"  
-- **Mount Point** - This is the mount point name for the instance of the PKI or Keyfactor secrets engine plugin.
-  - If using the PKI plugin, the default in Hashicorp is pki.  If using the Keyfactor plugin, it should correspond to the mount point given when the plugin was enabled.
-  - It is possible to have multiple instances of the Keyfactor plugin running simultaneously, so be sure this corresponds to the one you would like to manage.
 
-- **Vault Token** - This is the access token that will be used by the orchestrator for requests to Vault.
-- **Vault Server Url** - the full url and port of the Vault server instance
 
-At this point, the certificate store should be created and ready to peform inventory on your certificates stored via the Keyfactor or PKI secrets engine plugin for Hashicorp Vault.
+    </details>
 
-## Testing the Key-Value store
+2. Create Certificate Store Types for the for Hashicorp Vault Orchestrator extension. 
 
-### PFX Enrollment into Vault
+    * **Using kfutil**:
 
-**Note**
-Enrollment via the platform is only supported by the Key-Value store type
+        ```shell
+        # Hashicorp Vault Key-Value PKCS12
+        kfutil store-types create HCVKVP12
+        ```
 
-At this point you should be able to enroll a certificate and store it in Vault using the plugin.
+    * **Manually**:
+        * [Hashicorp Vault Key-Value PKCS12](docs/hcvkvp12.md#certificate-store-type-configuration)
 
-1. Navigate to `Enrollment > PFX Enrollment` from the main menu.
-1. Fill in some values for the new certificate, then select the "Install into certificate stores" radio button.
+3. Install the for Hashicorp Vault Universal Orchestrator extension.
+    
+    * **Using kfutil**: On the server that that hosts the Universal Orchestrator, run the following command:
 
-![](images/pfx_enrollment_filled.png)
+        ```shell
+        # Windows Server
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions"
 
-1. Select the certificate store we created
+        # Linux
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "/opt/keyfactor/orchestrator/extensions"
+        ```
 
-![](images/pfx_enrollment_certstore.png)
+    * **Manually**: Follow the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions) to install the latest [for Hashicorp Vault Universal Orchestrator extension](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest).
 
-1. **Be sure to fill out the Alias!**  This will be the key used to reference the cert in the KeyValue secrets engine.
-1. Click "Enroll"
+4. Create new certificate stores in Keyfactor Command for the Sample Universal Orchestrator extension.
 
-### Vault CLI verification
+    * [Hashicorp Vault Key-Value PKCS12](docs/hcvkvp12.md#certificate-store-configuration)
 
-1. Open a terminal window on the Vault host.
 
-- Make sure the vault is unsealed first
+</details>
 
-1. Type `vault kv list kv/cert-store` (where "kv/cert-store" is `<mount point>/<store path>`)
+<details><summary>Hashicorp Vault Key-Value PFX</summary>
 
-- You should see the alias of the newly enrolled certificate
 
-![](images/vault_cli_list.png)
+1. Follow the [requirements section](docs/hcvkvpfx.md#requirements) to configure a Service Account and grant necessary API permissions.
 
-1. To view the details of the certificate, run the command:
+    <details><summary>Requirements</summary>
 
-- `vault kv get kv/cert-store/testcert.kftrain.lab` where `testcert.kftrain.lab` is the alias you provided.
-- You should see the values output in the terminal window
+    To configure the Hashicorp Vault Key-Value PFX Certificate Store Type, follow these steps:
 
-![](images/vault_cli_read.png)
+    1. **Configure Hashicorp Vault:**
+        - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
+        - Enable the Key-Value secrets engine if it is not already enabled. This can be done using the command:
+          ```bash
+          vault secrets enable kv-v2
+          ```
+        - Create the path where the PFX files will be stored within the Key-Value secrets engine. Each PFX file should be base64 encoded and stored with the proper key naming conventions (ending with `_pfx`):
+          ```bash
+          vault kv put kv-v2/my-cert-path mycert_pfx='<base64-encoded-pfx>' passphrase='<store-passphrase>'
+          ```
 
-## Notes / Future Enhancements
+    2. **Service Account Creation:**
+        - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
+          ```bash
+          vault token create -policy="<your-policy>"
+          ```
+        - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your PFX files, and `list` capability on the `metadata` path.
 
-- For the Key-Value stores we operate on a single version of the Key Value secret (no versioning capabilities through the Orchesterator Extension / Keyfactor).
+    3. **Custom Fields in Keyfactor Command:**
+        - When adding the certificate store type to Keyfactor Command, use the following field configuration:
+          - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
+          - **Store Path**: The path where the PFX files will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
+          - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
+          - **Passphrase**: The passphrase for accessing the PFX file. This must be included for each PFX file.
 
+        ```json
+        {
+            "customFields": [
+                {"name": "MountPoint", "type": "string"},
+                {"name": "Passphrase", "type": "secret", "required": true}
+            ]
+        }
+        ```
+
+    4. **Configure the Orchestrator Agent Machine:**
+        - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
+        - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
+        - Restart the Orchestrator service.
+
+    5. **Version Requirement:**
+        - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+        - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
+
+
+
+    </details>
+
+2. Create Certificate Store Types for the for Hashicorp Vault Orchestrator extension. 
+
+    * **Using kfutil**:
+
+        ```shell
+        # Hashicorp Vault Key-Value PFX
+        kfutil store-types create HCVKVPFX
+        ```
+
+    * **Manually**:
+        * [Hashicorp Vault Key-Value PFX](docs/hcvkvpfx.md#certificate-store-type-configuration)
+
+3. Install the for Hashicorp Vault Universal Orchestrator extension.
+    
+    * **Using kfutil**: On the server that that hosts the Universal Orchestrator, run the following command:
+
+        ```shell
+        # Windows Server
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions"
+
+        # Linux
+        kfutil orchestrator extension -e hashicorp-vault-orchestrator@latest --out "/opt/keyfactor/orchestrator/extensions"
+        ```
+
+    * **Manually**: Follow the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions) to install the latest [for Hashicorp Vault Universal Orchestrator extension](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest).
+
+4. Create new certificate stores in Keyfactor Command for the Sample Universal Orchestrator extension.
+
+    * [Hashicorp Vault Key-Value PFX](docs/hcvkvpfx.md#certificate-store-configuration)
+
+
+</details>
+
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE).
+
+## Related Integrations
+
+See all [Keyfactor Universal Orchestrator extensions](https://github.com/orgs/Keyfactor/repositories?q=orchestrator).

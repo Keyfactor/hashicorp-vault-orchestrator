@@ -1,395 +1,184 @@
 {
-  "$schema": "https://keyfactor.github.io/integration-manifest-schema.json",
-  "integration_type": "orchestrator",
-  "name": "Orchestrator Extension for Hashicorp Vault",
-  "status": "production",
-  "link_github": true,
-  "update_catalog": true,
-  "support_level": "kf-supported",
-  "release_dir": "hashicorp-vault-orchestrator/bin/Release",
-  "description": "The Hashicorp Vault Orchestrator extension allows you to manage certificates in Hashicorp Vault KeyValue secrets engine and perform inventory on certificates stored in the PKI or Keyfactor secrets engines.",
-  "about": {
-    "orchestrator": {
-      "UOFramework": "10.1",
-      "pam_support": false,
-      "keyfactor_platform_version": "9.1",
-      "win": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "linux": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "store_types": [
-        {
-          "Name": "Hashicorp Vault Key-Value PEM",
-          "ShortName": "HCVKVPEM",
-          "Capability": "HCVKVPEM",
-          "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
-          },
-          "Properties": [
-            {
-              "Name": "SubfolderInventory",
-              "DisplayName": "Subfolder Inventory",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
+    "$schema": "/Users/hroszell/coding/dev/staff-tools/keyfactor.github.io/v2/integration-manifest-schema.json",
+    "integration_type": "orchestrator",
+    "name": "Orchestrator Extension for Hashicorp Vault",
+    "status": "production",
+    "link_github": true,
+    "update_catalog": true,
+    "support_level": "kf-supported",
+    "release_dir": "hashicorp-vault-orchestrator/bin/Release",
+    "description": "The Hashicorp Vault Orchestrator extension allows you to manage certificates in Hashicorp Vault KeyValue secrets engine and perform inventory on certificates stored in the PKI or Keyfactor secrets engines.",
+    "about": {
+        "orchestrator": {
+            "UOFramework": "10.1",
+            "pam_support": false,
+            "keyfactor_platform_version": "9.1",
+            "win": {
+                "supportsCreateStore": true,
+                "supportsDiscovery": true,
+                "supportsManagementAdd": true,
+                "supportsManagementRemove": true,
+                "supportsReenrollment": false,
+                "supportsInventory": true,
+                "platformSupport": "Unused"
             },
-            {
-              "Name": "IncludeCertChain",
-              "DisplayName": "Include Certificate Chain",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
+            "linux": {
+                "supportsCreateStore": true,
+                "supportsDiscovery": true,
+                "supportsManagementAdd": true,
+                "supportsManagementRemove": true,
+                "supportsReenrollment": false,
+                "supportsInventory": true,
+                "platformSupport": "Unused"
             },
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUsername",
-              "DisplayName": "Server Username",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerPassword",
-              "DisplayName": "Server Password",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUseSsl",
-              "DisplayName": "Use SSL",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "true",
-              "Required": true
-            }
-          ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
-        },
-        {
-          "Name": "Hashicorp Vault PKI",
-          "ShortName": "HCVPKI",
-          "Capability": "HCVPKI",
-          "LocalStore": false,
-          "SupportedOperations": {
-            "Add": false,
-            "Create": false,
-            "Discovery": false,
-            "Enrollment": false,
-            "Remove": false
-          },
-          "Properties": [
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
-            },
-            {
-              "Name": "VaultToken",
-              "DisplayName": "VaultToken",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
-            },
-            {
-              "Name": "VaultServerUrl",
-              "DisplayName": "Vault Server URL",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            }
-          ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": false,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
-        },
-        {
-          "Name": "Hashicorp Vault Key-Value JKS",
-          "ShortName": "HCVKVJKS",
-          "Capability": "HCVKVJKS",
-          "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
-          },
-          "Properties": [
-            {
-              "Name": "SubfolderInventory",
-              "DisplayName": "Sub-folder Inventory",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "IncludeCertChain",
-              "DisplayName": "Include Certificate Chain",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUsername",
-              "DisplayName": "Server Username",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerPassword",
-              "DisplayName": "Server Password",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUseSsl",
-              "DisplayName": "Use SSL",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "true",
-              "Required": true
-            }
-          ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
-          "StorePathType": "",
-          "StorePathValue": "",
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
-        },
-        {
-          "Name": "Hashicorp Vault Key-Value PKCS12",
-          "ShortName": "HCVKVP12",
-          "Capability": "HCVKVP12",
-          "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
-          },
-          "Properties": [
-            {
-              "Name": "SubfolderInventory",
-              "DisplayName": "Sub-folder Inventory",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "IncludeCertChain",
-              "DisplayName": "Include Certificate Chain",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "ServerUsername",
-              "DisplayName": "Server Username",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerPassword",
-              "DisplayName": "Server Password",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUseSsl",
-              "DisplayName": "Use SSL",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "true",
-              "Required": true
-            }
-          ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
-          "StorePathType": "",
-          "StorePathValue": "",
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
-        },
-        {
-          "Name": "Hashicorp Vault Key-Value PFX",
-          "ShortName": "HCVKVPFX",
-          "Capability": "HCVKVPFX",
-          "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
-          },
-          "Properties": [
-            {
-              "Name": "SubfolderInventory",
-              "DisplayName": "Sub-folder Inventory",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "IncludeCertChain",
-              "DisplayName": "Include Certificate Chain",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "false",
-              "Required": false
-            },
-            {
-              "Name": "MountPoint",
-              "DisplayName": "Mount Point",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUsername",
-              "DisplayName": "Server Username",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerPassword",
-              "DisplayName": "Server Password",
-              "Type": "Secret",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
-            },
-            {
-              "Name": "ServerUseSsl",
-              "DisplayName": "Use SSL",
-              "Type": "Bool",
-              "DependsOn": "",
-              "DefaultValue": "true",
-              "Required": true
-            }
-          ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
-          "StorePathType": "",
-          "StorePathValue": "",
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
+            "store_types": [
+                {
+                    "Name": "Hashicorp Vault Key-Value PEM",
+                    "ShortName": "HCVKVPEM",
+                    "Capability": "HCVKVPEM",
+                    "LocalStore": false,
+                    "SupportedOperations": {
+                        "Add": true,
+                        "Create": true,
+                        "Discovery": true,
+                        "Enrollment": false,
+                        "Remove": true
+                    },
+                    "Properties": [],
+                    "EntryParameters": [],
+                    "PasswordOptions": {
+                        "EntrySupported": false,
+                        "StoreRequired": false,
+                        "Style": "Default"
+                    },
+                    "PrivateKeyAllowed": "Optional",
+                    "JobProperties": [],
+                    "ServerRequired": true,
+                    "PowerShell": false,
+                    "BlueprintAllowed": false,
+                    "CustomAliasAllowed": "Optional",
+                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
+                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PEM-encoded certificates will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                },
+                {
+                    "Name": "Hashicorp Vault PKI",
+                    "ShortName": "HCVPKI",
+                    "Capability": "HCVPKI",
+                    "LocalStore": false,
+                    "SupportedOperations": {
+                        "Add": false,
+                        "Create": false,
+                        "Discovery": false,
+                        "Enrollment": false,
+                        "Remove": false
+                    },
+                    "Properties": [],
+                    "EntryParameters": [],
+                    "PasswordOptions": {
+                        "EntrySupported": false,
+                        "StoreRequired": false,
+                        "Style": "Default"
+                    },
+                    "PrivateKeyAllowed": "Optional",
+                    "JobProperties": [],
+                    "ServerRequired": false,
+                    "PowerShell": false,
+                    "BlueprintAllowed": false,
+                    "CustomAliasAllowed": "Optional",
+                    "ClientMachineDescription": "Enter the full URL for the Vault host machine where the Hashicorp Vault PKI secrets engine is running. Example: `http://127.0.0.1:8200`.",
+                    "StorePathDescription": "Enter the path for the PKI secrets engine within Vault. This is typically set to `/` for the Hashicorp Vault PKI store type. Example: `/`."
+                },
+                {
+                    "Name": "Hashicorp Vault Key-Value JKS",
+                    "ShortName": "HCVKVJKS",
+                    "Capability": "HCVKVJKS",
+                    "LocalStore": false,
+                    "SupportedOperations": {
+                        "Add": true,
+                        "Create": true,
+                        "Discovery": true,
+                        "Enrollment": false,
+                        "Remove": true
+                    },
+                    "Properties": [],
+                    "EntryParameters": [],
+                    "PasswordOptions": {
+                        "EntrySupported": false,
+                        "StoreRequired": false,
+                        "Style": "Default"
+                    },
+                    "StorePathType": "",
+                    "StorePathValue": "",
+                    "PrivateKeyAllowed": "Optional",
+                    "JobProperties": [],
+                    "ServerRequired": true,
+                    "PowerShell": false,
+                    "BlueprintAllowed": false,
+                    "CustomAliasAllowed": "Optional",
+                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
+                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the JKS files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                },
+                {
+                    "Name": "Hashicorp Vault Key-Value PKCS12",
+                    "ShortName": "HCVKVP12",
+                    "Capability": "HCVKVP12",
+                    "LocalStore": false,
+                    "SupportedOperations": {
+                        "Add": true,
+                        "Create": true,
+                        "Discovery": true,
+                        "Enrollment": false,
+                        "Remove": true
+                    },
+                    "Properties": [],
+                    "EntryParameters": [],
+                    "PasswordOptions": {
+                        "EntrySupported": false,
+                        "StoreRequired": false,
+                        "Style": "Default"
+                    },
+                    "StorePathType": "",
+                    "StorePathValue": "",
+                    "PrivateKeyAllowed": "Optional",
+                    "JobProperties": [],
+                    "ServerRequired": true,
+                    "PowerShell": false,
+                    "BlueprintAllowed": false,
+                    "CustomAliasAllowed": "Optional",
+                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
+                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PKCS12 files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                },
+                {
+                    "Name": "Hashicorp Vault Key-Value PFX",
+                    "ShortName": "HCVKVPFX",
+                    "Capability": "HCVKVPFX",
+                    "LocalStore": false,
+                    "SupportedOperations": {
+                        "Add": true,
+                        "Create": true,
+                        "Discovery": true,
+                        "Enrollment": false,
+                        "Remove": true
+                    },
+                    "Properties": [],
+                    "EntryParameters": [],
+                    "PasswordOptions": {
+                        "EntrySupported": false,
+                        "StoreRequired": false,
+                        "Style": "Default"
+                    },
+                    "StorePathType": "",
+                    "StorePathValue": "",
+                    "PrivateKeyAllowed": "Optional",
+                    "JobProperties": [],
+                    "ServerRequired": true,
+                    "PowerShell": false,
+                    "BlueprintAllowed": false,
+                    "CustomAliasAllowed": "Optional",
+                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
+                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PFX files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                }
+            ]
         }
-      ]
     }
-  }
 }
