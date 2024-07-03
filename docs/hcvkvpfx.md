@@ -158,8 +158,8 @@ The following table describes the required and optional fields for the `HCVKVPFX
 | --------- | ----------- | ------------------------- |
 | Category | Select "Hashicorp Vault Key-Value PFX" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension. | |
-| Store Path | Enter the path within the Key-Value secrets engine where the PFX files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`. | |
+| Client Machine | An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value PFX extension. | |
+| Store Path | The specific path within the Hashicorp Vault's Key-Value secrets engine where the PFX certificate files will be stored. Example: 'kv-v2/pfx-certificates'. | |
 | Orchestrator | Select an approved orchestrator capable of managing `HCVKVPFX` certificates. Specifically, one with the `HCVKVPFX` capability. | |
 
 * **Using kfutil**

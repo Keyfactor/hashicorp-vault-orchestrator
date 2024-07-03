@@ -1,5 +1,5 @@
 {
-    "$schema": "/Users/hroszell/coding/dev/staff-tools/keyfactor.github.io/v2/integration-manifest-schema.json",
+    "$schema": "https://keyfactor.github.io/v2/integration-manifest-schema.json",
     "integration_type": "orchestrator",
     "name": "Orchestrator Extension for Hashicorp Vault",
     "status": "production",
@@ -7,30 +7,12 @@
     "update_catalog": true,
     "support_level": "kf-supported",
     "release_dir": "hashicorp-vault-orchestrator/bin/Release",
-    "description": "The Hashicorp Vault Orchestrator extension allows you to manage certificates in Hashicorp Vault KeyValue secrets engine and perform inventory on certificates stored in the PKI or Keyfactor secrets engines.",
+    "description": "The Hashicorp Vault Universal Orchestrator extension enables seamless remote management of cryptographic certificates stored within Hashicorp Vault's Key-Value and PKI secrets engines, offering capabilities like inventory, addition, removal, and discovery of certificates.",
     "about": {
         "orchestrator": {
             "UOFramework": "10.1",
             "pam_support": false,
             "keyfactor_platform_version": "9.1",
-            "win": {
-                "supportsCreateStore": true,
-                "supportsDiscovery": true,
-                "supportsManagementAdd": true,
-                "supportsManagementRemove": true,
-                "supportsReenrollment": false,
-                "supportsInventory": true,
-                "platformSupport": "Unused"
-            },
-            "linux": {
-                "supportsCreateStore": true,
-                "supportsDiscovery": true,
-                "supportsManagementAdd": true,
-                "supportsManagementRemove": true,
-                "supportsReenrollment": false,
-                "supportsInventory": true,
-                "platformSupport": "Unused"
-            },
             "store_types": [
                 {
                     "Name": "Hashicorp Vault Key-Value PEM",
@@ -57,8 +39,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Optional",
-                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
-                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PEM-encoded certificates will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                    "ClientMachineDescription": "An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value PEM extension.",
+                    "StorePathDescription": "The specific path within the Hashicorp Vault's Key-Value secrets engine where the certificates will be stored. Example: 'kv-v2/kf-secrets'."
                 },
                 {
                     "Name": "Hashicorp Vault PKI",
@@ -85,8 +67,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Optional",
-                    "ClientMachineDescription": "Enter the full URL for the Vault host machine where the Hashicorp Vault PKI secrets engine is running. Example: `http://127.0.0.1:8200`.",
-                    "StorePathDescription": "Enter the path for the PKI secrets engine within Vault. This is typically set to `/` for the Hashicorp Vault PKI store type. Example: `/`."
+                    "ClientMachineDescription": "The full URL for the Vault host machine that will be used by the orchestrator to access the Hashicorp Vault PKI instance. Example: 'http://127.0.0.1:8200'.",
+                    "StorePathDescription": "The specific path within the Hashicorp Vault PKI secrets engine where the certificates will be managed. Example: '/'."
                 },
                 {
                     "Name": "Hashicorp Vault Key-Value JKS",
@@ -115,8 +97,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Optional",
-                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
-                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the JKS files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                    "ClientMachineDescription": "An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value JKS extension.",
+                    "StorePathDescription": "The specific path within the Hashicorp Vault's Key-Value secrets engine where the JKS certificate files will be stored. Example: 'kv-v2/jks-certificates'."
                 },
                 {
                     "Name": "Hashicorp Vault Key-Value PKCS12",
@@ -145,8 +127,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Optional",
-                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
-                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PKCS12 files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                    "ClientMachineDescription": "An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value PKCS12 extension.",
+                    "StorePathDescription": "The specific path within the Hashicorp Vault's Key-Value secrets engine where the PKCS12 certificate files will be stored. Example: 'kv-v2/pkcs12-certificates'."
                 },
                 {
                     "Name": "Hashicorp Vault Key-Value PFX",
@@ -175,8 +157,8 @@
                     "PowerShell": false,
                     "BlueprintAllowed": false,
                     "CustomAliasAllowed": "Optional",
-                    "ClientMachineDescription": "Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension.",
-                    "StorePathDescription": "Enter the path within the Key-Value secrets engine where the PFX files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`."
+                    "ClientMachineDescription": "An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value PFX extension.",
+                    "StorePathDescription": "The specific path within the Hashicorp Vault's Key-Value secrets engine where the PFX certificate files will be stored. Example: 'kv-v2/pfx-certificates'."
                 }
             ]
         }

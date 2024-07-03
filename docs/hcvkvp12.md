@@ -158,8 +158,8 @@ The following table describes the required and optional fields for the `HCVKVP12
 | --------- | ----------- | ------------------------- |
 | Category | Select "Hashicorp Vault Key-Value PKCS12" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension. | |
-| Store Path | Enter the path within the Key-Value secrets engine where the PKCS12 files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`. | |
+| Client Machine | An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value PKCS12 extension. | |
+| Store Path | The specific path within the Hashicorp Vault's Key-Value secrets engine where the PKCS12 certificate files will be stored. Example: 'kv-v2/pkcs12-certificates'. | |
 | Orchestrator | Select an approved orchestrator capable of managing `HCVKVP12` certificates. Specifically, one with the `HCVKVP12` capability. | |
 
 * **Using kfutil**

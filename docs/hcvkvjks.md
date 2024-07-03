@@ -158,8 +158,8 @@ The following table describes the required and optional fields for the `HCVKVJKS
 | --------- | ----------- | ------------------------- |
 | Category | Select "Hashicorp Vault Key-Value JKS" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | Enter an identifier for the client machine where the Keyfactor Universal Orchestrator is running. This can be the orchestrator host name or any useful identifier. This value is not used by the extension. | |
-| Store Path | Enter the path within the Key-Value secrets engine where the JKS files will be stored. This should be the path after the mount point. Example: `/kv-v2/my-cert-path`. | |
+| Client Machine | An identifier for the client machine which could be the host name of the Orchestrator or any meaningful label. This value is not used by the Hashicorp Vault Key-Value JKS extension. | |
+| Store Path | The specific path within the Hashicorp Vault's Key-Value secrets engine where the JKS certificate files will be stored. Example: 'kv-v2/jks-certificates'. | |
 | Orchestrator | Select an approved orchestrator capable of managing `HCVKVJKS` certificates. Specifically, one with the `HCVKVJKS` capability. | |
 
 * **Using kfutil**

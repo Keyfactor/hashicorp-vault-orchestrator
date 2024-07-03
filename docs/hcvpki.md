@@ -160,8 +160,8 @@ The following table describes the required and optional fields for the `HCVPKI` 
 | --------- | ----------- | ------------------------- |
 | Category | Select "Hashicorp Vault PKI" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | Enter the full URL for the Vault host machine where the Hashicorp Vault PKI secrets engine is running. Example: `http://127.0.0.1:8200`. | |
-| Store Path | Enter the path for the PKI secrets engine within Vault. This is typically set to `/` for the Hashicorp Vault PKI store type. Example: `/`. | |
+| Client Machine | The full URL for the Vault host machine that will be used by the orchestrator to access the Hashicorp Vault PKI instance. Example: 'http://127.0.0.1:8200'. | |
+| Store Path | The specific path within the Hashicorp Vault PKI secrets engine where the certificates will be managed. Example: '/'. | |
 | Orchestrator | Select an approved orchestrator capable of managing `HCVPKI` certificates. Specifically, one with the `HCVPKI` capability. | |
 
 * **Using kfutil**
