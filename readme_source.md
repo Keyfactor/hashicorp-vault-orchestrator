@@ -1,10 +1,12 @@
 <!-- add integration specific information below -->
 
-This integration for the Keyfactor Universal Orchestrator has been tested against Hashicorp Vault 1.10.  It utilizes the **Key/Value** secrets engine to store certificates issues via Keyfactor Command.
+This integration for the Keyfactor Universal Orchestrator has been tested against Hashicorp Vault 1.10+.  It utilizes the **Key/Value** secrets engine to store certificates issues via Keyfactor Command.
 
 ## Use Cases
 
-This integration supports 3 Hashicorp Secrets Engines; PKI, Key-Value store, and the Keyfactor Hashicorp Plugin (Keyfactor Secrets Engine).
+This integration supports three Hashicorp Secrets Engines; **PKI**, **Key-Value** store, and the **Keyfactor** secrets engine.
+The first part of this document describes setting up the store types available within the Hashicorp Vault Key-Value secrets engine.
+If you are using the Keyfactor Secrets Engine, or the Hashicorp Vault PKI Secrets Engine, you can skip to [this section](#the-hashicorp-pki-and-keyfactor-plugin-secrets-engines).
 
 ## The Key-Value secrets engine
 
@@ -82,6 +84,7 @@ This integration supports the following in order to view your certificates from 
 
 [View the repository on Github](https://github.com/Keyfactor/hashicorp-vault-secretsengine) for more information about the Hashicorp Vault Keyfactor Secrets Engine plugin.
 
+[View the Hashicorp documentation](https://developer.hashicorp.com/vault/api-docs/secret/pki) for more information on the Hashicorp Vault PKI Secrets Engine
 
 ## Extension Configuration
 
@@ -97,7 +100,7 @@ This integration supports the following in order to view your certificates from 
 
 ### In the Keyfactor Platform
 
-#### Add a new Certificate Store Type - **Hashicorp Vault Key-Value PEM**
+#### Add the Certificate Store Type
 
 - Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
 - Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
@@ -132,7 +135,7 @@ The 3 highlighted fields above will be added automatically by the platform, you 
 
 - Click **Save** to save the new Store Type.
 
-#### Add the Hashicorp Vault Certificate Store - **Key-Value Secrets Engine**
+#### Add the Certificate Store
 
 - Navigate to **Locations** > **Certificate Stores** from the main menu
 - Click **ADD** to open the new Certificate Store Dialog
@@ -157,6 +160,8 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - The server password should be the Vault token that will be used for authenticating.
 
 ### For the Keyfactor and PKI plugins
+
+#### Add the Store Type
 
 - Add a new Certificate Store Type
   - Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
@@ -190,6 +195,8 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 - Navigate to **Locations** > **Certificate Stores** from the main menu
 - Click **ADD** to open the new Certificate Store Dialog
 
+#### Add the Certificate Store
+
 In Keyfactor Command create a new Certificate Store similar to the one below:
 
 ![](images/store_type_pki.png)
@@ -206,6 +213,7 @@ In Keyfactor Command create a new Certificate Store similar to the one below:
 - The **SERVER PASSWORD** should be the Vault token that will be used for authenticating.
 
 At this point, the certificate store should be created and ready to peform inventory on your certificates stored via the Keyfactor or PKI secrets engine plugin for Hashicorp Vault.
+
 
 ## Testing the Key-Value store
 
