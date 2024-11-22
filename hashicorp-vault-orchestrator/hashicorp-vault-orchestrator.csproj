@@ -1,14 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
 		<AssemblyName>Keyfactor.Extensions.Orchestrator.HCV</AssemblyName>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<SignAssembly>false</SignAssembly>
-		<Copyright />
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 
@@ -33,25 +29,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
-		<PackageReference Include="Keyfactor.Logging" Version="1.1.1">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+		<PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
 		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.7.0" />
+		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="1.0.0" />
 		<PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="NLog" Version="5.2.3" />
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.3" />
-		<PackageReference Include="System.Linq" Version="4.3.0">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-		<PackageReference Include="VaultSharp" Version="1.13.0.1">
+		<PackageReference Include="NLog" Version="5.3.4" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="VaultSharp" Version="1.17.5.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>

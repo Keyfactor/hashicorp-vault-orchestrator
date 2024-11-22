@@ -21,8 +21,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
     public class HcvKeyfactorClient : IHashiClient
     {
-        //private IVaultClient _vaultClient { get; set; }
-
         private ILogger logger = LogHandler.GetClassLogger<HcvKeyfactorClient>();
 
         private string _vaultUrl { get; set; }
@@ -36,9 +34,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
         {
             _vaultToken = vaultToken;
-            _mountPoint = mountPoint ?? "keyfactor";
+            _mountPoint = mountPoint ?? "keyfactor"; // the mount point, including the namespace.. the namespace cannot contain slashes; so it will be everything before the first slash
+            // example: KF/pki/pru uses the KF namespace and the mount point is pki/pru.
+
             _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
-            _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("/", string.Empty) }";
+            _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("//", "/") }";
         }
 
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
@@ -124,7 +124,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 var content = JsonConvert.DeserializeObject<ListResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
                 string[] certKeys;
-
 
                 content.data.TryGetValue("keys", out certKeys);
 
