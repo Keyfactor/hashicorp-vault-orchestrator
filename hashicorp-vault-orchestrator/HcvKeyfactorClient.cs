@@ -34,8 +34,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
         {
             _vaultToken = vaultToken;
-            _mountPoint = mountPoint ?? "keyfactor"; // the mount point, including the namespace.. the namespace cannot contain slashes; so it will be everything before the first slash
-            // example: KF/pki/pru uses the KF namespace and the mount point is pki/pru.
+            _mountPoint = mountPoint ?? "keyfactor"; // the mount point, including the namespace. 
 
             _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
             _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("//", "/") }";
