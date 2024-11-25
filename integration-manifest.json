@@ -66,7 +66,7 @@
               "DisplayName": "Mount Point",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -74,7 +74,7 @@
               "DisplayName": "Server Username",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -82,7 +82,7 @@
               "DisplayName": "Server Password",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -94,7 +94,7 @@
               "Required": true
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -125,27 +125,11 @@
               "DisplayName": "Mount Point",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": true
-            },
-            {
-              "Name": "VaultToken",
-              "DisplayName": "VaultToken",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
-            },
-            {
-              "Name": "VaultServerUrl",
-              "DisplayName": "Vault Server URL",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": false
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -153,7 +137,7 @@
           },
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
-          "ServerRequired": false,
+          "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
           "CustomAliasAllowed": "Optional"
@@ -192,7 +176,7 @@
               "DisplayName": "Mount Point",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -200,7 +184,7 @@
               "DisplayName": "Server Username",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -208,7 +192,7 @@
               "DisplayName": "Server Password",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -220,7 +204,7 @@
               "Required": true
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -261,7 +245,7 @@
               "DisplayName": "Mount Point",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -277,7 +261,7 @@
               "DisplayName": "Server Username",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -285,7 +269,7 @@
               "DisplayName": "Server Password",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -297,7 +281,7 @@
               "Required": true
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -346,7 +330,7 @@
               "DisplayName": "Mount Point",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -354,7 +338,7 @@
               "DisplayName": "Server Username",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -362,7 +346,7 @@
               "DisplayName": "Server Password",
               "Type": "Secret",
               "DependsOn": "",
-              "DefaultValue": null,
+              "DefaultValue": "",
               "Required": false
             },
             {
@@ -374,7 +358,7 @@
               "Required": true
             }
           ],
-          "EntryParameters": null,
+          "EntryParameters": [],
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,

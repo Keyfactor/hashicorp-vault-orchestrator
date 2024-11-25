@@ -1,3 +1,6 @@
+## 3.1.1
+* bug fix: no longer stripping slashes from a mountpoint that includes them
+
 ## 3.1.0
 
 * Added support for enterprise namespaces and alternate mount-points during discovery by allowing the value to be entered in the "directories to search" field.
