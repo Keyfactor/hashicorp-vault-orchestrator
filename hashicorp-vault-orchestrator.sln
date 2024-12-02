@@ -1,17 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32413.511
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hashicorp-vault-orchestrator", "hashicorp-vault-orchestrator\hashicorp-vault-orchestrator.csproj", "{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{83623EBF-AC4C-4158-922D-959AEFC75453}"
 	ProjectSection(SolutionItems) = preProject
+		images\cert-store-kv.PNG = images\cert-store-kv.PNG
+		images\cert-store-pki.PNG = images\cert-store-pki.PNG
+		images\cert-store-type-advanced.png = images\cert-store-type-advanced.png
+		images\cert_store_add_dialog.png = images\cert_store_add_dialog.png
+		images\cert_store_fields.png = images\cert_store_fields.png
 		CHANGELOG.md = CHANGELOG.md
+		images\discovery.PNG = images\discovery.PNG
 		integration-manifest.json = integration-manifest.json
 		LICENSE = LICENSE
+		images\PEM-vault-example-1.PNG = images\PEM-vault-example-1.PNG
+		images\PEM-vault-example-2.PNG = images\PEM-vault-example-2.PNG
+		images\PEM-vault-example-3.PNG = images\PEM-vault-example-3.PNG
+		images\pfx_enrollment_blank.png = images\pfx_enrollment_blank.png
+		images\pfx_enrollment_certstore.png = images\pfx_enrollment_certstore.png
+		images\pfx_enrollment_filled.png = images\pfx_enrollment_filled.png
 		README.md = README.md
 		readme_source.md = readme_source.md
+		images\store-type-kv.PNG = images\store-type-kv.PNG
+		images\store_type_1.PNG = images\store_type_1.PNG
+		images\store_type_add.png = images\store_type_add.png
+		images\store_type_fields.png = images\store_type_fields.png
+		images\store_type_pki.png = images\store_type_pki.png
+		images\vault_cli_list.png = images\vault_cli_list.png
+		images\vault_cli_read.png = images\vault_cli_read.png
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "readme-src", "readme-src", "{3266961F-0B1D-4DB6-9A58-C0DA958EB832}"
