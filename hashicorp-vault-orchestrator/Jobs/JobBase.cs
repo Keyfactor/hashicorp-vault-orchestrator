@@ -20,21 +20,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public string ExtensionName => "HCV";
 
         public string StorePath { get; set; }
-
         public string VaultToken { get; set; }
-
         public string ClientMachine { get; set; }
-
         public string VaultServerUrl { get; set; }
-
         public bool SubfolderInventory { get; set; }
-
         public bool IncludeCertChain { get; set; }
-
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to kv-v2 if not provided.
-
-        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point. "namespace/mountpoint"
-
+        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point if needed. 
         internal protected IHashiClient VaultClient { get; set; }
         internal protected string _storeType { get; set; }
         internal protected ILogger logger { get; set; }
@@ -103,7 +95,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             logger.LogTrace($"Directories to search (mount point): {MountPoint}");
             logger.LogTrace($"Enterprise Namespace: {Namespace}");
-
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
             InitProps(config.JobProperties, config.Capability);
         }
@@ -112,11 +103,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger = LogHandler.GetClassLogger(GetType());
 
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
-
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
-
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
-
             StorePath = config.CertificateStoreDetails.StorePath;
             ClientMachine = config.CertificateStoreDetails.ClientMachine;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
@@ -141,8 +129,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-
             MountPoint = !string.IsNullOrEmpty(mp) ? mp : MountPoint;
+
             SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
 
@@ -156,7 +144,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             {
                 VaultClient = new HcvKeyfactorClient(VaultToken, VaultServerUrl, MountPoint, StorePath);
             }
-
         }
     }
 }
