@@ -38,6 +38,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "readme-src", "readme-src", 
 		readme-pam-support.md = readme-pam-support.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{7E3E5552-84DA-4D3F-B86D-8FA4329975E8}"
+	ProjectSection(SolutionItems) = preProject
+		content.md = content.md
+		hcvkvjks.md = hcvkvjks.md
+		hcvkvp12.md = hcvkvp12.md
+		hcvkvpem.md = hcvkvpem.md
+		hcvkvpfx.md = hcvkvpfx.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{C909A516-BFEE-4E31-88CA-90935F8B778C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +65,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3266961F-0B1D-4DB6-9A58-C0DA958EB832} = {83623EBF-AC4C-4158-922D-959AEFC75453}
+		{C909A516-BFEE-4E31-88CA-90935F8B778C} = {7E3E5552-84DA-4D3F-B86D-8FA4329975E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F1706189-FE1B-4EE6-9AE1-EF4A777B2F06}
