@@ -1,31 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
-		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
-		<AssemblyName>Keyfactor.Extensions.Orchestrator.HCV</AssemblyName>
+		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">		
-		<DefineConstants>TRACE;DEBUG</DefineConstants>
-		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-		<Optimize>false</Optimize>
-		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-		<WarningsAsErrors>;NU1605</WarningsAsErrors>
-		<DebugType>full</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-		<PlatformTarget>AnyCPU</PlatformTarget>
-		<OutputPath>bin\Release\</OutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants></DefineConstants>
-		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-		<Optimize>false</Optimize>
-		<OutputPath>bin\Debug\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -52,11 +31,4 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
-	<ProjectExtensions>
-		<VisualStudio>
-			<UserProperties manifest_1json__JsonSchema="" />
-		</VisualStudio>
-	</ProjectExtensions>
-
 </Project>
