@@ -7,35 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hashicorp-vault-orchestrato
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{83623EBF-AC4C-4158-922D-959AEFC75453}"
 	ProjectSection(SolutionItems) = preProject
-		images\cert-store-kv.PNG = images\cert-store-kv.PNG
-		images\cert-store-pki.PNG = images\cert-store-pki.PNG
-		images\cert-store-type-advanced.png = images\cert-store-type-advanced.png
-		images\cert_store_add_dialog.png = images\cert_store_add_dialog.png
-		images\cert_store_fields.png = images\cert_store_fields.png
 		CHANGELOG.md = CHANGELOG.md
-		images\discovery.PNG = images\discovery.PNG
 		integration-manifest.json = integration-manifest.json
 		LICENSE = LICENSE
-		images\PEM-vault-example-1.PNG = images\PEM-vault-example-1.PNG
-		images\PEM-vault-example-2.PNG = images\PEM-vault-example-2.PNG
-		images\PEM-vault-example-3.PNG = images\PEM-vault-example-3.PNG
-		images\pfx_enrollment_blank.png = images\pfx_enrollment_blank.png
-		images\pfx_enrollment_certstore.png = images\pfx_enrollment_certstore.png
-		images\pfx_enrollment_filled.png = images\pfx_enrollment_filled.png
-		README.md = README.md
-		readme_source.md = readme_source.md
-		images\store-type-kv.PNG = images\store-type-kv.PNG
-		images\store_type_1.PNG = images\store_type_1.PNG
-		images\store_type_add.png = images\store_type_add.png
-		images\store_type_fields.png = images\store_type_fields.png
-		images\store_type_pki.png = images\store_type_pki.png
-		images\vault_cli_list.png = images\vault_cli_list.png
-		images\vault_cli_read.png = images\vault_cli_read.png
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "readme-src", "readme-src", "{3266961F-0B1D-4DB6-9A58-C0DA958EB832}"
-	ProjectSection(SolutionItems) = preProject
-		readme-pam-support.md = readme-pam-support.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{7E3E5552-84DA-4D3F-B86D-8FA4329975E8}"
@@ -45,9 +19,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{
 		hcvkvp12.md = hcvkvp12.md
 		hcvkvpem.md = hcvkvpem.md
 		hcvkvpfx.md = hcvkvpfx.md
+		hcvpki.md = hcvpki.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{C909A516-BFEE-4E31-88CA-90935F8B778C}"
+	ProjectSection(SolutionItems) = preProject
+		images\cert-store-add-jks.png = images\cert-store-add-jks.png
+		images\cert-store-add-p12.png = images\cert-store-add-p12.png
+		images\cert-store-add-pem.png = images\cert-store-add-pem.png
+		images\cert-store-add-pfx.png = images\cert-store-add-pfx.png
+		images\cert-store-type-kv-advanced-tab.png = images\cert-store-type-kv-advanced-tab.png
+		images\cert-store-type-kv-custom-tab.png = images\cert-store-type-kv-custom-tab.png
+		images\cert-store-type-kv-jks-basic-tab.png = images\cert-store-type-kv-jks-basic-tab.png
+		images\cert-store-type-kv-notPEM-custom-tab.png = images\cert-store-type-kv-notPEM-custom-tab.png
+		images\cert-store-type-kv-p12-basic-tab.png = images\cert-store-type-kv-p12-basic-tab.png
+		images\cert-store-type-kv-pem-basic-tab.PNG = images\cert-store-type-kv-pem-basic-tab.PNG
+		images\cert-store-type-kv-pfx-basic-tab.png = images\cert-store-type-kv-pfx-basic-tab.png
+		images\cert-store-type-pki-advanced.png = images\cert-store-type-pki-advanced.png
+		images\cert-store-type-pki-custom.png = images\cert-store-type-pki-custom.png
+		images\discovery.PNG = images\discovery.PNG
+		images\PEM-vault-example-1.PNG = images\PEM-vault-example-1.PNG
+		images\PEM-vault-example-2.PNG = images\PEM-vault-example-2.PNG
+		images\PEM-vault-example-3.PNG = images\PEM-vault-example-3.PNG
+		images\pfx_enrollment_certstore.png = images\pfx_enrollment_certstore.png
+		images\pfx_enrollment_filled.png = images\pfx_enrollment_filled.png
+		images\store_type_add.png = images\store_type_add.png
+		images\store_type_pki.png = images\store_type_pki.png
+		images\vault_cli_list.png = images\vault_cli_list.png
+		images\vault_cli_read.png = images\vault_cli_read.png
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,7 +64,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3266961F-0B1D-4DB6-9A58-C0DA958EB832} = {83623EBF-AC4C-4158-922D-959AEFC75453}
 		{C909A516-BFEE-4E31-88CA-90935F8B778C} = {7E3E5552-84DA-4D3F-B86D-8FA4329975E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

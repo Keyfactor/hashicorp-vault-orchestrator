@@ -106,7 +106,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
             VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
             StorePath = config.CertificateStoreDetails.StorePath;
-            ClientMachine = config.CertificateStoreDetails.ClientMachine;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
             InitProps(props, config.Capability);
         }

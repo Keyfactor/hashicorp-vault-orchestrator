@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -130,7 +129,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error writing cert to Vault", ex);
+                logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
                 throw;
             }
 
@@ -445,7 +444,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error parsing certificate content", ex);
+                logger.LogError(ex, $"Error parsing certificate content: {ex.Message}");
                 throw;
             }
             try
@@ -459,7 +458,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error writing cert to Vault", ex);
+                logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
                 throw;
             }
             logger.MethodExit();
@@ -501,7 +500,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
 
                 certData = (Dictionary<string, object>)res.Data.Data;
-                logger.LogTrace("got secret data.", certData);
+                logger.LogTrace($"got secret data..");
 
                 string certificate = null;
                 string passphrase = null;
@@ -544,7 +543,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError("Error writing cert to Vault", ex);
+                    logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
                     throw;
                 }
 
@@ -615,7 +614,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
 
                 certData = (Dictionary<string, object>)res.Data.Data;
-                logger.LogTrace("got secret data.", certData);
+                logger.LogTrace("got secret data..");
 
                 string certStoreContents = null;
                 string passphrase = null;
@@ -657,7 +656,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError("Error writing file to Vault", ex);
+                    logger.LogError(ex, $"Error writing file to Vault: {ex.Message}");
                     throw;
                 }
 
@@ -680,7 +679,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error removing cert from Vault");
+                logger.LogError(ex, $"Error removing cert from Vault: {ex.Message}");
                 throw;
             }
         }
@@ -833,7 +832,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             List<string> componentPaths = new List<string> { };
             try
             {
-                logger.LogTrace("getting secret and path entries at this level.", storagePath);
+                logger.LogTrace($"getting secret and path entries at this level: {storagePath}");
 
                 Secret<ListInfo> listInfo = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint);
 
@@ -851,7 +850,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogWarning($"Error while listing component paths: {ex}");
+                logger.LogWarning(ex, $"Error while listing component paths: {ex.Message}");
             }
             logger.MethodExit();
             return componentPaths;
