@@ -34,6 +34,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             try
             {
                 (certs, warnings) = VaultClient.GetCertificates().Result;
+
                 var success = submitInventoryUpdate.Invoke(certs?.ToList() ?? new List<CurrentInventoryItem>());
                 
                 if (success) {
@@ -64,6 +65,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     Result = resultStatus,
                     JobHistoryId = config.JobHistoryId,
                     FailureMessage = failureMessage
+                    
                 };
             }
             catch (Exception ex)
