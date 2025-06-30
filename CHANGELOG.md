@@ -1,3 +1,8 @@
+## 3.1.2
+* doctool migration and documentation improvements
+* now support dual build for .NET 6.0 and .NET 8.0
+* removed unused "subfolder inventory" parameter from store type definition for HCVKVPFX, HCVKVP12, and HCVKVJKS store types.
+
 ## 3.1.1
 * bug fix: no longer stripping slashes from a mountpoint that includes them
 
