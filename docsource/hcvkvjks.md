@@ -1,75 +1,100 @@
 ## Overview
 
-The Hashicorp Vault Key-Value JKS Certificate Store Type allows users to manage Java KeyStore (JKS) files stored within Hashicorp Vault using the Key-Value secrets engine. This store type treats each JKS file as a separate certificate store, enabling fine-grained management of these files through Keyfactor Command. It supports various operations such as discovery, inventory, and the addition and removal of certificates within the JKS files.
-
-### Representation and Functionality
-
-The Hashicorp Vault Key-Value JKS Certificate Store Type represents individual JKS files stored in the Vault's Key-Value secrets engine. Each JKS file is treated as an independent store, making it easy to manage multiple JKS files systematically. This interaction ensures that each JKS file contains a base64-encoded certificate and an accompanying passphrase stored under specific keys.
-
-### Caveats and Considerations
-
-There are several important considerations when using this Certificate Store Type:
-
-- **Base64 Encoding:** All JKS files must be base64 encoded before being stored in Vault. This encoding ensures that the files can be accurately recognized and managed.
-- **Key Naming Convention:** The name (key) for each JKS entry must end with the suffix '_jks' to be correctly identified during operations. This convention is crucial for proper inventory and management.
-- **Passphrase Requirement:** Each JKS file entry must include a `passphrase` field containing the password for the store. Without this, the JKS file will be ignored during inventory scans, potentially leading to incomplete results.
-
-### Limitations and Potential Confusion
-
-The primary limitation of the Key-Value JKS Certificate Store Type is its dependence on strict naming conventions and base64 encoding. Users must ensure that each entry is correctly named and encoded to avoid errors during management operations. Additionally, the correct inclusion of the `passphrase` field is crucial for successful inventory and management.
-
-### SDK Use
-
-While not explicitly mentioned in the documentation, interactions are performed through the Hashicorp Vault API, implying that the Keyfactor Command orchestrator utilizes some API client to facilitate the required operations.
-
-### Summary
-
-In summary, the Hashicorp Vault Key-Value JKS Certificate Store Type offers a robust solution for managing JKS files within the Key-Value secrets engine of Hashicorp Vault. Representing each JKS file as an independent store enhances manageability and organization. However, users must be mindful of the necessary base64 encoding, strict naming conventions, and the inclusion of passphrases to ensure smooth operations and accurate results.
+The Hashicorp Vault Key-Value JKS Certificate Store manages certificates in the JKS format that are stored in the Hashicorp Vault Key-Value secrets engine.
+Each JKS file stored as a secret in the Key-Value secrets engine is treated as its own certificate store.  This file should be a valid JKS certificate store, and contain a collection of one or more certificates.
+The inventory job will catalog the certificates contained within the store.  Add/Remove operations will add and remove certificates 
 
 ## Requirements
 
-To configure the Hashicorp Vault Key-Value JKS Certificate Store Type, follow these steps:
+### Secret naming
 
-1. **Configure Hashicorp Vault:**
-    - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
-    - Enable the Key-Value secrets engine if it is not already enabled. This can be done using the command:
-      ```bash
-      vault secrets enable kv-v2
-      ```
-    - Create the path where the JKS files will be stored within the Key-Value secrets engine. Each JKS file should be base64 encoded and stored with the proper key naming conventions (ending with `_jks`):
-      ```bash
-      vault kv put kv-v2/my-cert-path mycert_jks='<base64-encoded-jks>' passphrase='<store-passphrase>'
-      ```
+In ordered to be managed by this orchestrator extension, a certificate store is comprised of two secret entries:
+- The certificate with the naming convention `<certificate name>_jks`
+- A secret containing the store passphrase located on the same level.  This should be named `passphrase`
 
-2. **Service Account Creation:**
-    - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
-      ```bash
-      vault token create -policy="<your-policy>"
-      ```
-    - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your JKS files, and `list` capability on the `metadata` path.
+### Base64 encoding
 
-3. **Custom Fields in Keyfactor Command:**
-    - When adding the certificate store type to Keyfactor Command, use the following field configuration:
-      - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
-      - **Store Path**: The path where the JKS files will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
-      - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
-      - **Passphrase**: The passphrase for accessing the JKS file. This must be included for each JKS file.
+Certificates should be stored in a base64 encoded format.  
+One method to encode a binary certificate store is to use the following command in a windows powershell or linux/macOs terminal window:
 
-    ```json
-    {
-        "customFields": [
-            {"name": "MountPoint", "type": "string"},
-            {"name": "Passphrase", "type": "secret", "required": true}
-        ]
-    }
-    ```
+`c:\> cat <cert store file path> | base64`
 
-4. **Configure the Orchestrator Agent Machine:**
-    - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
-    - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
-    - Restart the Orchestrator service.
+## Configuration in Keyfactor Command
 
-5. **Version Requirement:**
-    - - Ensure the orchestration system is compatible with the .NET 6 or .NET 8 framework
-    - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
+### Create the Store Type
 
+Here are the steps for manually creating the store type in Keyfactor Command.
+
+- Log into Keyfactor Command as Administrator or a user with permissions to add certificate store types.
+- Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
+- Click "Add" and enter the following information:
+
+- Set the following values in the "Basic" tab:
+  - **Name:** "Hashicorp Vault Java Keystore" (or another preferred name)
+  - **Short Name:** "HCVKVJKS"
+  - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
+  - **Needs Server** - should be checked (true).
+
+![](images/cert-store-type-kv-jks-basic-tab.png)
+
+- Set the following values on the "Advanced" tab:
+  - **Supports Custom Alias** - "Required"
+  - **Private Key Handling** - "Optional"
+
+![](images/cert-store-type-kv-advanced-tab.png)
+
+- Click the "Custom Fields" tab to add the following custom fields:
+  - **MountPoint** - Type: *string*  
+  - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+
+![](images/cert-store-type-kv-notPEM-custom-tab.png)
+
+**Note**
+The 3 highlighted fields above will be added automatically by the platform, you will not need to include them when creating the certificate store type.
+
+- Click **Save** to save the new Store Type.
+
+#### Create the Certificate Store
+
+- Navigate to **Locations** > **Certificate Stores** from the main menu
+- Click **ADD** to open the new Certificate Store Dialog
+
+In Keyfactor Command create a new Certificate Store that resembles the one below:
+
+![](images/cert-store-add-jks.png)
+
+- **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
+- **Store Path** - This is the path after mount point where the certs will be stored.
+  - example: `kv-v2\kf-secrets\mystore_jks` would use the path "\kf-secrets"
+- **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
+  - If left blank, will default to "kv-v2".
+  - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
+
+#### Set the server username and password
+
+- **SERVER USERNAME** should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- **SERVER PASSWORD** should be the Vault token that will be used for authenticating.
+
+## Discovery Job Configuration
+
+When the discovery job is executed, it will scan the provided vault path, and any sub-paths contained within it.  
+The certificate store entry is returned from a discovery job when.. 
+
+1. A secret entry is found that includes the `_p12` suffix.
+1. There is an entry named `passphrase` that contains the password for the store on the same level.
+1. The entry for the certificate contain the base64 encoded certificate file.
+
+**Note**: Key/Value secrets that do not include the expected keys or names do not end with "_p12" will be ignored during inventory scans.
+
+Set the following fields to configure a discovery job for PKCS12 Certificate Stores:
+- **Client Machine** - any string; it is unused by the Discovery job
+- **SERVER USERNAME** - the full URL to the instance of Vault
+- **SERVER PASSWORD** - the Vault Token to be used by the Orchestrator for authenticating into Vault
+- **Directories to Search** - used to restrict the certificate store search to a sub-path within the Secrets Engine
+- **Extensions** - The namespace (if used) and mount-point of the secrets engine to search.
+
+> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
+
+![](images/discovery.png)
+
+**Note**: The image shows an example configuration for a Discovery job with the HCVKVPEM store type, but the same approach is used across all of the store types.

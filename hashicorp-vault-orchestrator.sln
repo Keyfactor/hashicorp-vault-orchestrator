@@ -14,12 +14,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{F358CB33-11A6-4AB0-9D59-9F608C086CA7}"
 	ProjectSection(SolutionItems) = preProject
+		docsource\content.md = docsource\content.md
 		docsource\hcvkvjks.md = docsource\hcvkvjks.md
 		docsource\hcvkvp12.md = docsource\hcvkvp12.md
 		docsource\hcvkvpem.md = docsource\hcvkvpem.md
 		docsource\hcvkvpfx.md = docsource\hcvkvpfx.md
 		docsource\hcvpki.md = docsource\hcvpki.md
-		docsource\overview.md = docsource\overview.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{72529433-ABCD-4B2A-8AD2-727F1F58740C}"

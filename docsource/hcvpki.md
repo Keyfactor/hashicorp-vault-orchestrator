@@ -1,77 +1,73 @@
 ## Overview
 
-The Hashicorp Vault PKI Certificate Store Type allows users to manage and inventory certificates directly on a Hashicorp Vault instance using the PKI or Keyfactor Plugin secrets engines. This store type is intended for managing certificates issued and stored within the Vault's PKI, enabling seamless integration with Keyfactor Command for efficient certificate lifecycle management.
+The store type "HCVPKI" can perform inventory on certificates that exist in either the Hashicorp Vault PKI Secrets Engine, or the Keyfactor Secrets Engine.
 
-### Representation and Functionality
+- The [Hashicorp Vault PKI Secrets Engine](https://developer.hashicorp.com/vault/api-docs/secret/pki) is intended to allow for issuance and storage of certificates that rely on Certificate Authorities outside of Command; typically in Vault.
+- The [Keyfactor Secrets Engine](https://github.com/Keyfactor/hashicorp-vault-secretsengine) is designed to support the same interface as the Hashicorp Vault PKI Secrets Engine to issue and enroll certificates using Certificate Authorities managed by Keyfactor Command.
 
-The Hashicorp Vault PKI Certificate Store Type represents a path within Vault where certificates are stored and managed using either the native PKI engine or the Keyfactor Secrets Engine plugin. This configuration allows for streamlined certificate management, including inventory operations to keep track of all certificates within a specified Vault path.
+## The Hashicorp PKI and Keyfactor Plugin secrets engines
 
-### Caveats and Considerations
+Both the [Hashicorp PKI](https://developer.hashicorp.com/vault/api-docs/secret/pki) and [Keyfactor Secrets](https://github.com/Keyfactor/hashicorp-vault-secretsengine) Engine plugins are designed to allow managing certifications directly on the Hashicorp Vault instance.
+The store type for the PKI and/or the Keyfactor secrets engine is the same; `HCVPKI`.
 
-There are a few considerations to be aware of when using this store type:
+[View the repository on Github](https://github.com/Keyfactor/hashicorp-vault-secretsengine) for more information about the Hashicorp Vault Keyfactor Secrets Engine plugin.
 
-- **Mount Point Configuration:** It's crucial to correctly specify the mount point for the PKI or Keyfactor Plugin secrets engines. This ensures that the orchestrator can accurately access and manage the certificates.
-- **Vault Token Requirements:** The token used for Vault interactions must be configured with appropriate policies to permit read and list operations on the certificate path. Incorrect or insufficient permissions will impede the functionality of the certificate store.
+[View the Hashicorp documentation](https://developer.hashicorp.com/vault/api-docs/secret/pki) for more information on the Hashicorp Vault PKI Secrets Engine
 
-### Limitations and Potential Confusion
+## Configuration in Keyfactor Command
 
-The Hashicorp Vault PKI Certificate Store Type primarily supports inventory operations. This is a limitation to note if you require more extensive management capabilities such as adding or removing certificates. Additionally, users need to be careful with the path configurations to ensure accurate inventory results and avoid potential errors.
+#### Add the Store Type
 
-### SDK Use
+- Add a new Certificate Store Type via the Command User Interface
+  - Log into Keyfactor as Administrator or a user with permissions to add certificate store types.
+  - Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
+  - Click "Add" and enter the following information on the first tab:
 
-While the documentation does not explicitly mention the use of an SDK, interactions are performed through the Hashicorp Vault API, implying that API clients or services are employed by the Keyfactor Command orchestrator to facilitate required operations.
+![](images/store_type_add.png)
 
-### Summary
+- **Name:** "Hashicorp Vault PKI" (or another preferred name)
+- **Short Name:** "HCVPKI"
+- **Supported Job Types:** "Inventory"
+- **Needs Server** - should be checked (true).
 
-In summary, the Hashicorp Vault PKI Certificate Store Type is specialized for managing certificates stored in Vault's PKI or Keyfactor Plugin secrets engines. It focuses on inventory operations, representing a specific path within the Vault. Proper configuration of mount points and Vault tokens is essential for proper operation, and while it provides robust inventory capabilities, users should be aware of its limitations regarding additional management operations.
+![](images/store_type_pki.png)
 
-## Requirements
+- Set the following values on the "Advanced" tab:
+  - **Store Path Type** - "Fixed"
+  - **_Value_** - "/"
+    - The cert store inventories all certificates in the PKI or Keyfactor secrets engine, so we set it to the root path
+  - **Supports Custom Alias** - "Optional"
+  - **Private Key Handling** - "Optional"
 
-To configure the Hashicorp Vault PKI Certificate Store Type, follow these steps:
+![](images/cert-store-type-pki-advanced.png)
 
-1. **Configure Hashicorp Vault:**
-    - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
-    - Enable the PKI secret engine if it is not already enabled. This can be done using the command:
-      ```bash
-      vault secrets enable pki
-      ```
-    - Configure the PKI secret engine to generate certificates. This involves setting the URL for the CA and setting the maximum lease time for certificates:
-      ```bash
-      vault write pki/config/urls issuing_certificates="http://127.0.0.1:8200/v1/pki/ca" crl_distribution_points="http://127.0.0.1:8200/v1/pki/crl"
-      vault write pki/root/generate/internal common_name="example.com" ttl=8760h
-      ```
+- Click the "Custom Fields" tab to add the following field:
+  - **MountPoint** - type: *string*
+  
+![](images/cert-store-type-pki-custom.png)
 
-2. **Service Account Creation:**
-    - Create a token with the necessary policies for accessing the PKI secret engine. Ensure to provide the least privilege required for operations:
-      ```bash
-      vault token create -policy="<your-policy>"
-      ```
-    - The policy should include the following capabilities for certificate operations: `read`, `list` on the path of your certificates.
+- Click **Save** to save the new Store Type.
 
-3. **Custom Fields in Keyfactor Command:**
-    - When adding the certificate store type to Keyfactor Command, use the following field configuration:
-      - **Client Machine**: The URL for the Vault host machine.
-      - **Store Path**: This should be set to `/`.
-      - **Mount Point**: The mount point name for the instance of the PKI or Keyfactor plugins. If using the PKI plugin, the default is usually `pki`. If using the Keyfactor plugin, it corresponds to the configured mount point.
-      - **Vault Token**: The access token that will be used by the orchestrator for requests to Vault.
-      - **Vault Server URL**: The full URL and port of the Vault server instance.
+1. Add the Hashicorp Vault Certificate Store
 
-    ```json
-    {
-        "customFields": [
-            {"name": "MountPoint", "type": "string"},
-            {"name": "VaultServerUrl", "type": "string", "required": true},
-            {"name": "VaultToken", "type": "secret", "required": true}
-        ]
-    }
-    ```
+- Navigate to **Locations** > **Certificate Stores** from the main menu
+- Click **ADD** to open the new Certificate Store Dialog
 
-4. **Configure the Orchestrator Agent Machine:**
-    - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
-    - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
-    - Restart the Orchestrator service.
+#### Add the Certificate Store
 
-5. **Version Requirement:**
-    - Ensure the orchestration system is compatible with the .NET 6 or .NET 8 framework
-    - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
+In Keyfactor Command create a new Certificate Store similar to the one below:
 
+![](images/store_type_pki.png)
+
+- **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
+- **Store Path** - defaults to "/"  
+- **Mount Point** - This is the mount point name for the instance of the PKI or Keyfactor secrets engine plugin.
+  - If using the PKI plugin, the default in Hashicorp is "pki".  If using the Keyfactor plugin, the default is "keyfactor".
+  - It is possible to have multiple instances of the Keyfactor plugin running simultaneously, so be sure this corresponds to the one you would like to manage.
+
+#### Set the server username and password (values hidden)
+
+- The **SERVER USERNAME** should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- The **SERVER PASSWORD** should be the Vault token that will be used for authenticating.
+
+At this point, the certificate store should be created and ready to peform inventory on your certificates stored via the Keyfactor or PKI secrets engine plugin for Hashicorp Vault.

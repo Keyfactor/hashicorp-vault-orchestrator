@@ -1,76 +1,106 @@
 ## Overview
 
-The Hashicorp Vault Key-Value PEM Certificate Store Type allows users to manage PEM-encoded certificates stored in Hashicorp Vault using the Key-Value secrets engine. This store type treats each path in the Key-Value store as a certificate store, with individual certificates residing in sub-paths. It supports various operations, including discovery, inventory, certificate addition, certificate removal, and creating new certificate stores.
+The Hashicorp Vault Key-Value PEM Certificate Store manages certificates in the PEM format that are stored in the Hashicorp Vault Key-Value secrets engine.
+This certificate store type differs from the other Key-Value store types (HCVKVJKS, HCVKVP12, HCVKVPFX) in that rather than a certificate store being defined as a single file,
+these are defined as a single _path_ that may contain one or more separate PEM-formatted certificate secret entries.
 
-### Representation and Functionality
+### Important note on PEM (HCVKVPEM) Sub-Folder Inventory
 
-The Hashicorp Vault Key-Value PEM Certificate Store Type represents a hierarchical structure where the root path defined in the store contains multiple sub-paths, each potentially holding separate certificates and their associated private keys. This design enables users to manage large collections of PEM-encoded certificates efficiently and flexibly.
+> While HCVKVJKS, HCVKVPFX and HCVKVP12 point to a single file store, the HCVKVPEM is structured differently.   Each certificate and private key in a PEM store is in a specific sub-folder under the defined store path.
+Consequently you are able to define a single HCVKVPEM store as the root path, and have any number of sub-paths beneath it.  These sub-paths could be their own certificate store defined in the platform, or logical containers that don't require a seperate store be set up for each in the Command platform.
 
-### Caveats and Considerations
+> Example: 
 
-There are several important considerations to keep in mind when using this Certificate Store Type:
+ ![](images/PEM-vault-example-1.png)
 
-- **Sub-Folder Inventory:** Users can configure the store to include or exclude sub-folders during inventory operations. Setting 'Subfolder Inventory' to 'True' will inventory certificates in both the root path and its sub-paths. Conversely, setting it to 'False' will limit the inventory to certificates in the root path only. This flexibility helps avoid duplication and manage the store size effectively.
-- **Base64 Encoding:** All certificates and private keys in the Key-Value store must be base64 encoded. Incorrect encoding can lead to errors during inventory and management operations.
-- **Complex Path Management:** The hierarchical nature of the Key-Value PEM Certificate Store Type necessitates careful path management to avoid redundancy and ensure accurate inventory. Users should be cautious about the path configurations to prevent the same certificate from appearing in multiple stores.
+> In the "testpem" path above, there exist both a secret entry (toplevelcert), with a properly formatted and named certificate, and a subpath/ path.
 
-### Limitations and Potential Confusion
+![](images/PEM-vault-example-2.png)
 
-The primary limitation of this store type is the potential complexity in managing a large number of certificates within a hierarchical path structure. Additionally, users need to ensure that all PEM-encoded certificates and keys are correctly base64 encoded and correctly named to be recognized during inventory scans. If the required fields such as 'private_key' for PEM-encoded certificates are not present, those entries will be ignored during inventory scans.
+> The subpath/ path contains two certificate entries.
 
-### SDK Use
+![](images/PEM-vault-example-3.png)
 
-The documentation does not explicitly mention the use of an SDK for this Certificate Store Type. However, users interact with the Hashicorp Vault API to perform required operations, implying that some form of API client or service is in use by the Keyfactor Command orchestrator.
+> - If we define our HCVKVPEM store in the platform to have the path "testpem/", and set "Sub-folder Inventory" to "False", then the inventory job should return the single "toplevelcert" entry.
+> - If we define the store with "Sub-Folder Inventory" set to "True", then the inventory job should return 3 entries: "toplevelcert", "cert1", and "testaddexistingcert".
+> - If we define another store with the path "testpem/subpath/", then it's inventory will contain "cert1" and "testaddexistingcert".  
 
-### Summary
+:warning: _Avoid having the same certificate appearing in multiple stores by setting Sub-Folder inventory to "False" on any HCVKVPEM certificate stores where the path is a parent to another HCVKVPEM store's path that is defined in the platform._
 
-The Hashicorp Vault Key-Value PEM Certificate Store Type is a powerful extension for managing PEM-encoded certificates stored in a hierarchical structure within Vault's Key-Value secrets engine. While it offers significant flexibility and efficiency, it also demands careful management of paths and proper encoding to avoid errors and ensure smooth operation.
+### Create the Store Type
 
-## Requirements
+Here are the steps for manually creating the store type in Keyfactor Command.
 
-To configure the Hashicorp Vault Key-Value PEM Certificate Store Type, follow these steps:
+- Log into Keyfactor Command as Administrator or a user with permissions to add certificate store types.
+- Click on the gear icon in the top right and then navigate to the "Certificate Store Types"
+- Click "Add" and enter the following information:
 
-1. **Configure Hashicorp Vault:**
-    - Ensure you have a running instance of Hashicorp Vault accessible by the Keyfactor Universal Orchestrator.
-    - Configure the Key-Value secrets engine on your Vault instance if not already done. This can be achieved by running the command:
-      ```bash
-      vault secrets enable kv-v2
-      ```
-    - Create the path where the certificates will be stored within the Key-Value secrets engine, for example:
-      ```bash
-      vault kv put kv-v2/my-cert-path private_key="<base64-encoded-private-key>" certificate="<base64-encoded-certificate>"
-      ```
+- Set the following values in the "Basic" tab:
+  - **Name:** "Hashicorp PFX Certificate Store" (or another preferred name)
+  - **Short Name:** "HCVKVPEM"
+  - **Supported Job Types** - "Inventory", "Add", "Remove", "Discovery"
+  - **Needs Server** - should be checked (true).
 
-2. **Service Account Creation:**
-    - Create a token with the necessary policies for accessing the Key-Value secrets engine. Ensure to provide the least privilege required for operations:
-      ```bash
-      vault token create -policy="<your-policy>"
-      ```
-    - The policy should include the following capabilities for certificate operations: `read`, `list`, `create`, `update`, `patch`, `delete` on the path of your certificates, and `list` capability on the `metadata` path.
+![](images/cert-store-type-kv-pem-basic-tab.png)
 
-3. **Custom Fields in Keyfactor Command:**
-    - When adding the certificate store type to Keyfactor Command, use the following field configuration:
-      - **Client Machine**: Identifier for the orchestrator host (not used by the extension).
-      - **Store Path**: The path where the PEM certificates will be stored within the Key-Value secrets engine (e.g., `/kv-v2/my-cert-path`).
-      - **Mount Point**: The mount point name of the Key-Value secrets engine (default is `kv-v2`). Include the namespace if using Vault enterprise namespaces.
-      - **Subfolder Inventory**: Set to `True` if inventory should include certificates in sub-paths; otherwise, set to `False`.
-    
-    ```json
-    {
-        "customFields": [
-            {"name": "MountPoint", "type": "string"},
-            {"name": "SubfolderInventory", "type": "bool", "optional": true},
-            {"name": "IncludeCertChain", "type": "bool", "optional": true}
-        ]
-    }
-    ```
+- Click the "Advanced" tab and update the following:
+  - **Supports Custom Alias** - "Required" 
+  - **Private Key Handling** - "Optional"
 
-4. **Configure the Orchestrator Agent Machine:**
-    - Stop the Orchestrator service (e.g., `KeyfactorOrchestrator-Default`).
-    - Extract the Hashicorp Vault extension files into a new folder within the `extensions` directory of the orchestrator installation (e.g., `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\HCV`).
-    - Restart the Orchestrator service.
+![](images/cert-store-type-kv-advanced-tab.png)
 
-5. **Version Requirement:**
-    - Ensure the orchestration system is compatible with the .NET 6 or .NET 8 framework
-    - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
+- Click the "Custom Fields" tab to add the following custom fields:
+  - **MountPoint** - Type: *string*
+  - **SubfolderInventory** - Type: *bool*, Default Value: *false*
+  - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
 
+![](images/cert-store-type-kv-custom-tab.png)
+
+- Click **Save** to save the new Store Type.
+
+#### Create a Certificate Store
+
+- Navigate to **Locations** > **Certificate Stores** from the main menu
+- Click **ADD** to open the new Certificate Store Dialog
+
+Create a new Certificate Store that resembles the one below:
+
+![](images/cert-store-add-pem.png)
+
+- **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
+- **Store Path** - This is the path after mount point where the certificates will be stored.
+  - example: `kv-v2\kf-secrets\myPEMcerts\`
+- **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
+  - If left blank, will default to "kv-v2".
+  - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
+- **Subfolder Inventory** - Set to 'True' if all of the certificates . The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+
+#### Set the server username and password
+
+- **SERVER USERNAME** should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
+- **SERVER PASSWORD** should be the Vault token that will be used for authenticating.
+
+At this point, the certificate store should be created and ready to peform inventory on your certificates stored in PFX certificate store files on the Key-Value secrets engine.
+
+## Discovery Job Configuration
+
+When the discovery job is executed, it will scan the provided vault path, and any sub-paths contained within it.  
+The certificate store entry is returned from a discovery job when.. 
+
+1. A secret entry is found that includes the `certificate` suffix.
+1. The entry for the certificate contain the base64 encoded PEM formatted certificate file.
+
+**Note**: Key/Value secrets that do not include the expected keys or names do not end with "certificate" will be ignored during inventory scans.
+
+Set the following fields to configure a discovery job for PFX Certificate Stores:
+- **Client Machine** - any string; it is unused by the Discovery job
+- **SERVER USERNAME** - the full URL to the instance of Vault
+- **SERVER PASSWORD** - the Vault Token to be used by the Orchestrator for authenticating into Vault
+- **Directories to Search** - used to restrict the certificate store search to a sub-path within the Secrets Engine
+- **Extensions** - The namespace (if used) and mount-point of the secrets engine to search.
+
+> :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
+
+![](images/discovery.png)
+
+**Note**: The discovery job will return a collection of any paths beneath the provided root path that contains valid PEM-formatted certificates with the secret name ending in "certificate".
