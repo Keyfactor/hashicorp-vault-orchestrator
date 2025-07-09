@@ -72,6 +72,6 @@ To configure the Hashicorp Vault PKI Certificate Store Type, follow these steps:
     - Restart the Orchestrator service.
 
 5. **Version Requirement:**
-    - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+    - Ensure the orchestration system is compatible with the .NET 6 or .NET 8 framework
     - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 

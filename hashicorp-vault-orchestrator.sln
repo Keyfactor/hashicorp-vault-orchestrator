@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32413.511
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hashicorp-vault-orchestrator", "hashicorp-vault-orchestrator\hashicorp-vault-orchestrator.csproj", "{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}"
 EndProject
@@ -10,13 +10,39 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CHANGELOG.md = CHANGELOG.md
 		integration-manifest.json = integration-manifest.json
 		LICENSE = LICENSE
-		README.md = README.md
-		readme_source.md = readme_source.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "readme-src", "readme-src", "{3266961F-0B1D-4DB6-9A58-C0DA958EB832}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{F358CB33-11A6-4AB0-9D59-9F608C086CA7}"
 	ProjectSection(SolutionItems) = preProject
-		readme-pam-support.md = readme-pam-support.md
+		docsource\hcvkvjks.md = docsource\hcvkvjks.md
+		docsource\hcvkvp12.md = docsource\hcvkvp12.md
+		docsource\hcvkvpem.md = docsource\hcvkvpem.md
+		docsource\hcvkvpfx.md = docsource\hcvkvpfx.md
+		docsource\hcvpki.md = docsource\hcvpki.md
+		docsource\overview.md = docsource\overview.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{72529433-ABCD-4B2A-8AD2-727F1F58740C}"
+	ProjectSection(SolutionItems) = preProject
+		docsource\images\cert-store-kv.PNG = docsource\images\cert-store-kv.PNG
+		docsource\images\cert-store-pki.PNG = docsource\images\cert-store-pki.PNG
+		docsource\images\cert-store-type-advanced.png = docsource\images\cert-store-type-advanced.png
+		docsource\images\cert_store_add_dialog.png = docsource\images\cert_store_add_dialog.png
+		docsource\images\cert_store_fields.png = docsource\images\cert_store_fields.png
+		docsource\images\discovery.png = docsource\images\discovery.png
+		docsource\images\PEM-vault-example-1.png = docsource\images\PEM-vault-example-1.png
+		docsource\images\PEM-vault-example-2.png = docsource\images\PEM-vault-example-2.png
+		docsource\images\PEM-vault-example-3.png = docsource\images\PEM-vault-example-3.png
+		docsource\images\pfx_enrollment_blank.png = docsource\images\pfx_enrollment_blank.png
+		docsource\images\pfx_enrollment_certstore.png = docsource\images\pfx_enrollment_certstore.png
+		docsource\images\pfx_enrollment_filled.png = docsource\images\pfx_enrollment_filled.png
+		docsource\images\store-type-kv.PNG = docsource\images\store-type-kv.PNG
+		docsource\images\store_type_1.PNG = docsource\images\store_type_1.PNG
+		docsource\images\store_type_add.png = docsource\images\store_type_add.png
+		docsource\images\store_type_fields.png = docsource\images\store_type_fields.png
+		docsource\images\store_type_pki.png = docsource\images\store_type_pki.png
+		docsource\images\vault_cli_list.png = docsource\images\vault_cli_list.png
+		docsource\images\vault_cli_read.png = docsource\images\vault_cli_read.png
 	EndProjectSection
 EndProject
 Global
@@ -34,7 +60,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3266961F-0B1D-4DB6-9A58-C0DA958EB832} = {83623EBF-AC4C-4158-922D-959AEFC75453}
+		{F358CB33-11A6-4AB0-9D59-9F608C086CA7} = {83623EBF-AC4C-4158-922D-959AEFC75453}
+		{72529433-ABCD-4B2A-8AD2-727F1F58740C} = {F358CB33-11A6-4AB0-9D59-9F608C086CA7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F1706189-FE1B-4EE6-9AE1-EF4A777B2F06}

@@ -71,6 +71,6 @@ To configure the Hashicorp Vault Key-Value PEM Certificate Store Type, follow th
     - Restart the Orchestrator service.
 
 5. **Version Requirement:**
-    - Ensure the orchestration system is compatible with the .NET Core 3.1 target framework.
+    - Ensure the orchestration system is compatible with the .NET 6 or .NET 8 framework
     - The orchestrator must be able to connect to Keyfactor Command and the Hashicorp Vault instance.
 
