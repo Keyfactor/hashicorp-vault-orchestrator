@@ -1,42 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
-		<AssemblyName>Keyfactor.Extensions.Orchestrator.HCV</AssemblyName>
+		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<SignAssembly>false</SignAssembly>
-		<Copyright />
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">		
-		<DefineConstants>TRACE;DEBUG</DefineConstants>
-		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-		<Optimize>false</Optimize>
-		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-		<WarningsAsErrors>;NU1605</WarningsAsErrors>
-		<DebugType>full</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-		<PlatformTarget>AnyCPU</PlatformTarget>
-		<OutputPath>bin\Release\</OutputPath>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants></DefineConstants>
-		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-		<AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-		<Optimize>false</Optimize>
-		<OutputPath>bin\Debug\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
-		<PackageReference Include="Keyfactor.Logging" Version="1.1.1">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+		<PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
 		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
@@ -45,13 +18,10 @@
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="NLog" Version="5.2.3" />
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.3" />
-		<PackageReference Include="System.Linq" Version="4.3.0">
-			<IncludeAssets>all</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-		<PackageReference Include="VaultSharp" Version="1.13.0.1">
+		<PackageReference Include="NLog" Version="5.3.4" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="VaultSharp" Version="1.17.5.1">
 			<IncludeAssets>all</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
@@ -61,11 +31,4 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
-	<ProjectExtensions>
-		<VisualStudio>
-			<UserProperties manifest_1json__JsonSchema="" />
-		</VisualStudio>
-	</ProjectExtensions>
-
 </Project>
