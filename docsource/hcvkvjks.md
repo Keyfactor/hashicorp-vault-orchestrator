@@ -80,13 +80,13 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 When the discovery job is executed, it will scan the provided vault path, and any sub-paths contained within it.  
 The certificate store entry is returned from a discovery job when.. 
 
-1. A secret entry is found that includes the `_p12` suffix.
+1. A secret entry is found that includes the `_jks` suffix.
 1. There is an entry named `passphrase` that contains the password for the store on the same level.
 1. The entry for the certificate contain the base64 encoded certificate file.
 
 **Note**: Key/Value secrets that do not include the expected keys or names do not end with "_p12" will be ignored during inventory scans.
 
-Set the following fields to configure a discovery job for PKCS12 Certificate Stores:
+Set the following fields to configure a discovery job for JKS Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
 - **SERVER USERNAME** - the full URL to the instance of Vault
 - **SERVER PASSWORD** - the Vault Token to be used by the Orchestrator for authenticating into Vault

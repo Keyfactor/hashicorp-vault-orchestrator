@@ -73,7 +73,7 @@ Create a new Certificate Store that resembles the one below:
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-- **Subfolder Inventory** - Set to 'True' if all of the certificates . The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
+- **Subfolder Inventory** - Set to 'True' to inventory certificates stored in subfolders beneath the main "Store Path", in addition to those at the root. The default, 'False' will inventory secrets stored at the root of the "Store Path", but will not look at secrets in subfolders. **Note** that there is a limit on the number of certificates that can be in a certificate store. In certain environments enabling Subfolder Inventory may exceed this limit and cause inventory job failure. Inventory job results are currently submitted to the Command platform as a single HTTP POST. There is not a specific limit on the number of certificates in a store, rather the limit is based on the size of the actual certificates and the HTTP POST size limit configured on the Command web server.
 
 #### Set the server username and password
 
@@ -92,7 +92,7 @@ The certificate store entry is returned from a discovery job when..
 
 **Note**: Key/Value secrets that do not include the expected keys or names do not end with "certificate" will be ignored during inventory scans.
 
-Set the following fields to configure a discovery job for PFX Certificate Stores:
+Set the following fields to configure a discovery job for PEM Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
 - **SERVER USERNAME** - the full URL to the instance of Vault
 - **SERVER PASSWORD** - the Vault Token to be used by the Orchestrator for authenticating into Vault
