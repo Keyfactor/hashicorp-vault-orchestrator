@@ -1,3 +1,6 @@
+## 3.1.2 
+* updated manifest.json to reflect DLL name change
+
 ## 3.1.2
 * doctool migration and documentation improvements
 * now support dual build for .NET 6.0 and .NET 8.0

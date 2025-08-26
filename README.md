@@ -1,5 +1,5 @@
 <h1 align="center" style="border-bottom: none">
-    for Hashicorp Vault Universal Orchestrator Extension
+    Hashicorp Vault Universal Orchestrator Extension
 </h1>
 
 <p align="center">
@@ -33,7 +33,7 @@
 
 TODO Overview is a required section
 
-The for Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types. Depending on your use case, you may elect to use one, or all of these Certificate Store Types. Descriptions of each are provided below.
+The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types. Depending on your use case, you may elect to use one, or all of these Certificate Store Types. Descriptions of each are provided below.
 
 - [Hashicorp Vault PKI](#HCVPKI)
 
@@ -51,13 +51,13 @@ The for Hashicorp Vault Universal Orchestrator extension implements 5 Certificat
 This integration is compatible with Keyfactor Universal Orchestrator version 10.4 and later.
 
 ## Support
-The for Hashicorp Vault Universal Orchestrator extension If you have a support issue, please open a support ticket by either contacting your Keyfactor representative or via the Keyfactor Support Portal at https://support.keyfactor.com.
+The Hashicorp Vault Universal Orchestrator extension is supported by Keyfactor. If you require support for any issues or have feature request, please open a support ticket by either contacting your Keyfactor representative or via the Keyfactor Support Portal at https://support.keyfactor.com.
 
-> To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
+> If you want to contribute bug fixes or additional enhancements, use the **[Pull requests](../../pulls)** tab.
 
 ## Requirements & Prerequisites
 
-Before installing the for Hashicorp Vault Universal Orchestrator extension, we recommend that you install [kfutil](https://github.com/Keyfactor/kfutil). Kfutil is a command-line tool that simplifies the process of creating store types, installing extensions, and instantiating certificate stores in Keyfactor Command.
+Before installing the Hashicorp Vault Universal Orchestrator extension, we recommend that you install [kfutil](https://github.com/Keyfactor/kfutil). Kfutil is a command-line tool that simplifies the process of creating store types, installing extensions, and instantiating certificate stores in Keyfactor Command.
 
 
 TODO Requirements is an optional section. If this section doesn't seem necessary on initial glance, please delete it. Refer to the docs on [Confluence](https://keyfactor.atlassian.net/wiki/x/SAAyHg) for more info
@@ -65,9 +65,9 @@ TODO Requirements is an optional section. If this section doesn't seem necessary
 
 ## Certificate Store Types
 
-To use the for Hashicorp Vault Universal Orchestrator extension, you **must** create the Certificate Store Types required for your use-case. This only needs to happen _once_ per Keyfactor Command instance.
+To use the Hashicorp Vault Universal Orchestrator extension, you **must** create the Certificate Store Types required for your use-case. This only needs to happen _once_ per Keyfactor Command instance.
 
-The for Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types. Depending on your use case, you may elect to use one, or all of these Certificate Store Types.
+The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types. Depending on your use case, you may elect to use one, or all of these Certificate Store Types.
 
 ### HCVPKI
 
@@ -622,9 +622,9 @@ the Keyfactor Command Portal
 
 ## Installation
 
-1. **Download the latest for Hashicorp Vault Universal Orchestrator extension from GitHub.**
+1. **Download the latest Hashicorp Vault Universal Orchestrator extension from GitHub.**
 
-    Navigate to the [for Hashicorp Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
+    Navigate to the [Hashicorp Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/hashicorp-vault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
 
    | Universal Orchestrator Version | Latest .NET version installed on the Universal Orchestrator server | `rollForward` condition in `Orchestrator.runtimeconfig.json` | `hashicorp-vault-orchestrator` .NET version to download |
    | --------- | ----------- | ----------- | ----------- |
@@ -643,7 +643,7 @@ the Keyfactor Command Portal
     * **Default on Windows** - `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions`
     * **Default on Linux** - `/opt/keyfactor/orchestrator/extensions`
 
-3. **Create a new directory for the for Hashicorp Vault Universal Orchestrator extension inside the extensions directory.**
+3. **Create a new directory for the Hashicorp Vault Universal Orchestrator extension inside the extensions directory.**
 
     Create a new directory called `hashicorp-vault-orchestrator`.
     > The directory name does not need to match any names used elsewhere; it just has to be unique within the extensions directory.
@@ -657,7 +657,7 @@ the Keyfactor Command Portal
 
 6. **(optional) PAM Integration**
 
-    The for Hashicorp Vault Universal Orchestrator extension is compatible with all supported Keyfactor PAM extensions to resolve PAM-eligible secrets. PAM extensions running on Universal Orchestrators enable secure retrieval of secrets from a connected PAM provider.
+    The Hashicorp Vault Universal Orchestrator extension is compatible with all supported Keyfactor PAM extensions to resolve PAM-eligible secrets. PAM extensions running on Universal Orchestrators enable secure retrieval of secrets from a connected PAM provider.
 
     To configure a PAM provider, [reference the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam) to select an extension and follow the associated instructions to install it on the Universal Orchestrator (remote).
 
@@ -672,7 +672,7 @@ TODO Post Installation is an optional section. If this section doesn't seem nece
 
 ## Defining Certificate Stores
 
-The for Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types, each of which implements different functionality. Refer to the individual instructions below for each Certificate Store Type that you deemed necessary for your use case from the installation section.
+The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate Store Types, each of which implements different functionality. Refer to the individual instructions below for each Certificate Store Type that you deemed necessary for your use case from the installation section.
 
 <details><summary>Hashicorp Vault PKI (HCVPKI)</summary>
 
@@ -695,8 +695,8 @@ TODO Certificate Store Configuration is an optional section. If this section doe
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "Hashicorp Vault PKI" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This can be any value to help uniquely identify the store.  It is not used by this integration. |
@@ -785,8 +785,8 @@ TODO Certificate Store Configuration is an optional section. If this section doe
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "Hashicorp Vault Key-Value PEM" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This can be any value to help uniquely identify the store.  It is not used by this integration. |
@@ -879,8 +879,8 @@ TODO Certificate Store Configuration is an optional section. If this section doe
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "Hashicorp Vault Key-Value JKS" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This can be any value to help uniquely identify the store.  It is not used by this integration. |
@@ -971,8 +971,8 @@ TODO Certificate Store Configuration is an optional section. If this section doe
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "Hashicorp Vault Key-Value PKCS12" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This can be any value to help uniquely identify the store.  It is not used by this integration. |
@@ -1063,8 +1063,8 @@ TODO Certificate Store Configuration is an optional section. If this section doe
 
     Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
 
-   | Attribute | Description |
-   | --------- | ----------- |
+   | Attribute | Description                                             |
+   | --------- |---------------------------------------------------------|
    | Category | Select "Hashicorp Vault Key-Value PFX" or the customized certificate store name from the previous step. |
    | Container | Optional container to associate certificate store with. |
    | Client Machine | This can be any value to help uniquely identify the store.  It is not used by this integration. |
