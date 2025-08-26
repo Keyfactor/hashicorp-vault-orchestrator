@@ -3,59 +3,59 @@
     "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
 
       "CertStores.HCVKVPEM.Inventory": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       },
       "CertStores.HCVKVPEM.Discovery": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Discovery"
       },
       "CertStores.HCVKVPEM.Management": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Management"
       },
 
       "CertStores.HCVKVJKS.Inventory": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       },
       "CertStores.HCVKVJKS.Discovery": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Discovery"
       },
       "CertStores.HCVKVJKS.Management": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Management"
       },
 
       "CertStores.HCVKVP12.Inventory": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       },
       "CertStores.HCVKVP12.Discovery": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Discovery"
       },
       "CertStores.HCVKVP12.Management": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Management"
       },
 
       "CertStores.HCVKVPFX.Inventory": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       },
       "CertStores.HCVKVPFX.Discovery": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Discovery"
       },
       "CertStores.HCVKVPFX.Management": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Management"
       },
 
       "CertStores.HCVPKI.Inventory": {
-        "assemblypath": "Keyfactor.Extensions.Orchestrator.HCV.dll",
+        "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
       }
     }
