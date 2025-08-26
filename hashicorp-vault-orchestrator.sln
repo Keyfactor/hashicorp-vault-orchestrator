@@ -23,27 +23,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docsource", "docsource", "{
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{72529433-ABCD-4B2A-8AD2-727F1F58740C}"
-	ProjectSection(SolutionItems) = preProject
-		docsource\images\cert-store-kv.PNG = docsource\images\cert-store-kv.PNG
-		docsource\images\cert-store-pki.PNG = docsource\images\cert-store-pki.PNG
-		docsource\images\cert-store-type-advanced.png = docsource\images\cert-store-type-advanced.png
-		docsource\images\cert_store_add_dialog.png = docsource\images\cert_store_add_dialog.png
-		docsource\images\cert_store_fields.png = docsource\images\cert_store_fields.png
-		docsource\images\discovery.png = docsource\images\discovery.png
-		docsource\images\PEM-vault-example-1.png = docsource\images\PEM-vault-example-1.png
-		docsource\images\PEM-vault-example-2.png = docsource\images\PEM-vault-example-2.png
-		docsource\images\PEM-vault-example-3.png = docsource\images\PEM-vault-example-3.png
-		docsource\images\pfx_enrollment_blank.png = docsource\images\pfx_enrollment_blank.png
-		docsource\images\pfx_enrollment_certstore.png = docsource\images\pfx_enrollment_certstore.png
-		docsource\images\pfx_enrollment_filled.png = docsource\images\pfx_enrollment_filled.png
-		docsource\images\store-type-kv.PNG = docsource\images\store-type-kv.PNG
-		docsource\images\store_type_1.PNG = docsource\images\store_type_1.PNG
-		docsource\images\store_type_add.png = docsource\images\store_type_add.png
-		docsource\images\store_type_fields.png = docsource\images\store_type_fields.png
-		docsource\images\store_type_pki.png = docsource\images\store_type_pki.png
-		docsource\images\vault_cli_list.png = docsource\images\vault_cli_list.png
-		docsource\images\vault_cli_read.png = docsource\images\vault_cli_read.png
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
