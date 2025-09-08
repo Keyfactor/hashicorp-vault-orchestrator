@@ -1,9 +1,15 @@
+## 3.1.3
+
+* documentation fix
+
 ## 3.1.2
+
 * doctool migration and documentation improvements
 * now support dual build for .NET 6.0 and .NET 8.0
 * removed unused "subfolder inventory" parameter from store type definition for HCVKVPFX, HCVKVP12, and HCVKVJKS store types.
 
 ## 3.1.1
+
 * bug fix: no longer stripping slashes from a mountpoint that includes them
 
 ## 3.1.0
@@ -20,7 +26,6 @@
     * The server url and Vault Token have been moved to the server username and server password fields of server credentials, respectively.
     * The HCVKV store type for PEM files has been renamed to HCVKVPEM
     
-
 ## 2.0.0
 
 * Added support for storing certs in sub-paths
