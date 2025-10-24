@@ -6,16 +6,12 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
 //  and limitations under the License.
 
-using System.Collections.Generic;
-using Keyfactor.Orchestrators.Extensions;
+using Microsoft.Extensions.Logging;
 
-namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
+namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 {
-    public interface IFileStore
+    public class FileStoreBase
     {
-        string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string certContent, string passphrase);
-        string RemoveCertificate(string alias, string passphrase, string storeFileContent);
-        byte[] CreateFileStore(string passphrase);
-        IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields);        
+        internal protected ILogger logger { get; set; }
     }
 }

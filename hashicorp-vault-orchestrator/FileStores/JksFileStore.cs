@@ -1,9 +1,10 @@
-// Copyright 2023 Keyfactor
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
-// and limitations under the License.
+
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,6 @@ using System.Linq;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using NLog.Config;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
@@ -35,12 +35,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
         {
             var newStore = new JksStore();
 
-            using (var outstream = new MemoryStream())
-            {
-                logger.LogDebug("Created new JKS store, saving it to outStream");
-                newStore.Save(outstream, password.ToCharArray());
-                return outstream.ToArray();
-            }
+            using var outstream = new MemoryStream();
+            logger.LogDebug("Created new JKS store, saving it to outStream");
+            newStore.Save(outstream, password.ToCharArray());
+            return outstream.ToArray();
         }
 
         public string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string storeFileContent, string passphrase)
@@ -97,14 +95,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                     logger.LogTrace($"reading the base64 encoded file store.  It is {base64EncodedJksStore.Length} characters in size.");
                 }
 
-                if (certFields.TryGetValue("passphrase", out object filePasswordObj))
+                if (certFields.TryGetValue(StoreFileExtensions.PASSPHRASE, out object filePasswordObj))
                 {
                     password = filePasswordObj.ToString();
                     logger.LogTrace($"retreived the store passphrase.  it is {password.Length} characters.");
                 }
                 else
                 {
-                    throw new Exception($"No passphrase entry found for JKS store '{certKey}'.");
+                    throw new Exception($"no passphrase entry found for JKS store '{certKey}'.");
                 }
 
                 logger.LogTrace("converting base64 encoded cert to binary.");
@@ -117,7 +115,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error reading entry for {certKey} in vault. {ex.Message}");
+                logger.LogError(ex, $"error reading entry for {certKey} in vault. {ex.Message}");
 
                 throw;
             }
@@ -137,7 +135,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             // If existingStore is not null, load it into jksStore
             if (existingStore != null)
             {
-                logger.LogDebug("Loading existing JKS store");
+                logger.LogDebug("loading existing JKS store");
                 try
                 {
                     using (var ms = new MemoryStream(existingStore))
@@ -150,18 +148,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                     logger.LogDebug(ex, "error loading store as JKS, attempting to load as PKCS12");
                     try
                     {
-                        using (var ms = new MemoryStream(existingStore))
-                        {
-                            logger.LogTrace("creating pkcs12 store for working with the certificate.");
-                            Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
-                            existingPKCS12Store = pkcs12storeBuilder.Build();
-                            existingPKCS12Store.Load(ms, existingStorePassword.ToCharArray());
-                            isPKCS12Format = true;
-                        }
+                        using var ms = new MemoryStream(existingStore);
+                        logger.LogTrace("creating pkcs12 store for working with the certificate");
+                        Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
+                        existingPKCS12Store = pkcs12storeBuilder.Build();
+                        existingPKCS12Store.Load(ms, existingStorePassword.ToCharArray());
+                        isPKCS12Format = true;
                     }
                     catch (Exception innerEx)
                     {
-                        logger.LogError(innerEx, $"Unable to load store as JKS or PKCS12: {innerEx.Message}");
+                        logger.LogError(innerEx, $"unable to load store as JKS or PKCS12: {innerEx.Message}");
                         isPKCS12Format = false;
                         throw;
                     }
@@ -170,14 +166,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 if ((!isPKCS12Format && existingJksStore.ContainsAlias(alias)) || (isPKCS12Format && existingPKCS12Store.ContainsAlias(alias)))
                 {
                     // If alias exists, delete it from existingJksStore
-                    logger.LogDebug("Alias '{Alias}' exists in existing JKS store, deleting it", alias);
+                    logger.LogDebug($"alias '{alias}' exists in existing JKS store, deleting it", alias);
 
                     if (isPKCS12Format) existingPKCS12Store.DeleteEntry(alias); else existingJksStore.DeleteEntry(alias);
 
                     if (remove)
                     {
                         // If remove is true, save existingJksStore and return
-                        logger.LogDebug("This is a removal operation, saving existing JKS store");
+                        logger.LogDebug("this is a removal operation, saving existing JKS store");
                         using (var mms = new MemoryStream())
                         {
                             if (isPKCS12Format)
@@ -189,7 +185,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                                 existingJksStore.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
                             }
 
-                            logger.LogDebug("Returning existing JKS store");
+                            logger.LogDebug("returning existing JKS store");
                             return mms.ToArray();
                         }
                     }
@@ -197,7 +193,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 else if (remove)
                 {
                     // If alias does not exist and remove is true, return existingStore
-                    logger.LogDebug("Alias '{Alias}' does not exist in existing JKS store and this is a removal operation, returning existing JKS store as-is", alias);
+                    logger.LogDebug($"alias '{alias}' does not exist in existing JKS store and this is a removal operation, returning existing JKS store as-is", alias);
                     using (var mms = new MemoryStream())
                     {
                         if (isPKCS12Format)
@@ -226,10 +222,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             try
             {
                 logger.LogDebug("Loading new Pkcs12Store from newPkcs12Bytes");
-                using (var pkcs12Ms = new MemoryStream(newCertBytes))
-                {
-                    newCert.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
-                }
+                using var pkcs12Ms = new MemoryStream(newCertBytes);
+                newCert.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
             }
             catch (Exception)
             {
@@ -241,7 +235,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 // create new Pkcs12Store from certificate
                 storeBuilder = new Pkcs12StoreBuilder();
                 newCert = storeBuilder.Build();
-                logger.LogDebug("Setting certificate entry in new Pkcs12Store as alias '{Alias}'", alias);
+                logger.LogDebug($"Setting certificate entry in new Pkcs12Store as alias '{alias}'", alias);
                 newCert.SetCertificateEntry(alias, new X509CertificateEntry(certificate));
             }
 
@@ -250,21 +244,21 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             logger.LogDebug("Iterating through new Pkcs12Store aliases");
             foreach (var al in newCert.Aliases)
             {
-                logger.LogTrace("Alias: {Alias}", al);
+                logger.LogTrace($"alias: {al}", al);
                 if (newCert.IsKeyEntry(al))
                 {
-                    logger.LogDebug("Alias '{Alias}' is a key entry, getting key entry and certificate chain", al);
+                    logger.LogDebug($"alias '{al}' is a key entry, getting key entry and certificate chain", al);
                     var keyEntry = newCert.GetKey(al);
-                    logger.LogDebug("Getting certificate chain for alias '{Alias}'", al);
+                    logger.LogDebug($"getting certificate chain for alias '{al}'", al);
                     var certificateChain = newCert.GetCertificateChain(al);
 
-                    logger.LogDebug("Creating certificate list from certificate chain");
+                    logger.LogDebug("creating certificate list from certificate chain..");
                     var certificates = certificateChain.Select(certificateEntry => certificateEntry.Certificate).ToList();
 
                     if (createdNewStore)
                     {
                         // If createdNewStore is true, create a new store
-                        logger.LogDebug("Created new JKS store, setting key entry for alias '{Alias}'", al);
+                        logger.LogDebug($"created new JKS store, setting key entry for alias '{al}'", al);
                         newJksStore.SetKeyEntry(alias,
                             keyEntry.Key,
                             string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(),
@@ -274,14 +268,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                     {
                         // If createdNewStore is false, add to existingJksStore
                         // check if alias exists in existingJksStore
-                        if ((isPKCS12Format && existingPKCS12Store.ContainsAlias(alias)) || (!isPKCS12Format && existingJksStore.ContainsAlias(alias)))
+                        if ((isPKCS12Format && existingPKCS12Store.ContainsAlias(al)) || (!isPKCS12Format && existingJksStore.ContainsAlias(alias)))
                         {
                             // If alias exists, delete it from existingJksStore
-                            logger.LogDebug("Alias '{Alias}' exists in existing JKS store, deleting it", alias);
-                            if (isPKCS12Format) existingPKCS12Store.DeleteEntry(alias); else existingJksStore.DeleteEntry(alias);
+                            logger.LogDebug($"alias '{al}' exists in existing JKS store, deleting it", alias);
+                            if (isPKCS12Format) existingPKCS12Store.DeleteEntry(al); else existingJksStore.DeleteEntry(alias);
                         }
 
-                        logger.LogDebug("Setting key entry for alias '{Alias}'", alias);
+                        logger.LogDebug($"setting key entry for alias '{alias}'", alias);
 
                         if (!isPKCS12Format)
                         {
@@ -308,15 +302,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 }
             }
 
-            using (var outStream = new MemoryStream())
-            {
-                logger.LogDebug("Saving existing JKS store to outStream");
-                if (isPKCS12Format) existingPKCS12Store.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
-                else existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
+            using var outStream = new MemoryStream();
+            logger.LogDebug("Saving existing JKS store to outStream");
+            if (isPKCS12Format) existingPKCS12Store.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
+            else existingJksStore.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray());
 
-                logger.LogDebug("Returning updated JKS store as byte[]");
-                return outStream.ToArray();
-            }
+            logger.LogDebug("Returning updated JKS store as byte[]");
+            return outStream.ToArray();
         }
 
         private Pkcs12Store JksToPkcs12Store(byte[] storeContents, string storePassword)
@@ -332,14 +324,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             // first, see if it is already in the pkcs12 format
             try
             {
-                using (var ms = new MemoryStream(storeContents))
-                {
-                    logger.LogTrace("creating pkcs12 store for working with the certificate.");
-                    Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
-                    existingPKCS12Store = pkcs12storeBuilder.Build();
-                    existingPKCS12Store.Load(ms, storePassword.ToCharArray());
-                    isPKCS12Format = true;
-                }
+                using var ms = new MemoryStream(storeContents);
+                logger.LogTrace("creating pkcs12 store for working with the certificate.");
+                Pkcs12StoreBuilder pkcs12storeBuilder = new Pkcs12StoreBuilder();
+                existingPKCS12Store = pkcs12storeBuilder.Build();
+                existingPKCS12Store.Load(ms, storePassword.ToCharArray());
+                isPKCS12Format = true;
             }
             catch (Exception)
             {
@@ -348,10 +338,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 
                 try
                 {
-                    using (var ms = new MemoryStream(storeContents))
-                    {
-                        jksStore.Load(ms, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
-                    }
+                    using var ms = new MemoryStream(storeContents);
+                    jksStore.Load(ms, string.IsNullOrEmpty(storePassword) ? new char[0] : storePassword.ToCharArray());
                 }
                 catch (Exception innerEx)
                 {

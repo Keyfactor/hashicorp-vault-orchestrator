@@ -1,9 +1,10 @@
-﻿// Copyright 2023 Keyfactor
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
-// and limitations under the License.
+﻿
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using System;
 using Keyfactor.Logging;
@@ -78,11 +79,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 {
                     complete.FailureMessage = "You must supply an alias for the certificate.";
                     return complete;
-                }
-
+                } 
                 try
                 {
-                    var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, IncludeCertChain);
+                    var cert = VaultClient.PutCertificate(alias, entryContents, pfxPassword, JobParameters.CertSecretPath, JobParameters.CertSecretPropName, JobParameters.PassphraseSecretPath, JobParameters.PassphraseSecretPropName, JobParameters.IncludeCertChain);
                     cert.Wait();
                     complete.Result = OrchestratorJobStatusJobResult.Success;
                 }
@@ -95,7 +95,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                     }
                     else
                     {
-                        complete.FailureMessage = $"An error occured while adding {alias} to {StorePath}: " + ex.Message;
+                        complete.FailureMessage = $"An error occured while adding {alias} to {JobParameters.StorePath}: " + ex.Message;
 
                         if (ex.InnerException != null)
                             complete.FailureMessage += " - " + ex.InnerException.Message;
@@ -144,8 +144,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }
                 else
                 {
-                    logger.LogError("Error deleting cert from Vault", ex);
-                    complete.FailureMessage = $"An error occured while removing {alias} from {StorePath}: " + ex.Message;
+                    logger.LogError($"Error deleting cert from Vault: {ex.Message}");
+                    complete.FailureMessage = $"An error occured while removing {alias} from {JobParameters.StorePath}: " + ex.Message;
                 }
             }
             return complete;

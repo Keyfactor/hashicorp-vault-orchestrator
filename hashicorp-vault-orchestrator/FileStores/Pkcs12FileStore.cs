@@ -1,9 +1,10 @@
-﻿// Copyright 2023 Keyfactor
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
-// and limitations under the License.
+﻿
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using System;
 using System.Collections.Generic;
@@ -116,7 +117,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
             catch (Exception ex)
             {
-                logger.LogError("Unable to read PKCS12 file.", ex);
+                logger.LogError(ex, "Unable to read PKCS12 file.");
                 throw;
             }
         }
@@ -153,12 +154,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 
             if (existingPkcs12Store.ContainsAlias(alias))
             {
-                // If alias exists, delete it from existingJksStore
+                // If alias exists, delete it from existing PKCS12 store
                 logger.LogDebug($"Alias '{alias}' exists in existing PKCS12 store, deleting it");
                 existingPkcs12Store.DeleteEntry(alias);
                 if (remove)
                 {
-                    // If remove is true, save existingJksStore and return
+                    // If remove is true, save existing P12 store and return
                     logger.LogDebug("This is a removal operation, saving existing PKCS12 store");
                     using (var mms = new MemoryStream())
                     {
@@ -173,25 +174,23 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             {
                 // If alias does not exist and remove is true, return existingStore
                 logger.LogDebug($"Alias '{alias}' does not exist in existing PKCS12 store and this is a removal operation, returning existing PKCS12 store as-is");
-                using (var mms = new MemoryStream())
-                {
-                    existingPkcs12Store.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
-                    return mms.ToArray();
-                }
+                using var mms = new MemoryStream();
+                existingPkcs12Store.Save(mms, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
+                return mms.ToArray();
             }
 
             // adding the new certificate
 
             // Create new Pkcs12Store from newPkcs12Bytes
             var storeBuilder = new Pkcs12StoreBuilder();
-            var newCert = storeBuilder.Build();
+            var newCertStore = storeBuilder.Build();
 
             try
             {
                 logger.LogDebug("Loading new certificate as pfx/pkcs12 from newPkcs12Bytes");
                 using (var pkcs12Ms = new MemoryStream(newCertBytes))
                 {
-                    newCert.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
+                    newCertStore.Load(pkcs12Ms, string.IsNullOrEmpty(newCertPassword) ? Array.Empty<char>() : newCertPassword.ToCharArray());
                 }
             }
             catch (Exception)
@@ -203,56 +202,66 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 logger.LogDebug("Creating new Pkcs12Store from certificate");
                 // create new Pkcs12Store from certificate
                 storeBuilder = new Pkcs12StoreBuilder();
-                newCert = storeBuilder.Build();
+                newCertStore = storeBuilder.Build();
                 logger.LogDebug($"Setting certificate entry in new Pkcs12Store as alias '{alias}'");
-                newCert.SetCertificateEntry(alias, new X509CertificateEntry(certificate));
+                newCertStore.SetCertificateEntry(alias, new X509CertificateEntry(certificate));
             }
 
 
-            // Iterate through newCert aliases.
+            // Iterate through newCertStore aliases.
             logger.LogDebug("Iterating through new Pkcs12Store aliases");
-            foreach (var al in newCert.Aliases)
+            foreach (var al in newCertStore.Aliases)
             {
-                logger.LogTrace($"Alias: {al}");
-                if (newCert.IsKeyEntry(al))
+                logger.LogTrace($"alias: {al}");
+
+                if (newCertStore.IsCertificateEntry(al)) 
                 {
+                    logger.LogTrace("is a certificate entry..");
+                                 
+                    if (existingPkcs12Store.ContainsAlias(al)) 
+                    {
+                        // it does.. so we remove it
+                        logger.LogTrace("that already exists in the cert store, removing..");
+                                                
+                        existingPkcs12Store.DeleteEntry(al);
+
+                        logger.LogTrace("and now replacing it with the new one..");
+                        existingPkcs12Store.SetCertificateEntry(al, newCertStore.GetCertificate(al));
+                    }
+                }
+                else if (newCertStore.IsKeyEntry(al))
+                {
+                    // it's the private key; get the chain and set it as the key entry for the new cert
                     logger.LogDebug($"Alias '{al}' is a key entry, getting key entry and certificate chain");
-                    var keyEntry = newCert.GetKey(al);
+                    var keyEntry = newCertStore.GetKey(al);
                     logger.LogDebug($"Getting certificate chain for alias '{al}'");
-                    var certificateChain = newCert.GetCertificateChain(al);
+                    var certificateChain = newCertStore.GetCertificateChain(al);
 
                     logger.LogDebug("Creating certificate list from certificate chain");
                     var certificates = certificateChain.ToList();
 
-                    // If createdNewStore is false, add to existingJksStore
                     // check if alias exists in existingJksStore
-                    if (existingPkcs12Store.ContainsAlias(alias))
+                    if (existingPkcs12Store.ContainsAlias(al))
                     {
-                        // If alias exists, delete it from existingJksStore
-                        logger.LogDebug($"Alias '{alias}' exists in existing PKCS12 store, deleting it");
-                        existingPkcs12Store.DeleteEntry(alias);
+                        // If alias al exists, delete it from existingJksStore
+                        logger.LogDebug($"Alias '{al}' exists in existing PKCS12 store, deleting it");
+                        existingPkcs12Store.DeleteEntry(al);
                     }
 
-                    logger.LogDebug($"Setting key entry for alias '{alias}'");
+                    // we found the key, setting the key for the new cert alias in the existing cert store 
+                    logger.LogDebug($"Setting key entry with alias '{al}' for cert with alias '{alias}' in the existing store..");
                     existingPkcs12Store.SetKeyEntry(alias,
                         keyEntry,
                         certificates.ToArray());
                 }
-                else
-                {
-                    logger.LogDebug($"Setting certificate with alias '{alias}' for existing PKCS12 store");
-                    existingPkcs12Store.SetCertificateEntry(alias, newCert.GetCertificate(alias));
-                }
             }
 
-            using (var outStream = new MemoryStream())
-            {
-                logger.LogDebug("Saving existing PKCS12 store to outStream");
-                existingPkcs12Store.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
+            using var outStream = new MemoryStream();
+            logger.LogDebug("Saving existing PKCS12 store to outStream");
+            existingPkcs12Store.Save(outStream, string.IsNullOrEmpty(existingStorePassword) ? Array.Empty<char>() : existingStorePassword.ToCharArray(), new SecureRandom());
 
-                logger.LogDebug("Returning updated PKCS12 store as byte[]");
-                return outStream.ToArray();
-            }
+            logger.LogDebug("Returning updated PKCS12 store as byte[]");
+            return outStream.ToArray();
         }
     }
 }
