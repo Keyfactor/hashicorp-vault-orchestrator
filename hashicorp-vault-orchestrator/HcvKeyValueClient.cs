@@ -39,7 +39,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _certPath { get; set; }
         private string _passphrasePath { get; set; }
-        private string _certStorePropName { get; set; }
+        private string _certPropName { get; set; }
         private string _passphrasePropName { get; set; }
         private string _mountPoint { get; set; }
         private bool _subfolderInventory { get; set; }
@@ -59,7 +59,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _mountPoint = mountPoint;
             _certPath = (!string.IsNullOrEmpty(certPath) && !certPath.StartsWith("/")) ? "/" + certPath.Trim() : certPath?.Trim();
             _passphrasePath = (!string.IsNullOrEmpty(passphrasePath) && !passphrasePath.StartsWith("/")) ? "/" + passphrasePath.Trim() : passphrasePath?.Trim();
-            _certStorePropName = certPropName;
+            _certPropName = certPropName;
             _passphrasePropName = passphrasePropName;
             _subfolderInventory = SubfolderInventory;
             _storeType = storeType?.Split('.')[1];
@@ -96,8 +96,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = GetSecretPaths();
                         
-            var certSecretIsJSON = !string.IsNullOrEmpty(_certStorePropName);
-            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored as a JSON object with the base64 encoded cert stored in the property '{_certStorePropName}'");
+            var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored as a JSON object with the base64 encoded cert stored in the property '{_certPropName}'");
 
             var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
             if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored as a JSON object with the passphrase in the property '{_passphrasePropName}'");
@@ -132,43 +132,55 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 VaultClient.V1.Auth.ResetVaultToken();
 
-                // create the cert secret
-                Dictionary<string, object> newData;
-                object certSecretContent;
+                // create the cert secret                
+                Dictionary<string, object> certSecretContent;
+                var pathToWriteCert = string.Empty;
 
 
                 // the content will be either the base64 encoded cert, or a json object with a property containing the base64encoded cert
                 if (certSecretIsJSON)
                 {
-                    // this means the cert should be stored as a JSON object with property _certStorePropName, as opposed to a raw base64 string.
-                    certSecretContent = new Dictionary<string, object> { { _certStorePropName, Convert.ToBase64String(newStoreBytes) } };
+                    // this means the cert should be stored as a JSON object with property _certPropName, as opposed to a raw base64 string.
+                    certSecretContent = new Dictionary<string, object> { { _certPropName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the property name
+                    pathToWriteCert = _certPath; // we write to the secret
                 }
                 else
                 {
-                    certSecretContent = Convert.ToBase64String(newStoreBytes);
+                    certSecretContent = new Dictionary<string, object> { { certSecretName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the secret name..
+                    pathToWriteCert = certParentPath; // we write to the parent path
                 }
 
-                newData = new Dictionary<string, object> { { certSecretName, certSecretContent } };
+                logger.LogTrace($"we will send the request to write the cert secret at the path {pathToWriteCert}, keyed by the secret or property name: '{certSecretContent.Keys.First()}'");
 
                 // write the certificate secret
-                await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(certParentPath, newData, null, _mountPoint);
 
+                logger.LogTrace($"sending request to write new cert store secret");
+                var res = await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(pathToWriteCert, certSecretContent, null, _mountPoint);
+                logger.LogTrace($"request to write certificate secret was successful.  secret created time: {res.Data?.CreatedTime}");
 
                 // create the passphrase secret
 
-                object passphraseSecretContent;
+                Dictionary<string, object> passphraseSecretContent;
+                var pathToWritePassphrase = string.Empty;
 
                 if (passphraseSecretIsJSON)
                 {
                     passphraseSecretContent = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
+                    pathToWritePassphrase = _passphrasePath;
                 }
                 else
                 {
-                    passphraseSecretContent = passphrase;
+                    passphraseSecretContent = new Dictionary<string, object> { { passphraseSecretName, passphrase } };
+                    pathToWritePassphrase = passphraseParentPath;
                 }
 
+                logger.LogTrace($"we will send the request to write the passphrase secret at the path {pathToWritePassphrase}, keyed by the secret or property name: '{passphraseSecretContent.Keys.First()}'");
+
                 // write the passphrase secret
-                await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(passphraseParentPath, new Dictionary<string, object> { { passphraseSecretName, passphraseSecretContent } });
+
+                logger.LogTrace($"sending request to write new cert store passphrase");
+                res = await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(pathToWritePassphrase, passphraseSecretContent);
+                logger.LogTrace($"request to write passphrase secret was successful.  secret created time: {res.Data?.CreatedTime}");
 
             }
             catch (Exception ex)
@@ -395,7 +407,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 if (_storeType != StoreType.HCVKVPEM)
                 {
-                    await PutCertificateIntoFileStore(certName, contents, pfxPassword, certPath, certPropName, keyPath, keyPropName, includeChain);
+                    await PutCertificateIntoFileStore(certName, contents, pfxPassword, includeChain);
                     return;
                 }
                 // for PEM stores, the store path is the container name, not entry name as with file stores
@@ -511,7 +523,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.MethodExit();
         }
 
-        private async Task PutCertificateIntoFileStore(string newCertName, string contents, string pfxPassword, string certPath, string certPropName, string keyPath, string keyPropName, bool includeChain)
+        private async Task PutCertificateIntoFileStore(string newCertName, string contents, string pfxPassword, bool includeChain)
         {
             logger.MethodEntry();
 
@@ -519,12 +531,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = GetSecretPaths();
 
-            var certSecretIsJSON = !string.IsNullOrEmpty(_certStorePropName);
-            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored as a JSON object with the base64 encoded cert stored in the property '{_certStorePropName}'");
-
+            var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored at '{_certPath}' as a JSON object with the base64 encoded cert stored in the property '{_certPropName}'");
+            else logger.LogTrace($"the certificate secret will be stored at '{_certPath}' with the contents being the base64 encoded certificate.");
             var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
-            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored as a JSON object with the passphrase in the property '{_passphrasePropName}'");
-
+            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored at '{_passphrasePath}' as a JSON object with the passphrase in the property '{_passphrasePropName}'");
+            else logger.LogTrace($"the passphrase secret will be stored at '{_passphrasePath}' as a string containing the passphrase for the certificate store");
 
             Secret<SecretData> res;
             Dictionary<string, object> certFileObj;
@@ -550,68 +562,143 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             try
             {
                 // first get cert contents
-                logger.LogTrace("getting all secrets in the parent container for the store.");
+                logger.LogTrace("retreiving the certificate store secret..");
 
-                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(certPath, mountPoint: _mountPoint);
+                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(_certPath, mountPoint: _mountPoint);
 
-                certFileObj = (Dictionary<string, object>)res.Data.Data;                
-                logger.LogTrace($"got cert secret data..");
+                certFileObj = (Dictionary<string, object>)res.Data.Data;
+                logger.LogTrace($"got secret data.. contents: ");
 
-                if (certFileObj == null || certFileObj.Keys.Count == 0) {
-                    logger.LogError($"no secret content was found at path {certPath}");
+                if (certFileObj == null || certFileObj.Keys.Count == 0)
+                {
+                    logger.LogError($"no secret content was found at path {_certPath}");
                     throw new DirectoryNotFoundException($"entry named {certSecretName} not found at {certParentPath} or is empty.");
                 }
 
-                foreach (var key in certFileObj.Keys) {
+                foreach (var key in certFileObj.Keys)
+                {
                     logger.LogTrace($"key = {key}, value = {certFileObj[key]}");
                 }
 
                 string certificate = null;
                 string passphrase = null;
 
-                // Validates if the certificate secret exists
-
                 logger.LogTrace($"getting the contents of {certSecretName}");
-                              
+
 
                 if (certSecretIsJSON)
                 {
-                    var prop = certFileObj.GetType().GetProperty(certPropName);
+                    // if the cert data is stored as a property in a JSON secret object, we get the value from the property
+                    var prop = certFileObj.GetType().GetProperty(_certPropName);
                     certificate = prop.GetValue(certFileObj, null).ToString();
                 }
                 else
                 {
+                    // otherwise, the entire secret content is the base64 encoded cert
                     certificate = certFileObj.ToString();
                 }
 
-                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(passphraseParentPath, mountPoint: _mountPoint);
-                
-                // Validates that the passphrase secret exists 
 
+                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(_passphrasePath, mountPoint: _mountPoint);
+                var passphraseObj = (Dictionary<string, object>)res.Data.Data;
 
-                if (!certFileObj.TryGetValue("passphrase", out object passphraseObj))
+                if (passphraseSecretIsJSON)
                 {
-                    throw new DirectoryNotFoundException($"no passphrase entry found at {passphraseParentPath}");
+                    // the secret is a json object with one of the fields containing the passphrase
+                    var passphraseProp = passphraseObj.GetType().GetProperty(_passphrasePropName);
+                    passphrase = passphraseProp.GetValue(passphraseObj, null).ToString();
+
                 }
-                passphrase = passphraseObj.ToString();
+                else
+                {
+                    // the entire contents of the secret is the passphrase
+                    passphrase = passphraseObj.ToString();
+                }                
+
+                if (string.IsNullOrEmpty(passphrase))
+                {
+                    throw new DirectoryNotFoundException($"no passphrase found at {_passphrasePath}");
+                }
 
                 logger.LogTrace("got passphrase and certificate store secrets from vault.");
-
                 logger.LogTrace("calling method to add certificate to store file.");
+
                 // get new store entry
-                var newEntry = fileStore.AddCertificate(newCertName, pfxPassword, contents, includeChain, certificate, passphrase);
+                var newCertFileStore = fileStore.AddCertificate(newCertName, pfxPassword, contents, includeChain, certificate, passphrase);
+                
                 logger.LogTrace("got new store file.");
                 
                 // write new store entry
                 try
                 {
-                    //logger.LogTrace("writing file store with new certificate to vault.");
-                    //VaultClient.V1.Auth.ResetVaultToken();
+                    logger.LogTrace("writing file store with new certificate to vault.");
+                    VaultClient.V1.Auth.ResetVaultToken();
 
-                    //var newData = new Dictionary<string, object> { { key, newEntry } };
-                    //var patchReq = new PatchSecretDataRequest() { Data = newData };
-                    //logger.LogTrace($"patching {key} to path {certParentPath} at mount point {_mountPoint}");
-                    //await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(certParentPath, patchReq, _mountPoint);
+                    // if the certificate and/or passphrase is stored as a property in a JSON secret..
+                    // then we need to write the full path to the secret, and pass a dictionary of the object for the PATCH operation
+
+                    // if the cert or passphrase is the full contents of the secret.. 
+                    // then we need to write to the _parent_ path, a dictionary with a key of the secret name and value of the contents
+
+                    // first write the certificate
+                    var newCertSecretData = new Dictionary<string, object>();
+                    var newPassphraseSecretData = new Dictionary<string, object>();
+                    var certPathToWrite = string.Empty;
+                    var passphrasePathToWrite = string.Empty;
+
+                    logger.LogTrace($"creating the patch request for the certificate secret...");
+                    if (certSecretIsJSON)
+                    {
+                        // we will create a dictionary to represent the secret itself..
+                        newCertSecretData = new Dictionary<string, object> { { _certPropName, newCertFileStore } };
+
+                        // and write it to the full path of the secret
+                        certPathToWrite = _certPath;
+                    }
+                    else
+                    {
+                        // we will create a dictionary to represent the contents of the parent path
+                        newCertSecretData = new Dictionary<string, object> { { certSecretName, newCertFileStore } };
+
+                        // and write it to the parent path of the secret
+                        certPathToWrite = certParentPath;
+                    }
+
+                    var patchCertReq = new PatchSecretDataRequest() { Data = newCertSecretData };
+
+                    // submit the patch request
+                    logger.LogTrace($"patching {newCertSecretData.Keys.First()} to path {certPathToWrite} at mount point {_mountPoint}");
+                    await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(certPathToWrite, patchCertReq, _mountPoint);
+                    logger.LogTrace("the PATCH request for the certificate executed successfully");
+
+                    // then write the passphrase
+                    logger.LogTrace($"creating the patch request for the passphrase secret...");
+
+                    if (passphraseSecretIsJSON)
+                    {
+                        // we will create a dictionary to represent the secret itself..
+                        newPassphraseSecretData = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
+
+                        // and write it to the full path of the secret
+                        passphrasePathToWrite = _passphrasePath;
+                    }
+                    else
+                    {
+                        // we will create a dictionary to represent the contents of the parent path
+                        newPassphraseSecretData = new Dictionary<string, object> { { passphraseSecretName, passphrase } };
+
+                        // and write it to the parent path of the secret
+                        passphrasePathToWrite = passphraseParentPath;
+                    }
+
+                    var patchPassphraseReq = new PatchSecretDataRequest() { Data = newPassphraseSecretData };
+
+                    // submit the patch request
+                    logger.LogTrace($"patching {newPassphraseSecretData.Keys.First()} to path {passphrasePathToWrite} at mount point {_mountPoint}");
+                    await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(passphrasePathToWrite, patchPassphraseReq, _mountPoint);
+                    logger.LogTrace("the PATCH request for passphrase executed successfully");
+
+                    logger.LogTrace("The certificate and passphrase have been successfully written to Vault.");
                 }
                 catch (Exception ex)
                 {
@@ -622,7 +709,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error adding certificate to {_storeType}: {ex.Message}");
+                logger.LogError(ex, $"An error occurred when trying to update the secret for {_storeType}: {ex.Message}");
                 throw;
             }
         }
