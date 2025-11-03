@@ -60,34 +60,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             return Convert.ToBase64String(newPfxStoreBytes);
         }
 
-        public IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields)
+        public IEnumerable<CurrentInventoryItem> GetInventory(string base64encodedCert, string passphrase)
         {
             logger.MethodEntry();
-            // certFields should contain two entries.  The certificate with the "_pfx" suffix, and "passphrase"
-            string password;
-            string base64encodedCert;
+
             var certs = new List<CurrentInventoryItem>();
-
-            var certKey = certFields.Keys.First(f => f.Contains(StoreFileExtensions.HCVKVPFX));
-
-            if (certKey == null)
-            {
-                throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVPFX}' found");
-            }
-            else
-            {
-                base64encodedCert = certFields[certKey].ToString();
-            }
-
-            if (certFields.TryGetValue("passphrase", out object filePasswordObj))
-            {
-                password = filePasswordObj.ToString();
-            }
-            else
-            {
-                throw new Exception($"No password entry found for PFX store '{certKey}'.");
-            }
-            logger.LogTrace("converting base64 encoded cert to binary format.");
 
             var pfxBytes = Convert.FromBase64String(base64encodedCert);
 
@@ -98,7 +75,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
                 logger.LogTrace("creating pkcs12 store for working with the certificate.");
                 Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
                 p = storeBuilder.Build();
-                p.Load(pfxBytesMemoryStream, password.ToCharArray());
+                p.Load(pfxBytesMemoryStream, passphrase.ToCharArray());
             }
 
             certs = CertUtility.CurrentInventoryFromPkcs12(p);

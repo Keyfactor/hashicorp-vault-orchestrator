@@ -167,7 +167,7 @@
           "StorePathDescription": "This is the path to the secret containing the store.",
           "LocalStore": false,
           "StorePathType": "",
-          "StorePathValue": "",
+          "StorePathValue": "example: '/mycerts/certstore.jks?b64cert'",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,
@@ -219,6 +219,16 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false
+            },
+            {
+              "Name": "PassphrasePath",
+              "DisplayName": "Passphrase Path",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": false,
+              "IsPAMEligible": true,
+              "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
           "EntryParameters": [],
@@ -240,7 +250,7 @@
           "StorePathDescription": "This is the path to the secret containing the store.",
           "LocalStore": false,
           "StorePathType": "",
-          "StorePathValue": "",
+          "StorePathValue": "example: '/mycerts/certstore.p12?b64cert'",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,
@@ -292,6 +302,16 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false
+            },
+            {
+              "Name": "PassphrasePath",
+              "DisplayName": "Passphrase Path",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": false,
+              "IsPAMEligible": true,
+              "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
           "EntryParameters": [],
@@ -313,7 +333,7 @@
           "StorePathDescription": "This is the path to the secret containing the store.",
           "LocalStore": false,
           "StorePathType": "",
-          "StorePathValue": "",
+          "StorePathValue": "example: '/mycerts/certstore.pfx?b64cert'",
           "PrivateKeyAllowed": "Optional",
           "JobProperties": [],
           "ServerRequired": true,
@@ -365,6 +385,16 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false
+            },
+            {
+              "Name": "PassphrasePath",
+              "DisplayName": "Passphrase Path",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": false,
+              "IsPAMEligible": true,
+              "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
           "EntryParameters": [],

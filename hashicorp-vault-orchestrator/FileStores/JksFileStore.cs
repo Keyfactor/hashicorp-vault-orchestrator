@@ -68,46 +68,18 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             return Convert.ToBase64String(newJksBytes);
         }
 
-        public IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields)
+        public IEnumerable<CurrentInventoryItem> GetInventory(string base64encodedCertStore, string passphrase)
         {
             logger.MethodEntry();
-            // certFields should contain two entries.  The certificate with the "_jks" suffix, and "passphrase"
 
-            string password;
-            string base64EncodedJksStore;
             var certs = new List<CurrentInventoryItem>();
             string certKey = null;
 
             try
             {
-                logger.LogTrace($"checking these keys for one that ends in {StoreFileExtensions.HCVKVJKS}");
-                certFields.Keys.ToList().ForEach(key => logger.LogTrace(key));
-
-                certKey = certFields.Keys.First(f => f.EndsWith(StoreFileExtensions.HCVKVJKS));
-
-                if (certKey == null)
-                {
-                    throw new Exception($"No entry with extension '{StoreFileExtensions.HCVKVJKS}' found");
-                }
-                else
-                {                    
-                    base64EncodedJksStore = certFields[certKey].ToString();
-                    logger.LogTrace($"reading the base64 encoded file store.  It is {base64EncodedJksStore.Length} characters in size.");
-                }
-
-                if (certFields.TryGetValue(StoreFileExtensions.PASSPHRASE, out object filePasswordObj))
-                {
-                    password = filePasswordObj.ToString();
-                    logger.LogTrace($"retreived the store passphrase.  it is {password.Length} characters.");
-                }
-                else
-                {
-                    throw new Exception($"no passphrase entry found for JKS store '{certKey}'.");
-                }
-
                 logger.LogTrace("converting base64 encoded cert to binary.");
-                var jksBytes = Convert.FromBase64String(base64EncodedJksStore);
-                var pkcs12Store = JksToPkcs12Store(jksBytes, password);
+                var jksBytes = Convert.FromBase64String(base64encodedCertStore);
+                var pkcs12Store = JksToPkcs12Store(jksBytes, passphrase);
                 certs = CertUtility.CurrentInventoryFromPkcs12(pkcs12Store);
                 logger.MethodExit();
                 return certs;
@@ -115,8 +87,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"error reading entry for {certKey} in vault. {ex.Message}");
-
+                logger.LogError($"error reading entry for {certKey} in vault. {ex.Message}");
+                logger.LogError($"{LogHandler.FlattenException(ex)}");
                 throw;
             }
         }

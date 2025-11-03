@@ -16,6 +16,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         string AddCertificate(string alias, string pfxPassword, string entryContents, bool includeChain, string certContent, string passphrase);
         string RemoveCertificate(string alias, string passphrase, string storeFileContent);
         byte[] CreateFileStore(string passphrase);
-        IEnumerable<CurrentInventoryItem> GetInventory(Dictionary<string, object> certFields);        
+        IEnumerable<CurrentInventoryItem> GetInventory(string cert, string passphrase);        
     }
 }

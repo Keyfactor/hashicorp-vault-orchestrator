@@ -25,7 +25,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         internal protected ILogger logger { get; set; }
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
 
-        public JobBase(IPAMSecretResolver resolver) {
+        public JobBase(IPAMSecretResolver resolver)
+        {
             PamSecretResolver = resolver;
         }
 
@@ -47,6 +48,30 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
 
             InitProps(props, config.Capability);
+
+            LogInitValues();
+        }
+
+        private void LogInitValues()
+        {
+            logger.LogTrace("- - - job initialization complete. resolved values: - - -");
+            logger.LogTrace($"ClientMachine:\t{JobParameters.ClientMachine}");
+            logger.LogTrace($"VaultServerUrl:\t{JobParameters.VaultServerUrl}");
+            logger.LogTrace($"Namespace:\t{JobParameters.Namespace}");
+            logger.LogTrace($"MountPoint:\t{JobParameters.MountPoint}");
+            logger.LogTrace($"VaultToken:\t{JobParameters.VaultToken.Length} characters (value hidden)");
+            logger.LogTrace($"StorePath:\t{JobParameters.StorePath}");
+            logger.LogTrace($"IncludeCertChain:\t{JobParameters.IncludeCertChain}");
+
+            if (!_storeType.Contains(StoreType.HCVKVPEM) && !_storeType.Contains(StoreType.HCVPKI))
+            {
+                logger.LogTrace($"CertSecretPath:\t{JobParameters.CertSecretPath}");
+                logger.LogTrace($"CertSecretPropName:\t{(String.IsNullOrEmpty(JobParameters.CertSecretPropName) ? "-not set- (entire secret content should be base64 encoded cert)" : JobParameters.CertSecretPropName)}");
+                logger.LogTrace($"PassphraseSecretPath:\t{JobParameters.PassphraseSecretPath}");
+                logger.LogTrace($"PassphraseSecretPropName:\t{(String.IsNullOrEmpty(JobParameters.PassphraseSecretPropName) ? "-not set- (entire secret content should be the passphrase)" : JobParameters.PassphraseSecretPropName)}");
+            }
+            if (_storeType.Contains(StoreType.HCVKVPEM)) logger.LogTrace($"SubfolderInventory:\t{JobParameters.SubfolderInventory}");
+            logger.LogTrace("- - - - - - - - -");
         }
 
         public void Initialize(DiscoveryJobConfiguration config)
@@ -129,9 +154,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
 
-            var isPki = _storeType.Contains("HCVPKI");
+            JobParameters.PassphrasePath = props.ContainsKey("PassphrasePath") ? props["PassphrasePath"].ToString() : null;
 
-            if (!isPki)
+            if (JobParameters.PassphrasePath == null && _storeType != StoreType.HCVKVPEM && _storeType != StoreType.HCVPKI)
+            {
+                // the passphrase path was not provided for HCVKVPFX, HCVKVJKS, or HCVKVP12.
+                // we assume the convention of a secret named "passphrase" at the same level as the cert secret.
+                // we assume the contents are a single string containing the passphrase
+                JobParameters.PassphrasePath = $"{JobParameters.CertSecretPath}/{StoreFileExtensions.PASSPHRASE}";
+            }
+
+            if (!_storeType.Contains("HCVPKI"))
             {
                 VaultClient = new HcvKeyValueClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.Namespace, _storeType, JobParameters.StorePath, JobParameters.CertSecretPropName, JobParameters.PassphrasePath, JobParameters.PassphraseSecretPropName, JobParameters.SubfolderInventory);
             }
