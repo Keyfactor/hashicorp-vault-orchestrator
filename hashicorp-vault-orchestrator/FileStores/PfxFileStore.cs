@@ -28,7 +28,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 
         public byte[] CreateFileStore(string password)
         {
-            Pkcs12Store newStore = null;
+            Pkcs12StoreBuilder storeBuilder = new Pkcs12StoreBuilder();
+            Pkcs12Store newStore = storeBuilder.Build();
             using var outstream = new MemoryStream();
             logger.LogDebug("Created new PFX store, saving it to outStream");
             newStore.Save(outstream, password.ToCharArray(), new SecureRandom());

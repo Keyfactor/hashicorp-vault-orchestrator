@@ -122,6 +122,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
         public void Initialize(ManagementJobConfiguration config)
         {
             logger = LogHandler.GetClassLogger(GetType());
+            JobParameters = new JobProperties();
 
             JobParameters.ClientMachine = config.CertificateStoreDetails.ClientMachine;
             JobParameters.VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);

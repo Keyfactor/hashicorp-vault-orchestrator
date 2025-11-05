@@ -7,6 +7,7 @@
 //  and limitations under the License.
 
 using System;
+using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -56,13 +57,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             try
             {
-                VaultClient.CreateCertStore();
+                Task.Run(VaultClient.CreateCertStore).Wait();
                 complete.Result = OrchestratorJobStatusJobResult.Success;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error when trying to create the new certificate store.");
-                complete.FailureMessage = $"Error when trying to create the new certificate store.  {ex.Message}";
+                logger.LogError("Error when trying to create the new certificate store.  Returning Job Failed response");
+                complete.Result = OrchestratorJobStatusJobResult.Failure;
+                complete.FailureMessage = $"An error occurred when trying to create the new certificate store: {ex.Message}";
             }
             return complete;
         }

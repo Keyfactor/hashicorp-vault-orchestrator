@@ -82,7 +82,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error when adding the new certificate.");
+                logger.LogError($"Error when adding the new certificate: {LogHandler.FlattenException(ex)}");
                 throw;
             }
             logger.MethodExit();
@@ -142,7 +142,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 {
                     // this means the cert should be stored as a JSON object with property _certPropName, as opposed to a raw base64 string.
                     certSecretContent = new Dictionary<string, object> { { _certPropName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the property name
-                    pathToWriteCert = _certPath; // we write to the secret
+                    pathToWriteCert = certParentPath + certSecretName; // we write to the secret
                 }
                 else
                 {
@@ -166,7 +166,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 if (passphraseSecretIsJSON)
                 {
                     passphraseSecretContent = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
-                    pathToWritePassphrase = _passphrasePath;
+                    pathToWritePassphrase = passphraseParentPath + passphraseSecretName;
                 }
                 else
                 {
@@ -177,18 +177,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 logger.LogTrace($"we will send the request to write the passphrase secret at the path {pathToWritePassphrase}, keyed by the secret or property name: '{passphraseSecretContent.Keys.First()}'");
 
                 // write the passphrase secret
-
+                var req = new PatchSecretDataRequest();
+                req.Data = passphraseSecretContent;
+                
                 logger.LogTrace($"sending request to write new cert store passphrase");
-                res = await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(pathToWritePassphrase, passphraseSecretContent);
+                res = await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(pathToWritePassphrase, req, _mountPoint);
                 logger.LogTrace($"request to write passphrase secret was successful.  secret created time: {res.Data?.CreatedTime}");
 
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
+                logger.LogError($"Error writing cert to Vault: {ex.Message}");
                 throw;
             }
-
         }
         private async Task CreatePemStore()
         {
@@ -540,8 +541,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
 
-            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored at '{_passphrasePath}' as a JSON object with the passphrase in the property '{_passphrasePropName}'");
-            else logger.LogTrace($"the passphrase secret will be stored at '{_passphrasePath}' as a string containing the passphrase for the certificate store");
+            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored at '{passphraseParentPath}/{passphraseSecretName}' as a JSON object with the passphrase in the property '{_passphrasePropName}'");
+            else logger.LogTrace($"the passphrase secret will be stored at '{passphraseParentPath}/{passphraseSecretName}' as a string containing the passphrase for the certificate store");
 
             switch (_storeType)
             {
@@ -596,7 +597,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         newCertSecretData = new Dictionary<string, object> { { _certPropName, newCertFileStore } };
 
                         // and write it to the full path of the secret
-                        certPathToWrite = _certPath;
+                        certPathToWrite = certParentPath + "/" + certSecretName;
                     }
                     else
                     {
@@ -612,40 +613,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     // submit the patch request
                     logger.LogTrace($"patching {newCertSecretData.Keys.First()} to path {certPathToWrite} at mount point {_mountPoint}");
                     await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(certPathToWrite, patchCertReq, _mountPoint);
-                    logger.LogTrace("the PATCH request for the certificate executed successfully");
-
-                    // then write the passphrase
-                    logger.LogTrace($"creating the patch request for the passphrase secret...");
-
-                    if (passphraseSecretIsJSON)
-                    {
-                        // we will create a dictionary to represent the secret itself..
-                        newPassphraseSecretData = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
-
-                        // and write it to the full path of the secret
-                        passphrasePathToWrite = _passphrasePath;
-                    }
-                    else
-                    {
-                        // we will create a dictionary to represent the contents of the parent path
-                        newPassphraseSecretData = new Dictionary<string, object> { { passphraseSecretName, passphrase } };
-
-                        // and write it to the parent path of the secret
-                        passphrasePathToWrite = passphraseParentPath;
-                    }
-
-                    var patchPassphraseReq = new PatchSecretDataRequest() { Data = newPassphraseSecretData };
-
-                    // submit the patch request
-                    logger.LogTrace($"patching {newPassphraseSecretData.Keys.First()} to path {passphrasePathToWrite} at mount point {_mountPoint}");
-                    await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(passphrasePathToWrite, patchPassphraseReq, _mountPoint);
-                    logger.LogTrace("the PATCH request for passphrase executed successfully");
 
                     logger.LogTrace("The certificate and passphrase have been successfully written to Vault.");
+
+                    // since this is an existing store, no update needs to be made to the passphrase
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
+                    logger.LogError($"Error writing cert to Vault: {ex.Message}");
+                    logger.LogError($"{LogHandler.FlattenException(ex)}");
+
                     throw;
                 }
 
@@ -960,8 +937,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.LogTrace($"passphrase parent path = {passphraseParentPath}");
 
             var certSecretName = _certPath.Substring(_certPath.LastIndexOf('/')).TrimStart('/');
+            certSecretName = certSecretName.Split('?')[0]; // we want the name of the secret without the optional property name parameter
             var passphraseSecretName = string.IsNullOrEmpty(_passphrasePath) ? StoreFileExtensions.PASSPHRASE : _passphrasePath[_passphrasePath.LastIndexOf('/')..];
-
+            passphraseSecretName = passphraseSecretName.Split('?')[0]; // we want the name of the secret without the optional property name parameter
             logger.LogTrace($"cert secret name = {certSecretName}");
             logger.LogTrace($"passphrase secret name = {passphraseSecretName}");
 
