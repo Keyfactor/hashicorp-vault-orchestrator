@@ -467,6 +467,7 @@ the Keyfactor Command Portal
    | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
+   | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
 
    The Custom Fields tab should look like this:
 
@@ -588,6 +589,7 @@ the Keyfactor Command Portal
    | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
+   | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
 
    The Custom Fields tab should look like this:
 
@@ -709,6 +711,7 @@ the Keyfactor Command Portal
    | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
+   | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
 
    The Custom Fields tab should look like this:
 
@@ -1077,6 +1080,7 @@ Please refer to the **Universal Orchestrator (remote)** usage section ([PAM prov
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 </details>
 
@@ -1106,6 +1110,7 @@ Please refer to the **Universal Orchestrator (remote)** usage section ([PAM prov
    | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 3. **Import the CSV file to create the certificate stores**
 
@@ -1125,6 +1130,7 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1221,6 +1227,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 </details>
 
@@ -1250,6 +1257,7 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
    | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 3. **Import the CSV file to create the certificate stores**
 
@@ -1269,6 +1277,7 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1367,6 +1376,7 @@ At this point, the certificate store should be created and ready to peform inven
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 </details>
 
@@ -1396,6 +1406,7 @@ At this point, the certificate store should be created and ready to peform inven
    | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
+   | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 3. **Import the CSV file to create the certificate stores**
 
@@ -1415,6 +1426,7 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
