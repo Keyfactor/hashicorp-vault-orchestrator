@@ -12,6 +12,29 @@ In ordered to be managed by this orchestrator extension, a certificate store is 
 - The certificate with the naming convention `<certificate name>_p12`
 - A secret containing the store passphrase located on the same level.  This should be named `passphrase`
 
+This is the convention followed by the certificate store if the full path to the secret is not provided, and no passphrase path is provided.
+
+
+**As of version 3.2+ of this integration, any secret name can be used, and the passphrase path can be anywhere within an accessable area of the KeyValue secrets engine.**
+
+Additionally, we can read the certificate store and/or passphrase secret from a JSON secret that contains the value on a specific property.
+The way to indicate the property name that should be used to retreive the value of the certificate store or passphrase, add a "?" at the end of the path, followed by the property name.
+
+**examples:** 
+
+StorePath = `kv-v2/mycerts/myjkscertstore?certData`
+> This path indicates that the secret containing the certificate store data is named "myjkscertstore" and is a JSON secret with the `certData` property containing the Base64 encoded certificate store.
+>
+
+StorePath = `kv-v2/mycerts/myjkscertstore`
+> This path indicates that the entire secret value is the base64 encoded certificate store
+
+> Generally, the paths to the certificate store data and passphrase should be in the following format
+> `<namespace>/<mount point>/<path-to-secret>?<json property name>`
+> if namespaces are not used, that section can be omitted.
+
+This convention applies to both the Store Path and Passphrase Path.
+
 ### Base64 encoding
 
 Certificates should be stored in a base64 encoded format.  
@@ -46,6 +69,7 @@ Here are the steps for manually creating the store type in Keyfactor Command.
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - Type: *string*
   - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+  - **PassphrasePath** - Type: *string* (If the passphrase is in a location other than in a secret named 'passphrase' at the same level as the cert store, provide the path here) 
 
 ![](images/cert-store-type-kv-notPEM-custom-tab.png)
 
@@ -65,11 +89,11 @@ Create a new Certificate Store that resembles the one below:
 
 - **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
 - **Store Path** - This is the path after mount point where the certs will be stored.
-  - example: `kv-v2\kf-secrets\mystore_p12` would use the path "\kf-secrets"
+  - example: `kv-v2\kf-secrets\mystore_p12`
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-
+ - **Passphrase Path** - The path to the secret (and optional JSON property) where the certificate store passphrase is located.
 #### Set the server username and password
 
 - **SERVER USERNAME** should be the full URL to the instance of Vault that will be accessible by the orchestrator. (example: `http://127.0.0.1:8200`)
@@ -86,7 +110,10 @@ The certificate store entry is returned from a discovery job when..
 1. There is an entry named `passphrase` that contains the password for the store on the same level.
 1. The entry for the certificate contain the base64 encoded certificate file.
 
-**Note**: Key/Value secrets that do not include the expected keys or names do not end with "_p12" will be ignored during inventory scans.
+> :warning: 
+> While any secret and passphrase location can be used, the discovery job can only discover certificate stores that follow the default convention.
+> If you store your certificate stores and passphrases with another convention, the discovery job will not work in that case.
+
 
 Set the following fields to configure a discovery job for PKCS12 Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
