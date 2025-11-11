@@ -66,6 +66,15 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": true
+            },
+            {
+              "Name": "PassphrasePath",
+              "DisplayName": "Passphrase Path",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": false,
+              "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
           "EntryParameters": [],
@@ -227,7 +236,6 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false,
-              "IsPAMEligible": true,
               "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
@@ -310,7 +318,6 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false,
-              "IsPAMEligible": true,
               "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
@@ -393,7 +400,6 @@
               "DependsOn": "",
               "DefaultValue": "",
               "Required": false,
-              "IsPAMEligible": true,
               "Description": "This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret."
             }
           ],
