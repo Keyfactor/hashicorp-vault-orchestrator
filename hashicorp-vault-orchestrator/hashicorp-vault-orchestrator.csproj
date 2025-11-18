@@ -5,6 +5,7 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
