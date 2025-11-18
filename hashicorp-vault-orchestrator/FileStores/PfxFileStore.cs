@@ -101,7 +101,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             {
                 using var pfxBytesMemoryStream = new MemoryStream(existingStore);
                 logger.LogTrace("creating pkcs12 store for working with the certificate.");
-                Pkcs12StoreBuilder sb = new Pkcs12StoreBuilder();
+                var sb = new Pkcs12StoreBuilder();
                 existingPfxStore = sb.Build();
                 existingPfxStore.Load(pfxBytesMemoryStream, existingStorePassword.ToCharArray());
             }

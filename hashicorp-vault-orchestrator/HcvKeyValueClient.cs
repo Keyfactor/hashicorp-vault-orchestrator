@@ -939,7 +939,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             var certSecretName = _certPath.Substring(_certPath.LastIndexOf('/')).TrimStart('/');
             certSecretName = certSecretName.Split('?')[0]; // we want the name of the secret without the optional property name parameter
             var passphraseSecretName = string.IsNullOrEmpty(_passphrasePath) ? StoreFileExtensions.PASSPHRASE : _passphrasePath[_passphrasePath.LastIndexOf('/')..];
-            passphraseSecretName = passphraseSecretName.Split('?')[0]; // we want the name of the secret without the optional property name parameter
+            passphraseSecretName = passphraseSecretName.Split('?')[0].TrimStart('/'); // we want the name of the secret without the optional property name parameter
             logger.LogTrace($"cert secret name = {certSecretName}");
             logger.LogTrace($"passphrase secret name = {passphraseSecretName}");
 
