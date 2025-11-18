@@ -163,6 +163,7 @@ the Keyfactor Command Portal
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
    | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
    | MountPoint | Mount Point | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> | String |  | ✅ Checked |
+   | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
 
    The Custom Fields tab should look like this:
 
@@ -370,9 +371,32 @@ The inventory job will catalog the certificates contained within the store.  Add
 
 #### Secret naming
 
-In ordered to be managed by this orchestrator extension, a certificate store is comprised of two secret entries:
+In order to be managed by this orchestrator extension, a certificate store is comprised of two secret entries:
 - The certificate with the naming convention `<certificate name>_jks`
 - A secret containing the store passphrase located on the same level.  This should be named `passphrase`
+
+This is the convention followed by the certificate store if the full path to the secret is not provided, and no passphrase path is provided.
+
+
+**As of version 3.2+ of this integration, any secret name can be used, and the passphrase path can be anywhere within an accessable area of the KeyValue secrets engine.**
+
+Additionally, we can read the certificate store and/or passphrase secret from a JSON secret that contains the value on a specific property.
+The way to indicate the property name that should be used to retreive the value of the certificate store or passphrase, add a "?" at the end of the path, followed by the property name.
+
+**examples:** 
+
+StorePath = `kv-v2/mycerts/myjkscertstore?certData`
+> This path indicates that the secret containing the certificate store data is named "myjkscertstore" and is a JSON secret with the `certData` property containing the Base64 encoded certificate store.
+>
+
+StorePath = `kv-v2/mycerts/myjkscertstore`
+> This path indicates that the entire secret value is the base64 encoded certificate store
+
+> Generally, the paths to the certificate store data and passphrase should be in the following format
+> `<mount point>/<path-to-secret>?<json property name>`
+
+
+This convention applies to both the Store Path and Passphrase Path.
 
 #### Base64 encoding
 
@@ -496,6 +520,29 @@ In ordered to be managed by this orchestrator extension, a certificate store is 
 - The certificate with the naming convention `<certificate name>_p12`
 - A secret containing the store passphrase located on the same level.  This should be named `passphrase`
 
+This is the convention followed by the certificate store if the full path to the secret is not provided, and no passphrase path is provided.
+
+
+**As of version 3.2+ of this integration, any secret name can be used, and the passphrase path can be anywhere within an accessable area of the KeyValue secrets engine.**
+
+Additionally, we can read the certificate store and/or passphrase secret from a JSON secret that contains the value on a specific property.
+The way to indicate the property name that should be used to retreive the value of the certificate store or passphrase, add a "?" at the end of the path, followed by the property name.
+
+**examples:** 
+
+StorePath = `kv-v2/mycerts/myjkscertstore?certData`
+> This path indicates that the secret containing the certificate store data is named "myjkscertstore" and is a JSON secret with the `certData` property containing the Base64 encoded certificate store.
+>
+
+StorePath = `kv-v2/mycerts/myjkscertstore`
+> This path indicates that the entire secret value is the base64 encoded certificate store
+
+> Generally, the paths to the certificate store data and passphrase should be in the following format
+> `<namespace>/<mount point>/<path-to-secret>?<json property name>`
+> if namespaces are not used, that section can be omitted.
+
+This convention applies to both the Store Path and Passphrase Path.
+
 #### Base64 encoding
 
 Certificates should be stored in a base64 encoded format.  
@@ -617,6 +664,28 @@ The inventory job will catalog the certificates contained within the store.  Add
 In ordered to be managed by this orchestrator extension, a certificate store is comprised of two secret entries:
 - The certificate with the naming convention `<certificate name>_pfx`
 - A secret containing the store passphrase located on the same level.  This should be named `passphrase`
+
+This is the convention followed by the certificate store if the full path to the secret is not provided, and no passphrase path is provided.
+
+**As of version 3.2+ of this integration, any secret name can be used, and the passphrase path can be anywhere within an accessable area of the KeyValue secrets engine.**
+
+Additionally, we can read the certificate store and/or passphrase secret from a JSON secret that contains the value on a specific property.
+The way to indicate the property name that should be used to retreive the value of the certificate store or passphrase, add a "?" at the end of the path, followed by the property name.
+
+**examples:** 
+
+StorePath = `kv-v2/mycerts/myjkscertstore?certData`
+> This path indicates that the secret containing the certificate store data is named "myjkscertstore" and is a JSON secret with the `certData` property containing the Base64 encoded certificate store.
+>
+
+StorePath = `kv-v2/mycerts/myjkscertstore`
+> This path indicates that the entire secret value is the base64 encoded certificate store
+
+> Generally, the paths to the certificate store data and passphrase should be in the following format
+> `<namespace>/<mount point>/<path-to-secret>?<json property name>`
+> if namespaces are not used, that section can be omitted.
+
+This convention applies to both the Store Path and Passphrase Path.
 
 #### Base64 encoding
 
@@ -836,6 +905,7 @@ The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate St
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | MountPoint | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> |
+   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 </details>
 
@@ -864,6 +934,7 @@ The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate St
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
    | Properties.MountPoint | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> |
+   | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 3. **Import the CSV file to create the certificate stores**
 
@@ -1130,7 +1201,6 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
-   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1168,6 +1238,7 @@ Here are the steps for manually creating the store type in Keyfactor Command.
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - Type: *string*  
   - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+  - **PassphrasePath** - Type: *string* (If the passphrase is in a location other than in a secret named 'passphrase' at the same level as the cert store, provide the path here) 
 
 ![](images/cert-store-type-kv-notPEM-custom-tab.png)
 
@@ -1187,10 +1258,11 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
 
 - **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
 - **Store Path** - This is the path after mount point where the certs will be stored.
-  - example: `kv-v2\kf-secrets\mystore_jks` would use the path "\kf-secrets"
+  - example: `kv-v2\kf-secrets\mystore_jks` 
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
+- **Passphrase Path** - The path to the secret (and optional JSON property) where the certificate store passphrase is located.
 
 ##### Set the server username and password
 
@@ -1277,7 +1349,6 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
-   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1315,6 +1386,7 @@ Here are the steps for manually creating the store type in Keyfactor Command.
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - Type: *string*
   - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+  - **PassphrasePath** - Type: *string* (If the passphrase is in a location other than in a secret named 'passphrase' at the same level as the cert store, provide the path here) 
 
 ![](images/cert-store-type-kv-notPEM-custom-tab.png)
 
@@ -1334,10 +1406,11 @@ Create a new Certificate Store that resembles the one below:
 
 - **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
 - **Store Path** - This is the path after mount point where the certs will be stored.
-  - example: `kv-v2\kf-secrets\mystore_p12` would use the path "\kf-secrets"
+  - example: `kv-v2\kf-secrets\mystore_p12`
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
+ - **Passphrase Path** - The path to the secret (and optional JSON property) where the certificate store passphrase is located.
 
 ##### Set the server username and password
 
@@ -1426,7 +1499,6 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
    | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
-   | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1464,6 +1536,7 @@ Here are the steps for manually creating the store type in Keyfactor Command.
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - Type: *string*
   - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
+  - **PassphrasePath** - Type: *string* (If the passphrase is in a location other than in a secret named 'passphrase' at the same level as the cert store, provide the path here) 
 
 ![](images/cert-store-type-kv-notPEM-custom-tab.png)
 
@@ -1483,10 +1556,11 @@ Create a new Certificate Store that resembles the one below:
 
 - **Client Machine** - Enter an identifier for the client machine.  This could be the Orchestrator host name, or anything else useful.  This value is not used by the extension.
 - **Store Path** - This is the path to the secret containing the store.
-  - example: `kv-v2\kf-secrets\mystore_pfx` would use the path "\kf-secrets"
+  - example: `kv-v2\kf-secrets\mystore_pfx`
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.  
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
+- **Passphrase Path** - The path to the secret (and optional JSON property) where the certificate store passphrase is located.
 
 ##### Set the server username and password
 
@@ -1539,7 +1613,10 @@ The certificate store entry is returned from a discovery job when..
 1. There is an entry named `passphrase` that contains the password for the store on the same level.
 1. The entry for the certificate contain the base64 encoded certificate file.
 
-**Note**: Key/Value secrets that do not include the expected keys or names do not end with "_p12" will be ignored during inventory scans.
+> :warning: 
+> While any secret and passphrase location can be used, the discovery job can only discover certificate stores that follow the default convention.
+> If you store your certificate stores and passphrases with another convention, the discovery job will not work in that case.
+
 
 Set the following fields to configure a discovery job for JKS Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
@@ -1568,7 +1645,10 @@ The certificate store entry is returned from a discovery job when..
 1. There is an entry named `passphrase` that contains the password for the store on the same level.
 1. The entry for the certificate contain the base64 encoded certificate file.
 
-**Note**: Key/Value secrets that do not include the expected keys or names do not end with "_p12" will be ignored during inventory scans.
+> :warning: 
+> While any secret and passphrase location can be used, the discovery job can only discover certificate stores that follow the default convention.
+> If you store your certificate stores and passphrases with another convention, the discovery job will not work in that case.
+
 
 Set the following fields to configure a discovery job for PKCS12 Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
@@ -1597,7 +1677,9 @@ The certificate store entry is returned from a discovery job when..
 1. There is an entry named `passphrase` that contains the password for the store on the same level.
 1. The entry for the certificate contain the base64 encoded certificate file.
 
-**Note**: Key/Value secrets that do not include the expected keys or names do not end with "_pfx" will be ignored during inventory scans.
+> :warning: 
+> While any secret and passphrase location can be used, the discovery job can only discover certificate stores that follow the default convention.
+> If you store your certificate stores and passphrases with another convention, the discovery job will not work in that case.
 
 Set the following fields to configure a discovery job for PFX Certificate Stores:
 - **Client Machine** - any string; it is unused by the Discovery job
