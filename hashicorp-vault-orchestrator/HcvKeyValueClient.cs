@@ -17,6 +17,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
@@ -63,7 +64,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _passphrasePropName = passphrasePropName;
             _subfolderInventory = SubfolderInventory;
             _storeType = storeType?.Split('.')[1];
-
         }
 
         public async Task CreateCertStore()
@@ -179,7 +179,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 // write the passphrase secret
                 var req = new PatchSecretDataRequest();
                 req.Data = passphraseSecretContent;
-                
+
                 logger.LogTrace($"sending request to write new cert store passphrase");
                 res = await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(pathToWritePassphrase, req, _mountPoint);
                 logger.LogTrace($"request to write passphrase secret was successful.  secret created time: {res.Data?.CreatedTime}");
@@ -960,15 +960,22 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             // first get cert contents
             try
             {
-                logger.LogTrace("retreiving the certificate store secret..");
+                logger.LogTrace($"retreiving the certificate store secret at {_certPath} from the Key-Value secrets engine mounted at {_mountPoint}..");
 
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(_certPath, mountPoint: _mountPoint);
 
-                certFileObj = (Dictionary<string, object>)res.Data.Data;
+                logger.LogTrace($"received a response: {JsonConvert.SerializeObject(res)}");
+
+                if (res.Warnings.Any())
+                {
+                    logger.LogTrace($"response warnings: {res.Warnings}");
+                }
+
+                certFileObj = (Dictionary<string, object>)res?.Data?.Data;
 
                 logger.LogTrace($"got cert secret data.. contents: ");
 
-                if (certFileObj == null || certFileObj.Keys.Count == 0)
+                if (certFileObj == null || certFileObj?.Keys?.Count == 0)
                 {
                     logger.LogError($"no secret content was found at path {_certPath}");
                     throw new DirectoryNotFoundException($"entry named {certSecretName} not found at {certParentPath} or is empty.");
@@ -985,7 +992,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 if (certSecretIsJSON)
                 {
                     // if the cert data is stored as a property in a JSON secret object, we get the value from the property
-                    certContent = certFileObj[_certPropName].ToString();                    
+                    certContent = certFileObj[_certPropName].ToString();
                 }
                 else
                 {
@@ -997,7 +1004,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 logger.LogTrace($"now we retrieve the passphrase from {passphraseParentPath + passphraseSecretName}");
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(_passphrasePath, mountPoint: _mountPoint);
-                var passphraseObj = (Dictionary<string, object>)res.Data.Data;
+                var passphraseObj = (Dictionary<string, object>)res?.Data?.Data;
 
                 foreach (var key in passphraseObj.Keys)
                 {
