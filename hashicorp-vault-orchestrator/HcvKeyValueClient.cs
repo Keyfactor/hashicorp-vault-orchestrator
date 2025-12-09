@@ -860,7 +860,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             {
                 var warning = $"Vault returned an error when attempting to read the secret from {_certPath}.  Exception message: {ex.Message}";
                 logger.LogError(LogHandler.FlattenException(ex));
-                res.Warnings.ForEach(w => logger.LogTrace(w));
+                res?.Warnings?.ForEach(w => logger.LogTrace(w));
                 return (null, new List<string> { warning });
             }
 
@@ -961,6 +961,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             try
             {
                 logger.LogTrace($"retreiving the certificate store secret at {_certPath} from the Key-Value secrets engine mounted at {_mountPoint}..");
+                logger.LogTrace($"the cert is {(certSecretIsJSON ? "" : "not")} a JSON property.");
+                if (certSecretIsJSON) logger.LogTrace($"the cert is stored in the property named {_certPropName}");
 
                 res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(_certPath, mountPoint: _mountPoint);
 
@@ -1030,9 +1032,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                var warning = $"Vault returned an error when attempting to read the secret from {_certPath}.  Exception message: {ex.Message}";
-                logger.LogError(LogHandler.FlattenException(ex));
-                res.Warnings.ForEach(w => logger.LogTrace(w));
+                var warning = $"Vault returned an error when attempting to read the certificate from {_certPath} or the passphrase from {_passphrasePath}.  Exception message: {ex.Message}";
+                logger.LogError($"there was an error when attempting to retrieve the cert and passphrase: {LogHandler.FlattenException(ex)}");
+                if (res != null && res.Warnings.Any()) res.Warnings.ForEach(w => logger.LogTrace(w));
                 throw;
             }
 
