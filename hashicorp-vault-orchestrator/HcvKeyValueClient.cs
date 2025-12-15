@@ -1,9 +1,10 @@
-// Copyright 2023 Keyfactor
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
-// and limitations under the License.
+
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
@@ -36,13 +38,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private ILogger logger = LogHandler.GetClassLogger<HcvKeyValueClient>();
 
-        private string _storePath { get; set; }
+        private string _certPath { get; set; }
+        private string _passphrasePath { get; set; }
+        private string _certPropName { get; set; }
+        private string _passphrasePropName { get; set; }
         private string _mountPoint { get; set; }
         private bool _subfolderInventory { get; set; }
         private string _storeType { get; set; }
         private string _namespace { get; set; }
+        private int _kvVersionCache { get; set; }
 
-        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string ns, string storePath, string storeType, bool SubfolderInventory = false)
+        public HcvKeyValueClient(string vaultToken, string serverUrl, string mountPoint, string ns, string storeType, string certPath, string certPropName, string passphrasePath, string passphrasePropName, bool SubfolderInventory = false)
         {
             // Initialize one of the several auth methods.
             IAuthMethodInfo authMethod = new TokenAuthMethodInfo(vaultToken);
@@ -50,15 +56,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             // Initialize settings. You can also set proxies, custom delegates etc. here.
             var clientSettings = new VaultClientSettings(serverUrl, authMethod) { Namespace = _namespace, UseVaultTokenHeaderInsteadOfAuthorizationHeader = true };
+
             _vaultClient = new VaultClient(clientSettings);
-
-            //logger.LogTrace("----- vault client has been initialized with these settings ------ ");
-            //logger.LogTrace($"url with port: {_vaultClient.Settings.VaultServerUriWithPort}");
-            //logger.LogTrace($"namespace: {_vaultClient.Settings.Namespace}");
-            //logger.LogTrace($"use token header?: {_vaultClient.Settings.UseVaultTokenHeaderInsteadOfAuthorizationHeader}");            
-
             _mountPoint = mountPoint;
-            _storePath = (!string.IsNullOrEmpty(storePath) && !storePath.StartsWith("/")) ? "/" + storePath.Trim() : storePath?.Trim();
+            _certPath = (!string.IsNullOrEmpty(certPath) && !certPath.StartsWith("/")) ? "/" + certPath.Trim() : certPath?.Trim();
+            _passphrasePath = (!string.IsNullOrEmpty(passphrasePath) && !passphrasePath.StartsWith("/")) ? "/" + passphrasePath.Trim() : passphrasePath?.Trim();
+            _certPropName = certPropName;
+            _passphrasePropName = passphrasePropName;
             _subfolderInventory = SubfolderInventory;
             _storeType = storeType?.Split('.')[1];
         }
@@ -79,7 +83,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error when adding the new certificate.");
+                logger.LogError($"Error when adding the new certificate: {LogHandler.FlattenException(ex)}");
                 throw;
             }
             logger.MethodExit();
@@ -87,11 +91,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private async Task CreateFileStore()
         {
+            logger.MethodEntry();
+
             IFileStore fileStore;
-            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
-            logger.LogTrace($"parent path = {parentPath}");
-            var entryName = _storePath.Substring(_storePath.LastIndexOf("/"));
-            entryName = entryName.TrimStart('/');
+
+            (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = ParsedSecretPaths();
+
+            var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored as a JSON object with the base64 encoded cert stored in the property '{_certPropName}'");
+
+            var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
+            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored as a JSON object with the passphrase in the property '{_passphrasePropName}'");
 
             switch (_storeType)
             {
@@ -121,38 +131,81 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                VaultClient.V1.Auth.ResetVaultToken();
+                // create the cert secret                
+                Dictionary<string, object> certSecretContent;
+                var pathToWriteCert = string.Empty;
 
-                var newData = new Dictionary<string, object> { { entryName, Convert.ToBase64String(newStoreBytes) }, { "passphrase", passphrase } };
 
-                await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(parentPath, newData, null, _mountPoint);
+                // the content will be either the base64 encoded cert, or a json object with a property containing the base64encoded cert
+                if (certSecretIsJSON)
+                {
+                    // this means the cert should be stored as a JSON object with property _certPropName, as opposed to a raw base64 string.
+                    certSecretContent = new Dictionary<string, object> { { _certPropName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the property name
+                    pathToWriteCert = certParentPath + certSecretName; // we write to the secret
+                }
+                else
+                {
+                    certSecretContent = new Dictionary<string, object> { { certSecretName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the secret name..
+                    pathToWriteCert = certParentPath; // we write to the parent path
+                }
+
+                logger.LogTrace($"we will send the request to write the cert secret at the path {pathToWriteCert}, keyed by the secret or property name: '{certSecretContent.Keys.First()}'");
+
+                // write the certificate secret
+
+                logger.LogTrace($"sending request to write new cert store secret");
+
+                await WriteSecretAutoAsync(pathToWriteCert, certSecretContent, _mountPoint);
+
+                logger.LogTrace($"request to write certificate secret was successful");
+
+                // create the passphrase secret
+
+                Dictionary<string, object> passphraseSecretContent;
+                var pathToWritePassphrase = string.Empty;
+
+                if (passphraseSecretIsJSON)
+                {
+                    passphraseSecretContent = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
+                    pathToWritePassphrase = passphraseParentPath + passphraseSecretName;
+                }
+                else
+                {
+                    passphraseSecretContent = new Dictionary<string, object> { { passphraseSecretName, passphrase } };
+                    pathToWritePassphrase = passphraseParentPath;
+                }
+
+                logger.LogTrace($"we will send the request to write the passphrase secret at the path {pathToWritePassphrase}, keyed by the secret or property name: '{passphraseSecretContent.Keys.First()}'");
+
+                // write the passphrase secret                
+
+                logger.LogTrace($"sending request to write new cert store passphrase");
+
+                await PatchSecretAutoAsync(pathToWritePassphrase, passphraseSecretContent, _mountPoint);
+
+                logger.LogTrace($"request to write passphrase secret was successful");
+
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
+                logger.LogError($"Error writing cert to Vault: {LogHandler.FlattenException(ex)}");
                 throw;
             }
-
         }
         private async Task CreatePemStore()
         {
+            logger.MethodEntry();
+
             //without a certificate, the only thing to do is create the secret path in Vault with empty values
             var newData = new Dictionary<string, object> { { "certificate", string.Empty }, { "private_key", string.Empty } };
 
             try
             {
-                if (_mountPoint == null)
-                {
-                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData);
-                }
-                else
-                {
-                    await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_storePath, newData, mountPoint: _mountPoint);
-                }
+                await WriteSecretAutoAsync(_certPath, newData, _mountPoint);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error creating the PEM certificate store at path {_storePath}");
+                logger.LogError($"Error creating the PEM certificate store at path {_certPath}: {LogHandler.FlattenException(ex)}");
                 throw;
             }
         }
@@ -160,17 +213,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
         {
             logger.MethodEntry();
-            VaultClient.V1.Auth.ResetVaultToken();
 
             Dictionary<string, object> certData = new Dictionary<string, object>();
-            Secret<SecretData> res;
-            var fullPath = _storePath + key;
 
+            var fullPath = _certPath + key;
 
             try
             {
-                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(fullPath, mountPoint: _mountPoint);
-                certData = (Dictionary<string, object>)res.Data.Data;
+                certData = await ReadSecretAutoAsync(fullPath, _mountPoint);
             }
             catch (VaultApiException ex)
             {
@@ -191,7 +241,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 string certificate = null;
                 string privateKey = null;
 
-                //Validates if the "certificate" and "private_key" keys exist in certData
+                //Validates if the "certificate" and "private_key" keys exist in certFileObj
                 if (certData.TryGetValue(StoreFileExtensions.HCVKVPEM, out object publicKeyObj))
                 {
                     certificate = publicKeyObj.ToString();
@@ -216,6 +266,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         logger.LogWarning($"The secret entry located at `{fullPath}` is missing `{missing}` but has `{exists}`.  Inventory will continue.");
                         throw new PemException($"The secret entry located at `{fullPath}` is missing `{missing}` but has `{exists}`");
                     }
+
                     return null;
                 }
 
@@ -261,14 +312,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             // there are 4 store types that use the KV secrets engine.  HCVKVPEM uses the folder as the store path.  The others (KCVKVJKS,HCVKVPKCS12,HCVKVPFX) use the full file path.
 
-            storePath = storePath ?? _storePath;
+            storePath = storePath ?? _certPath;
 
             if (!storePath.StartsWith("/")) storePath = "/" + storePath;
             if (!storePath.EndsWith("/")) storePath = storePath + "/";
 
             string suffix = StoreFileExtensions.ForStoreType(_storeType);
             var vaultPaths = new List<string>();
-            var entryPaths = new List<string>();
+
             var entries = new List<string>();
             var subPaths = new List<string>();
             var warnings = new List<string>();
@@ -276,10 +327,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.LogTrace($"starting vault discovery search in path: {_mountPoint + storePath}");
             try
             {
-                var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
-                entryPaths = res.Data.Keys.ToList();
-                entries = entryPaths.Where(e => !e.EndsWith("/")).ToList();
-                subPaths = entryPaths.Where(e => e.EndsWith("/")).ToList();
+                //var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storePath, _mountPoint);
+                var paths = await ReadSecretPathsAutoAsync(storePath, _mountPoint);
+
+                entries = paths.Where(e => !e.EndsWith("/")).ToList();
+                subPaths = paths.Where(e => e.EndsWith("/")).ToList();
 
                 logger.LogTrace($"Will check contents of these paths for secret keys ending with `{suffix}`: {string.Join(", ", entries)}");
             }
@@ -289,7 +341,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 var warning = $"Error reading entry names at {storePath}\nStatus code: {ex.StatusCode}\n";
                 if (ex.ApiErrors != null) warning += string.Join("\n", ex.ApiErrors);
                 warnings.Add(warning);
-                //throw;
+                //we continue searching rather than throw on individual error(s)
             }
 
             for (var i = 0; i < entries.Count(); i++)
@@ -298,16 +350,18 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 // get the sub-keys for the secret entry
 
-                IDictionary<string, object> keys;
                 try
                 {
-                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {storePath + path} and mountPoint: {_mountPoint}.");
+                    var fullPath = storePath + path;
+                    logger.LogTrace($"Making request to vault to read secret sub-keys at path: {fullPath} and mountPoint: {_mountPoint}.");
                     var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(storePath + path, mountPoint: _mountPoint);
-                    keys = res.Data.Subkeys;
+
+                    var keys = await ReadSecretSubKeysAutoAsync(fullPath, _mountPoint);
+
 
                     // does it have an entry with the suffix we are looking for?
-                    var key = keys.FirstOrDefault(k => k.Key.EndsWith(suffix));
-                    if (key.Key != null)
+                    var key = keys.FirstOrDefault(k => k.EndsWith(suffix));
+                    if (key != null)
                     {
                         if (_storeType == StoreType.HCVKVPEM)
                         {
@@ -316,7 +370,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         }
                         else
                         {
-                            vaultPaths.Add(storePath + path + "/" + key.Key);
+                            vaultPaths.Add(fullPath + "/" + key);
                         }
                     }
                 }
@@ -341,7 +395,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         }
 
 
-        public async Task PutCertificate(string certName, string contents, string pfxPassword, bool includeChain)
+        public async Task PutCertificate(string certName, string contents, string pfxPassword, string certPath, string certPropName, string keyPath, string keyPropName, bool includeChain)
         {
             logger.MethodEntry();
             try
@@ -357,13 +411,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error when adding the new certificate.");
+                logger.LogError($"An error occurred when attempting to add the new certificate: {LogHandler.FlattenException(ex)}");
                 throw;
             }
             logger.MethodExit();
         }
+
         private async Task PutCertificateIntoPemStore(string certName, string contents, string pfxPassword, bool includeChain)
         {
+            logger.MethodEntry();
+
             var certDict = new Dictionary<string, object>();
             var pfxBytes = Convert.FromBase64String(contents);
             Pkcs12Store p;
@@ -375,7 +432,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 p.Load(pfxBytesMemoryStream, pfxPassword.ToCharArray());
             }
 
-            // Extract private key
+            // Extract private secretName
             string alias;
             string privateKeyString;
             using (var memoryStream = new MemoryStream())
@@ -391,7 +448,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                     logger.LogTrace($"publicKey = {publicKey}");
                     var KeyEntry = p.GetKey(alias);
-                    if (KeyEntry == null) throw new Exception("Unable to retrieve private key");
+                    if (KeyEntry == null) throw new Exception("Unable to retrieve private secretName");
 
                     var privateKey = KeyEntry.Key;
                     var keyPair = new AsymmetricCipherKeyPair(publicKey, privateKey);
@@ -450,11 +507,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             try
             {
                 logger.LogTrace("writing secret to vault.");
-                VaultClient.V1.Auth.ResetVaultToken();
 
-                var fullPath = _storePath + certName;
+                var fullPath = _certPath + certName;
 
-                await VaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(fullPath, certDict, mountPoint: _mountPoint);
+                await WriteSecretAutoAsync(fullPath, certDict, _mountPoint);
             }
             catch (Exception ex)
             {
@@ -464,15 +520,25 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.MethodExit();
         }
 
-        private async Task PutCertificateIntoFileStore(string certName, string contents, string pfxPassword, bool includeChain)
+        private async Task PutCertificateIntoFileStore(string newCertName, string contents, string pfxPassword, bool includeChain)
         {
             logger.MethodEntry();
 
             IFileStore fileStore;
-            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
-            logger.LogTrace($"parent path = {parentPath}");
-            Secret<SecretData> res;
-            Dictionary<string, object> certData;
+
+            (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = ParsedSecretPaths();
+
+            (var certificate, var passphrase) = await GetCertificateAndPassphrase();
+
+            var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+
+            if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored at '{_certPath}' as a JSON object with the base64 encoded cert stored in the property '{_certPropName}'");
+            else logger.LogTrace($"the certificate secret will be stored at '{_certPath}' with the contents being the base64 encoded certificate.");
+
+            var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
+
+            if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored at '{passphraseParentPath}/{passphraseSecretName}' as a JSON object with the passphrase in the property '{_passphrasePropName}'");
+            else logger.LogTrace($"the passphrase secret will be stored at '{passphraseParentPath}/{passphraseSecretName}' as a string containing the passphrase for the certificate store");
 
             switch (_storeType)
             {
@@ -494,63 +560,69 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                // first get entry contents and passphrase
-                logger.LogTrace("getting all secrets in the parent container for the store.");
-
-                res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint);
-
-                certData = (Dictionary<string, object>)res.Data.Data;
-                logger.LogTrace($"got secret data..");
-
-                string certificate = null;
-                string passphrase = null;
-
-                //Validates if the "certificate" and "private_key" keys exist in certData
-
-                var key = _storePath.Substring(_storePath.LastIndexOf("/"));
-                key = key.TrimStart('/');
-
-                logger.LogTrace($"getting the contents of {key}");
-
-                if (!certData.TryGetValue(key, out object certFileObj))
-                {
-                    throw new DirectoryNotFoundException($"entry named {key} not found at {parentPath}");
-                }
-                certificate = certFileObj.ToString();
-
-                if (!certData.TryGetValue("passphrase", out object passphraseObj))
-                {
-                    throw new DirectoryNotFoundException($"no passphrase entry found at {parentPath}");
-                }
-                passphrase = passphraseObj.ToString();
-
                 logger.LogTrace("got passphrase and certificate store secrets from vault.");
-
                 logger.LogTrace("calling method to add certificate to store file.");
+
                 // get new store entry
-                var newEntry = fileStore.AddCertificate(certName, pfxPassword, contents, includeChain, certificate, passphrase);
+                var newCertFileStore = fileStore.AddCertificate(newCertName, pfxPassword, contents, includeChain, certificate, passphrase);
+
                 logger.LogTrace("got new store file.");
+
                 // write new store entry
                 try
                 {
                     logger.LogTrace("writing file store with new certificate to vault.");
-                    VaultClient.V1.Auth.ResetVaultToken();
 
-                    var newData = new Dictionary<string, object> { { key, newEntry } };
-                    var patchReq = new PatchSecretDataRequest() { Data = newData };
-                    logger.LogTrace($"patching {key} to path {parentPath} at mount point {_mountPoint}");
-                    await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq, _mountPoint);
+                    // if the certificate and/or passphrase is stored as a property in a JSON secret..
+                    // then we need to write the full path to the secret, and pass a dictionary of the object for the PATCH operation
+
+                    // if the cert or passphrase is the full contents of the secret.. 
+                    // then we need to write to the _parent_ path, a dictionary with a key of the secret name and value of the contents
+
+                    // first write the certificate
+                    var newCertSecretData = new Dictionary<string, object>();
+                    var newPassphraseSecretData = new Dictionary<string, object>();
+                    var certPathToWrite = string.Empty;
+                    var passphrasePathToWrite = string.Empty;
+
+                    logger.LogTrace($"creating the patch request for the certificate secret...");
+                    if (certSecretIsJSON)
+                    {
+                        // we will create a dictionary to represent the secret itself..
+                        newCertSecretData = new Dictionary<string, object> { { _certPropName, newCertFileStore } };
+
+                        // and write it to the full path of the secret
+                        certPathToWrite = certParentPath + "/" + certSecretName;
+                    }
+                    else
+                    {
+                        // we will create a dictionary to represent the contents of the parent path
+                        newCertSecretData = new Dictionary<string, object> { { certSecretName, newCertFileStore } };
+
+                        // and write it to the parent path of the secret
+                        certPathToWrite = certParentPath;
+                    }
+
+                    // submit the patch request
+                    logger.LogTrace($"patching {newCertSecretData.Keys.First()} to path {certPathToWrite} at mount point {_mountPoint}");
+
+                    await PatchSecretAutoAsync(certPathToWrite, newCertSecretData, _mountPoint);
+
+                    logger.LogTrace("The certificate and passphrase have been successfully written to Vault.");
+
+                    // since this is an existing store, no update needs to be made to the passphrase
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, $"Error writing cert to Vault: {ex.Message}");
+                    logger.LogError($"An error occurred when attempting  to Vault: {ex.Message}");
+                    logger.LogError($"{LogHandler.FlattenException(ex)}");
                     throw;
                 }
 
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error adding certificate to {_storeType}: {ex.Message}");
+                logger.LogError(ex, $"An error occurred when trying to update the secret for {_storeType}: {ex.Message}");
                 throw;
             }
         }
@@ -583,7 +655,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             logger.MethodEntry();
 
             IFileStore fileStore;
-            var parentPath = _storePath.Substring(0, _storePath.LastIndexOf("/"));
+            var parentPath = _certPath.Substring(0, _certPath.LastIndexOf("/"));
             logger.LogTrace($"parent path = {parentPath}");
             Secret<SecretData> res;
             Dictionary<string, object> certData;
@@ -619,16 +691,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 string certStoreContents = null;
                 string passphrase = null;
 
-                //Validates if the "certificate" and "private_key" keys exist in certData
+                //Validates if the "certificate" and "private_key" keys exist in certFileObj
 
-                var key = _storePath.Substring(_storePath.LastIndexOf("/"));
-                key = key.TrimStart('/');
+                var secretName = _certPath.Substring(_certPath.LastIndexOf("/"));
+                secretName = secretName.TrimStart('/');
 
-                logger.LogTrace($"getting the contents of {key}");
+                logger.LogTrace($"getting the contents of {secretName}");
 
-                if (!certData.TryGetValue(key, out object certFileObj))
+                if (!certData.TryGetValue(secretName, out object certFileObj))
                 {
-                    throw new DirectoryNotFoundException($"entry named {key} not found at {parentPath}");
+                    throw new DirectoryNotFoundException($"entry named {secretName} not found at {parentPath}");
                 }
                 certStoreContents = certFileObj.ToString();
 
@@ -650,7 +722,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     logger.LogTrace("writing file store sans certificate to vault.");
                     VaultClient.V1.Auth.ResetVaultToken();
 
-                    var newData = new Dictionary<string, object> { { key, newEntry } };
+                    var newData = new Dictionary<string, object> { { secretName, newEntry } };
                     var patchReq = new PatchSecretDataRequest() { Data = newData };
                     await VaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(parentPath, patchReq, _mountPoint);
                 }
@@ -674,7 +746,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                var fullPath = _storePath + certName;
+                var fullPath = _certPath + certName;
                 await VaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(fullPath, _mountPoint);
             }
             catch (Exception ex)
@@ -706,28 +778,28 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             List<string> inventoryExceptions = new List<string>();
 
             //Grabs the list of subpaths to get certificates from, if SubFolder Inventory is turned on.
-            //Otherwise just define the single path _storePath
+            //Otherwise just define the single path _certPath
             logger.LogDebug($"SubInventoryEnabled: {_subfolderInventory}");
 
             if (_subfolderInventory == true)
             {
                 logger.LogTrace("getting all sub-paths for container");
-                subPaths = await GetSubPaths(_storePath);
-                subPaths.Add(_storePath);
+                subPaths = await GetSubPaths(_certPath);
+                subPaths.Add(_certPath);
             }
             else
             {
-                subPaths.Add(_storePath);
+                subPaths.Add(_certPath);
             }
 
-            logger.LogTrace($"got all subpaths for container {_storePath}");
+            logger.LogTrace($"got all subpaths for container {_certPath}");
             logger.LogTrace($"subPaths = {string.Join(", ", subPaths)}");
 
 
             foreach (var path in subPaths)
             {
                 logger.LogTrace($"checking for entries at {path}");
-                var relative_path = path.Substring(_storePath.Length);
+                var relative_path = path.Substring(_certPath.Length);
 
                 try
                 {
@@ -768,31 +840,22 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         public async Task<(List<CurrentInventoryItem>, List<string>)> GetCertificatesFromFileStore()
         {
-            Secret<SecretData> res;
-
-            //file stores for JKS, PKCS12 and PFX will have a "passphrase" entry on the same level by convention.  We'll need this in order to extract the certificates for inventory.
-            var pos = _storePath.LastIndexOf("/");
-            var parentPath = _storePath.Substring(0, pos);
-            logger.LogTrace($"reading secrets at path {parentPath}, which should include the key and certificate for {_storePath}");
+            logger.MethodEntry();
+            Secret<SecretData> res = null;
+            string certStore = string.Empty;
+            string passphrase = string.Empty;
 
             try
             {
-                res = (await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(parentPath, mountPoint: _mountPoint));
+                (certStore, passphrase) = await GetCertificateAndPassphrase();
             }
             catch (Exception ex)
             {
-                var warning = $"Error getting {_storeType} certificate data from {parentPath}.  Exception message: {ex.Message}";
-                logger.LogError(ex, warning);
+                var warning = $"Vault returned an error when attempting to read the secret from {_certPath}.  Exception message: {ex.Message}";
+                logger.LogError(LogHandler.FlattenException(ex));
+                res?.Warnings?.ForEach(w => logger.LogTrace(w));
                 return (null, new List<string> { warning });
             }
-
-            var certFields = (Dictionary<string, object>)res.Data.Data;
-
-            logger.LogTrace("retrieved the following entries:");
-            certFields.Keys?.ToList()?.ForEach(key =>
-            {
-                logger.LogTrace($"key: `{key}`, value: {certFields[key].ToString().Length} character long string (value hidden).");
-            });
 
             IFileStore fileStore;
             switch (_storeType)
@@ -815,11 +878,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
-                return (fileStore.GetInventory(certFields).ToList(), null);
+                return (fileStore.GetInventory(certStore, passphrase).ToList(), null);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error performing inventory on {_storePath}: {ex.Message}");
+                logger.LogError(ex, $"Error performing inventory on {_certPath}: {ex.Message}");
                 throw;
             }
         }
@@ -828,15 +891,14 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         {
             logger.MethodEntry();
 
-            VaultClient.V1.Auth.ResetVaultToken();
             List<string> componentPaths = new List<string> { };
             try
             {
                 logger.LogTrace($"getting secret and path entries at this level: {storagePath}");
 
-                Secret<ListInfo> listInfo = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(storagePath, _mountPoint);
+                var paths = await ReadSecretPathsAutoAsync(storagePath, _mountPoint);
 
-                foreach (var path in listInfo.Data.Keys)
+                foreach (var path in paths)
                 {
                     if (path.EndsWith("/"))
                     {
@@ -850,10 +912,509 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, $"Error while listing component paths: {ex.Message}");
+                logger.LogWarning($"An error occurred when attempting to read the paths: {LogHandler.FlattenException(ex)}");
+                throw;
             }
             logger.MethodExit();
             return componentPaths;
+        }
+
+        private (string, string, string, string) ParsedSecretPaths()
+        {
+            logger.MethodEntry();
+            logger.LogTrace("extracting the JSON property names from the secret paths..");
+            var certParentPath = _certPath.Substring(0, _certPath.LastIndexOf("/"));
+
+            // if a seperate passphrase path is not provided, we use the same parent path as the certificate to store the passphrase.
+            var passphraseParentPath = string.IsNullOrEmpty(_passphrasePath) ? certParentPath : _passphrasePath?[.._passphrasePath.LastIndexOf('/')];
+
+            logger.LogTrace($"cert parent path = {certParentPath}");
+            logger.LogTrace($"passphrase parent path = {passphraseParentPath}");
+
+            var certSecretName = _certPath.Substring(_certPath.LastIndexOf('/')).TrimStart('/');
+            certSecretName = certSecretName.Split('?')[0]; // we want the name of the secret without the optional property name parameter
+            var passphraseSecretName = string.IsNullOrEmpty(_passphrasePath) ? StoreFileExtensions.PASSPHRASE : _passphrasePath[_passphrasePath.LastIndexOf('/')..];
+            passphraseSecretName = passphraseSecretName.Split('?')[0].TrimStart('/'); // we want the name of the secret without the optional property name parameter
+            logger.LogTrace($"cert secret name = {certSecretName}");
+            logger.LogTrace($"passphrase secret name = {passphraseSecretName}");
+
+            return (certParentPath, certSecretName, passphraseParentPath, passphraseSecretName);
+        }
+
+        private async Task<(string, string)> GetCertificateAndPassphrase()
+        {
+            (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = ParsedSecretPaths();
+            var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+            var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
+
+            string certContent = string.Empty;
+            string passphrase = string.Empty;
+            Dictionary<string, object> certFileObj = null;
+
+            // first get cert contents
+            try
+            {
+                logger.LogTrace($"cert secret name {certSecretName}");
+                logger.LogTrace($"retreiving the certificate store secret at {certParentPath + "/" + certSecretName} from the Key-Value secrets engine mounted at {_mountPoint}..");
+                logger.LogTrace($"the cert is {(certSecretIsJSON ? "" : "not")} a JSON property.");
+                if (certSecretIsJSON) logger.LogTrace($"the cert is stored in the property named {_certPropName}");
+                var secretPath = certParentPath + "/" + certSecretName;
+                certFileObj = await ReadSecretAutoAsync(secretPath, _mountPoint);
+
+                logger.LogTrace($"received a response: {JsonConvert.SerializeObject(certFileObj)}");
+
+                if (certFileObj == null || certFileObj?.Keys?.Count == 0)
+                {
+                    logger.LogError($"no secret content was found at path {_certPath}");
+                    throw new DirectoryNotFoundException($"entry named {certSecretName} not found at {certParentPath} or is empty.");
+                }
+
+                foreach (var key in certFileObj.Keys)
+                {
+                    logger.LogTrace($"key = {key}, value = {certFileObj[key]}");
+                }
+
+                logger.LogTrace($"getting the contents of {certSecretName}");
+
+
+                if (certSecretIsJSON)
+                {
+                    // if the cert data is stored as a property in a JSON secret object, we get the value from the property
+                    certContent = certFileObj[_certPropName]?.ToString();
+                }
+                else
+                {
+                    // otherwise, the entire secret content is the base64 encoded cert
+                    certContent = certFileObj.First().Value.ToString();
+                }
+
+                logger.LogTrace($"base64 encoded cert: {certContent}");
+
+                logger.LogTrace($"now we retrieve the passphrase from {passphraseParentPath + passphraseSecretName}");
+
+                var passphraseObj = await ReadSecretAutoAsync(_passphrasePath, _mountPoint);
+
+                foreach (var key in passphraseObj.Keys)
+                {
+                    logger.LogTrace($"key = {key}, value = <hidden>");
+                }
+
+                if (passphraseSecretIsJSON)
+                {
+                    // the secret is a json object with one of the fields containing the passphrase
+                    passphrase = passphraseObj[_passphrasePropName].ToString();
+                }
+                else
+                {
+                    // the entire contents of the secret is the passphrase
+                    passphrase = passphraseObj.First().Value.ToString();
+                }
+
+                if (string.IsNullOrEmpty(passphrase))
+                {
+                    throw new DirectoryNotFoundException($"no passphrase found at {_passphrasePath}");
+                }
+                else { logger.LogTrace($"retrieved passphrase of length {passphrase.Length}"); }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"there was an error when attempting to retrieve the cert and passphrase: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+
+            logger.LogTrace("successfully retreived the secrets.. ");
+            logger.LogTrace($"cert file contents: {certContent}");
+            logger.LogTrace($"passphrase length: {passphrase.Length}");
+
+            return (certContent, passphrase);
+        }
+
+        public async Task<List<string>> GetTokenPoliciesAsync()
+        {
+            logger.MethodEntry();
+            try
+            {
+                var tokenInfo = await VaultClient.V1.Auth.Token.LookupSelfAsync();
+                return tokenInfo.Data.Policies;
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to retreive the active token policies: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        public async Task<int> GetKVVersionAsync()
+        {
+            if (_kvVersionCache > 0)
+            {
+                return _kvVersionCache;
+            }
+            logger.MethodEntry();
+            logger.LogTrace("determining the Key-Value secrets engine version (v1 or v2)");
+            try
+            {
+                // Get all mounted secrets engines
+                var mounts = await _vaultClient.V1.System.GetSecretBackendsAsync();
+
+                // Normalize mount point (add trailing slash if not present)
+                var normalizedMount = _mountPoint.EndsWith("/") ? _mountPoint : $"{_mountPoint}/";
+                logger.LogTrace($"got {mounts.Data.Count} secret engine mounts.. looking for {normalizedMount}");
+
+                if (mounts.Data.TryGetValue(normalizedMount, out var mountConfig))
+                {
+                    logger.LogTrace($"found {normalizedMount}!");
+                    logger.LogTrace($"serialized values: {JsonConvert.SerializeObject(mountConfig)}");
+                    // Check the options for version info
+                    if (mountConfig.Options != null &&
+                        mountConfig.Options.TryGetValue("version", out var version))
+                    {
+                        var kvVersion = int.Parse(version.ToString());
+                        _kvVersionCache = kvVersion;
+                        logger.LogTrace($"using version {kvVersion} of the Key-Value secrets engine.");
+                        return kvVersion;
+                    }
+
+                    // If no version in options, it's KV v1                    
+                    return 1;
+                }
+
+                throw new Exception($"Mount point '{_mountPoint}' not found");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to determine KV version for mount '{_mountPoint}': {ex.Message}", ex);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Read a secret from KV engine, automatically detecting the version
+        /// </summary>
+        public async Task<Dictionary<string, object>> ReadSecretAutoAsync(
+            string path,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            try
+            {
+                var kvVersion = await GetKVVersionAsync();
+
+                if (kvVersion == 2)
+                {
+                    logger.LogTrace($"making request to read secret at {mountPoint}{path}..");
+
+
+                    var secret = await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(
+                        path: path,
+                        mountPoint: mountPoint
+                    );
+
+                    return secret.Data.Data as Dictionary<string, object>;
+                }
+                else // v1
+                {
+                    Secret<Dictionary<string, object>> secret = null;
+
+                    var secretv1 = await _vaultClient.V1.Secrets.KeyValue.V1.ReadSecretAsync(
+                    path,
+                    mountPoint: mountPoint);
+
+                    return secretv1.Data;
+                }
+            }
+            catch (VaultApiException ex)
+            {
+                if (ex.StatusCode == 404)
+                {
+                    logger.LogError($"no secret was found at path '{path}' of the KV secrets engine mount point '{mountPoint}'.. The server returned 404");
+                }
+                else
+                {
+                    logger.LogError($"There was an error reading the secret with mountpoint = '{mountPoint}' and path = '{path}'");
+                }
+
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"API Warnings: {string.Join(", ", ex.ApiWarnings ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                logger.LogTrace($"full exception: {JsonConvert.SerializeObject(ex)}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to retreive the secret: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Write a secret to KV engine, automatically detecting the version
+        /// </summary>
+        public async Task WriteSecretAutoAsync(
+            string path,
+            Dictionary<string, object> data,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            logger.LogTrace($"writing secret to path {mountPoint}/{path}");
+            try
+            {
+                var kvVersion = await GetKVVersionAsync();
+
+                if (kvVersion == 2)
+                {
+                    await _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(
+                        path: path,
+                        data: data,
+                        mountPoint: mountPoint
+                    );
+                }
+                else // v1
+                {
+                    await _vaultClient.V1.Secrets.KeyValue.V1.WriteSecretAsync(
+                        path: path,
+                        values: data,
+                        mountPoint: mountPoint
+                    );
+                }
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to write the secret: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Patch a secret (update specific keys without overwriting others)
+        /// For KV v1, this does a read-modify-write operation
+        /// For KV v2, this uses native patch support
+        /// </summary>
+        public async Task PatchSecretAutoAsync(
+            string path,
+            Dictionary<string, object> keysToUpdate,
+            string mountPoint)
+        {
+            try
+            {
+                var kvVersion = await GetKVVersionAsync();
+
+                if (kvVersion == 2)
+                {
+                    // KV v2 requires PatchSecretDataRequest
+                    var patchRequest = new PatchSecretDataRequest
+                    {
+                        Data = keysToUpdate
+                    };
+
+                    await _vaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(
+                        path: path,
+                        patchSecretDataRequest: patchRequest,
+                        mountPoint: mountPoint
+                    );
+                }
+                else // v1
+                {
+                    // KV v1 requires read-modify-write
+                    var existing = await ReadSecretAutoAsync(path, mountPoint);
+
+                    // Merge with new data
+                    foreach (var kvp in keysToUpdate)
+                    {
+                        existing[kvp.Key] = kvp.Value;
+                    }
+
+                    // Write back the merged data
+                    await WriteSecretAutoAsync(path, existing as Dictionary<string, object>, mountPoint);
+                }
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to patch the secret: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Delete specific keys from a secret
+        /// For both KV v1 and v2, this does a read-modify-write operation
+        /// </summary>
+        public async Task DeleteKeysFromSecretAsync(
+            string path,
+            IEnumerable<string> keysToDelete,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            logger.LogTrace($"deleting the keys {string.Join(',', keysToDelete)} from secret at path {mountPoint}/{path}");
+            // Read existing data
+            var existing = await ReadSecretAutoAsync(path, mountPoint);
+
+            // Remove specified keys
+            foreach (var key in keysToDelete)
+            {
+                existing.Remove(key);
+            }
+
+            // Write back the modified data
+            await WriteSecretAutoAsync(path, existing, mountPoint);
+        }
+
+        /// <summary>
+        /// Delete an entire secret
+        /// </summary>
+        public async Task DeleteSecretAutoAsync(
+            string path,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            logger.LogTrace($"deleting the secret at {mountPoint}/{path}");
+            try
+            {
+                var kvVersion = await GetKVVersionAsync();
+
+                if (kvVersion == 2)
+                {
+                    await _vaultClient.V1.Secrets.KeyValue.V2.DeleteSecretAsync(
+                        path: path,
+                        mountPoint: mountPoint
+                    );
+                }
+                else // v1
+                {
+                    await _vaultClient.V1.Secrets.KeyValue.V1.DeleteSecretAsync(
+                        path: path,
+                        mountPoint: mountPoint
+                    );
+                }
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to delete the secret: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// List all secret paths at a given path
+        /// </summary>
+        public async Task<List<string>> ReadSecretPathsAutoAsync(
+            string path,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            logger.LogTrace($"reading the secret paths under the root path of {mountPoint}/{path}");
+            var kvVersion = await GetKVVersionAsync();
+
+            Secret<ListInfo> result;
+            try
+            {
+                if (kvVersion == 2)
+                {
+                    result = await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(
+                        path: path,
+                        mountPoint: mountPoint
+                    );
+                }
+                else // v1
+                {
+                    result = await _vaultClient.V1.Secrets.KeyValue.V1.ReadSecretPathsAsync(
+                        path: path,
+                        mountPoint: mountPoint
+                    );
+                }
+
+                return result?.Data?.Keys?.ToList() ?? new List<string>();
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to read the paths: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// List all secret paths at a given path
+        /// </summary>
+        public async Task<List<string>> ReadSecretSubKeysAutoAsync(
+            string path,
+            string mountPoint)
+        {
+            logger.MethodEntry();
+            logger.LogTrace($"reading the secret subkeys from the secret at {mountPoint}/{path}");
+            var kvVersion = await GetKVVersionAsync();
+
+            List<string> result;
+            try
+            {
+                if (kvVersion == 2)
+                {
+                    var res = await VaultClient.V1.Secrets.KeyValue.V2.ReadSecretSubkeysAsync(path, mountPoint: _mountPoint);
+                    result = res.Data?.Subkeys?.Keys?.ToList();
+                }
+                else // v1
+                {
+                    var res = await VaultClient.V1.Secrets.KeyValue.V1.ReadSecretAsync(path, _mountPoint);
+                    result = res.Data?.Keys?.ToList();
+                }
+
+                return result;
+            }
+            catch (VaultApiException ex)
+            {
+                logger.LogError($"Status code: {ex.StatusCode}");
+                logger.LogError($"Message: {ex.Message}");
+                logger.LogError($"API Errors: {string.Join(", ", ex.ApiErrors ?? new List<string>())}");
+                logger.LogError($"Help Link: {ex.HelpLink}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"There was an error attempting to read the sub-keys within the secret: {LogHandler.FlattenException(ex)}");
+                throw;
+            }
         }
     }
 }

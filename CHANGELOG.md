@@ -1,3 +1,8 @@
+## 3.2.0
+* added parameter "PassphrasePath" to support custom passphrase path (no longer needs to be a secret named 'passphrase' on the same level)
+* added support for optional parameter on store path and passphrase path to indicate the property containing the value (if JSON secret)
+* the additional parameter and JSON property identifier apply to the following store types: HCVKVJKS, HCVKVP12, HCVKVPKS
+
 ## 3.1.3
 
 * documentation fix
