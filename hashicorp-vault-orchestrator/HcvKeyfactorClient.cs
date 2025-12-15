@@ -179,5 +179,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         {
             throw new NotSupportedException();
         }
+
+        public async Task<List<string>> GetTokenPoliciesAsync()
+        {
+            throw new NotSupportedException();
+        }
     }
 }

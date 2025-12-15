@@ -132,7 +132,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             InitProps(props, config.Capability);
         }
 
-        private void InitProps(dynamic props, string capability)
+        private async void InitProps(dynamic props, string capability)
         {
             _storeType = capability;
 
@@ -173,6 +173,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             {
                 VaultClient = new HcvKeyfactorClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.StorePath);
             }
-        }
+            // logging token policies
+            var policies = await VaultClient.GetTokenPoliciesAsync();
+            logger.LogInformation($"token policies: {string.Join(", ", policies)}");
+        }        
     }
 }
