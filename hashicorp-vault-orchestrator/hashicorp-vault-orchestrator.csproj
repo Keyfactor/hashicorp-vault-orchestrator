@@ -5,6 +5,7 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+		<RootNamespace>Keyfactor.Extensions.Orchestrator.HashicorpVault</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -19,6 +20,7 @@
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="NLog" Version="5.3.4" />
+		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
 		<PackageReference Include="System.Text.Json" Version="8.0.5" />
 		<PackageReference Include="VaultSharp" Version="1.17.5.1">
