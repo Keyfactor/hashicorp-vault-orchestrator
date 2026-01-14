@@ -99,10 +99,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
             if (certSecretIsJSON) logger.LogTrace($"the certificate data will be stored as a JSON object with the base64 encoded cert stored in the property '{_certPropName}'");
-
+            else logger.LogTrace($"the certificate data will be stored as the entire secret content at '{certParentPath}/{certSecretName}' and contain the base64 encoded cert.");
             var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
             if (passphraseSecretIsJSON) logger.LogTrace($"the passphrase secret will be stored as a JSON object with the passphrase in the property '{_passphrasePropName}'");
-
+            else logger.LogTrace($"the passphrase string will be stored as the entire secret content at '{passphraseParentPath}/{passphraseSecretName}'");
             switch (_storeType)
             {
                 case StoreType.HCVKVPFX:
@@ -131,6 +131,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             try
             {
+                var kvVersion = await GetKVVersionAsync();
+                if (!certSecretIsJSON && kvVersion == 1)
+                {
+                    _certPropName = "value"; // kv v1 secrets are _always_ stored as JSON; setting generic "value" property
+                    certSecretIsJSON = true;
+                }
+
                 // create the cert secret                
                 Dictionary<string, object> certSecretContent;
                 var pathToWriteCert = string.Empty;
@@ -141,7 +148,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 {
                     // this means the cert should be stored as a JSON object with property _certPropName, as opposed to a raw base64 string.
                     certSecretContent = new Dictionary<string, object> { { _certPropName, Convert.ToBase64String(newStoreBytes) } }; // the content includes the property name
-                    pathToWriteCert = certParentPath + certSecretName; // we write to the secret
+                    pathToWriteCert = $"{certParentPath}/{certSecretName}"; // we write to the secret
                 }
                 else
                 {
@@ -161,13 +168,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 // create the passphrase secret
 
+                if (!passphraseSecretIsJSON && kvVersion == 1)
+                {
+                    _passphrasePropName = "value"; // kv v1 secrets are _always_ stored as JSON; setting generic "value" property
+                    passphraseSecretIsJSON = true;
+                }
+
                 Dictionary<string, object> passphraseSecretContent;
                 var pathToWritePassphrase = string.Empty;
 
                 if (passphraseSecretIsJSON)
                 {
                     passphraseSecretContent = new Dictionary<string, object> { { _passphrasePropName, passphrase } };
-                    pathToWritePassphrase = passphraseParentPath + passphraseSecretName;
+                    pathToWritePassphrase = $"{passphraseParentPath}/{passphraseSecretName}";
                 }
                 else
                 {
@@ -393,7 +406,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
             return (vaultPaths, warnings);
         }
-
 
         public async Task PutCertificate(string certName, string contents, string pfxPassword, string certPath, string certPropName, string keyPath, string keyPropName, bool includeChain)
         {
@@ -943,8 +955,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private async Task<(string, string)> GetCertificateAndPassphrase()
         {
+
             (var certParentPath, var certSecretName, var passphraseParentPath, var passphraseSecretName) = ParsedSecretPaths();
             var certSecretIsJSON = !string.IsNullOrEmpty(_certPropName);
+
             var passphraseSecretIsJSON = !string.IsNullOrEmpty(_passphrasePropName);
 
             string certContent = string.Empty;
@@ -954,6 +968,22 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             // first get cert contents
             try
             {
+                var kvVersion = await GetKVVersionAsync();
+
+                if (kvVersion == 1) // in the key-value secrets engine v1; all secrets are stored as JSON
+                {
+                    if (!certSecretIsJSON)
+                    {
+                        _certPropName = "value";
+                        certSecretIsJSON = true;
+                    }
+                    if (!passphraseSecretIsJSON)
+                    {
+                        _passphrasePropName = "value";
+                        passphraseSecretIsJSON = true;
+                    }
+                }
+
                 logger.LogTrace($"cert secret name {certSecretName}");
                 logger.LogTrace($"retreiving the certificate store secret at {certParentPath + "/" + certSecretName} from the Key-Value secrets engine mounted at {_mountPoint}..");
                 logger.LogTrace($"the cert is {(certSecretIsJSON ? "" : "not")} a JSON property.");
@@ -1123,12 +1153,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 else // v1
                 {
-                    Secret<Dictionary<string, object>> secret = null;
+                    logger.LogTrace($"making request to read secret at {mountPoint}{path}..");
 
                     var secretv1 = await _vaultClient.V1.Secrets.KeyValue.V1.ReadSecretAsync(
                     path,
                     mountPoint: mountPoint);
-
+                    logger.LogTrace($"response: {JsonConvert.SerializeObject(secretv1)}");
                     return secretv1.Data;
                 }
             }
@@ -1234,9 +1264,17 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 }
                 else // v1
                 {
+                    Dictionary<string, object> existing = null;
                     // KV v1 requires read-modify-write
-                    var existing = await ReadSecretAutoAsync(path, mountPoint);
-
+                    try
+                    {
+                        existing = await ReadSecretAutoAsync(path, mountPoint);
+                    }
+                    catch (VaultApiException ex) {
+                        if (ex.StatusCode != 404) throw;
+                        // if it's not found, that's ok.  we'll create a new secret
+                    }
+                    if (existing == null) existing = new Dictionary<string, object>();
                     // Merge with new data
                     foreach (var kvp in keysToUpdate)
                     {
@@ -1244,7 +1282,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     }
 
                     // Write back the merged data
-                    await WriteSecretAutoAsync(path, existing as Dictionary<string, object>, mountPoint);
+                    await WriteSecretAutoAsync(path, existing, mountPoint);
                 }
             }
             catch (VaultApiException ex)

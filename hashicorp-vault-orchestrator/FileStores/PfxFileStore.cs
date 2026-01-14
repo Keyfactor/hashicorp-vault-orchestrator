@@ -45,9 +45,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
             var newCertBytes = Convert.FromBase64String(entryContents);
 
             logger.LogTrace("adding the new certificate, and getting the new PFX store bytes.");
-            var newJksBytes = AddOrRemoveCert(alias, pfxPassword, newCertBytes, pfxBytes, passphrase);
+            var newPFXbytes = AddOrRemoveCert(alias, pfxPassword, newCertBytes, pfxBytes, passphrase);
 
-            return Convert.ToBase64String(newJksBytes);
+            return Convert.ToBase64String(newPFXbytes);
         }
         public string RemoveCertificate(string alias, string passphrase, string storeFileContent)
         {

@@ -117,7 +117,10 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger.LogTrace($"Directories to search (mount point): {JobParameters.MountPoint}");
             logger.LogTrace($"Enterprise Namespace: {JobParameters.Namespace}");
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
+
             InitProps(config.JobProperties, config.Capability);
+
+            LogInitValues();
         }
         public void Initialize(ManagementJobConfiguration config)
         {
@@ -130,6 +133,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.StorePath = config.CertificateStoreDetails.StorePath;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
             InitProps(props, config.Capability);
+            LogInitValues();
         }
 
         private async void InitProps(dynamic props, string capability)
