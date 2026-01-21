@@ -6,26 +6,12 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
 //  and limitations under the License.
 
-using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
+namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.FileStores
 {
-    internal class PAMUtilities
+    public class FileStoreBase
     {
-        internal static string ResolvePAMField(IPAMSecretResolver resolver, ILogger logger, string name, string key)
-        {
-            if (resolver == null)
-            {
-                logger.LogWarning("provided PAM resolver is null");
-                return key;
-            }
-            else
-            {
-                return resolver.Resolve(key);
-            }
-
-        }
+        internal protected ILogger logger { get; set; }
     }
 }
-
