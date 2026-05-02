@@ -146,12 +146,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             if (props.ContainsKey("StorePath"))
             {
                 JobParameters.StorePath = props["StorePath"].ToString();
-                JobParameters.StorePath = JobParameters.StorePath.TrimStart('/');
-                JobParameters.StorePath = JobParameters.StorePath.TrimEnd('/');
-                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
-                {
-                    JobParameters.StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
-                }
+            }
+
+            // Normalize StorePath regardless of source (props or config.CertificateStoreDetails.StorePath)
+            JobParameters.StorePath = JobParameters.StorePath?.TrimStart('/').TrimEnd('/') ?? string.Empty;
+            if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
+            {
+                JobParameters.StorePath += "/"; // trailing slash required: HcvKeyValueClient prepends "/" and appends entry name directly
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
