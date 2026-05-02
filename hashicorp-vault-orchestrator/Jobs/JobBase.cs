@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
@@ -47,7 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
 
-            InitProps(props, config.Capability);
+            InitProps(props, config.Capability).GetAwaiter().GetResult();
 
             LogInitValues();
         }
@@ -118,7 +119,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger.LogTrace($"Enterprise Namespace: {JobParameters.Namespace}");
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
 
-            InitProps(config.JobProperties, config.Capability);
+            InitProps(config.JobProperties, config.Capability).GetAwaiter().GetResult();
 
             LogInitValues();
         }
@@ -132,11 +133,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
             JobParameters.StorePath = config.CertificateStoreDetails.StorePath;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-            InitProps(props, config.Capability);
+            InitProps(props, config.Capability).GetAwaiter().GetResult();
             LogInitValues();
         }
 
-        private async void InitProps(dynamic props, string capability)
+        private async Task InitProps(dynamic props, string capability)
         {
             _storeType = capability;
 
@@ -177,9 +178,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             {
                 VaultClient = new HcvKeyfactorClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.StorePath);
             }
-            // logging token policies
-            var policies = await VaultClient.GetTokenPoliciesAsync();
-            logger.LogInformation($"token policies: {string.Join(", ", policies)}");
+            // logging token policies (best-effort; token may lack lookup-self or method may be unsupported)
+            try
+            {
+                var policies = await VaultClient.GetTokenPoliciesAsync();
+                logger.LogInformation($"token policies: {string.Join(", ", policies)}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug($"GetTokenPoliciesAsync skipped: {ex.Message}");
+            }
         }        
     }
 }
