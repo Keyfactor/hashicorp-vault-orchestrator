@@ -193,7 +193,7 @@ the Keyfactor Command Portal
    ###### Mount Point
    This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point>
 
-   ![HCVPKI Custom Field - MountPoint](docsource/images/HCVPKI-custom-field-MountPoint-dialog.png)
+   > **Vault Enterprise:** The extension parses the namespace from this field by splitting on the last `/`. For example, `ep/common/pki` resolves to namespace `ep/common` and mount point `pki`. See the [Security Considerations](#security-considerations) section for the required Vault token policy.
 
 
 
@@ -201,6 +201,7 @@ the Keyfactor Command Portal
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-dialog.png)
+   ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-validation-options-dialog.png)
 
 
 
@@ -414,6 +415,7 @@ the Keyfactor Command Portal
    Should certificates found in sub-paths be included when performing an inventory?
 
    ![HCVKVPEM Custom Field - SubfolderInventory](docsource/images/HCVKVPEM-custom-field-SubfolderInventory-dialog.png)
+   ![HCVKVPEM Custom Field - SubfolderInventory](docsource/images/HCVKVPEM-custom-field-SubfolderInventory-validation-options-dialog.png)
 
 
 
@@ -421,13 +423,14 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVPEM Custom Field - IncludeCertChain](docsource/images/HCVKVPEM-custom-field-IncludeCertChain-dialog.png)
+   ![HCVKVPEM Custom Field - IncludeCertChain](docsource/images/HCVKVPEM-custom-field-IncludeCertChain-validation-options-dialog.png)
 
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
-   ![HCVKVPEM Custom Field - MountPoint](docsource/images/HCVKVPEM-custom-field-MountPoint-dialog.png)
+   > **Vault Enterprise:** The extension parses the namespace from this field by splitting on the last `/`. For example, `ep/common/secret` resolves to namespace `ep/common` and mount point `secret`. This supports nested namespaces. Note that if your mount point name itself contains a `/`, this heuristic is ambiguous — in that case, a dedicated Namespace store parameter is planned for a future release. See the [Security Considerations](#security-considerations) section for the required Vault token policy.
 
 
 
@@ -603,13 +606,14 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVJKS Custom Field - IncludeCertChain](docsource/images/HCVKVJKS-custom-field-IncludeCertChain-dialog.png)
+   ![HCVKVJKS Custom Field - IncludeCertChain](docsource/images/HCVKVJKS-custom-field-IncludeCertChain-validation-options-dialog.png)
 
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
-   ![HCVKVJKS Custom Field - MountPoint](docsource/images/HCVKVJKS-custom-field-MountPoint-dialog.png)
+   > **Vault Enterprise:** The extension parses the namespace from this field by splitting on the last `/`. For example, `ep/common/secret` resolves to namespace `ep/common` and mount point `secret`. See the [Security Considerations](#security-considerations) section for the required Vault token policy.
 
 
 
@@ -617,6 +621,7 @@ the Keyfactor Command Portal
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-dialog.png)
+   ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-validation-options-dialog.png)
 
 
 
@@ -792,13 +797,14 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVP12 Custom Field - IncludeCertChain](docsource/images/HCVKVP12-custom-field-IncludeCertChain-dialog.png)
+   ![HCVKVP12 Custom Field - IncludeCertChain](docsource/images/HCVKVP12-custom-field-IncludeCertChain-validation-options-dialog.png)
 
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
-   ![HCVKVP12 Custom Field - MountPoint](docsource/images/HCVKVP12-custom-field-MountPoint-dialog.png)
+   > **Vault Enterprise:** The extension parses the namespace from this field by splitting on the last `/`. For example, `ep/common/secret` resolves to namespace `ep/common` and mount point `secret`. See the [Security Considerations](#security-considerations) section for the required Vault token policy.
 
 
 
@@ -806,6 +812,7 @@ the Keyfactor Command Portal
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-dialog.png)
+   ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-validation-options-dialog.png)
 
 
 
@@ -980,13 +987,14 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVPFX Custom Field - IncludeCertChain](docsource/images/HCVKVPFX-custom-field-IncludeCertChain-dialog.png)
+   ![HCVKVPFX Custom Field - IncludeCertChain](docsource/images/HCVKVPFX-custom-field-IncludeCertChain-validation-options-dialog.png)
 
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
-   ![HCVKVPFX Custom Field - MountPoint](docsource/images/HCVKVPFX-custom-field-MountPoint-dialog.png)
+   > **Vault Enterprise:** The extension parses the namespace from this field by splitting on the last `/`. For example, `ep/common/secret` resolves to namespace `ep/common` and mount point `secret`. See the [Security Considerations](#security-considerations) section for the required Vault token policy.
 
 
 
@@ -994,6 +1002,7 @@ the Keyfactor Command Portal
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-dialog.png)
+   ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-validation-options-dialog.png)
 
 
 
@@ -1967,8 +1976,38 @@ This integration was built on the .NET Core 3.1 target framework and are compati
 1. The capabilities required to perform all operations on a cert store within vault are `["read", "list", "create", "update", "patch", "delete"]`
 1. These capabilities should apply to the parent folder on file stores.
 1. The token will also need `"list"` capability on the `<mount point>/metadata` path to perform basic operations.
+1. The token requires `"read"` capability on `sys/mounts` to allow the extension to auto-detect whether the KV secrets engine is version 1 or version 2.  If this permission is not granted, the extension will log a warning and default to KV v2 — all Inventory, Management, and Discovery operations will continue normally, but the warning will appear in the orchestrator job log on every job until the permission is granted or the KV engine is confirmed to be v2.
 
 - For the Key-Value stores we operate on a single version of the Key Value secret (no versioning capabilities through the Orchesterator Extension / Keyfactor).
+
+### Minimum recommended Vault policy (HCL)
+
+The following HCL policy grants the minimum capabilities required for full Inventory, Management (Add/Remove), and Discovery operations on a KV v2 mount named `secret`, with certificates stored under `secret/data/keyfactor/certs/`.
+
+```hcl
+# Required for KV version auto-detection (used at job startup).
+# If omitted, the extension defaults to KV v2 and logs a warning.
+path "sys/mounts" {
+  capabilities = ["read"]
+}
+
+# KV v2 data plane — read, write, and delete certificate secrets
+path "secret/data/keyfactor/certs/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# KV v2 metadata plane — required for listing paths during Inventory and Discovery
+path "secret/metadata/keyfactor/certs/*" {
+  capabilities = ["read", "list", "delete"]
+}
+
+# KV v2 metadata — list the parent path so Discovery can traverse the tree
+path "secret/metadata/keyfactor/*" {
+  capabilities = ["read", "list"]
+}
+```
+
+> **Vault Enterprise (namespaced tokens):** If the token is scoped to a namespace (e.g. `ep/common`), the policy above must be created _inside that namespace_ via the Vault UI or CLI with the `-namespace` flag. The `sys/mounts` path in particular is evaluated against the namespace the HTTP request targets — if the `X-Vault-Namespace` header is absent, the request hits the root namespace and will return `403` even if the policy exists in the token's home namespace. The extension sets this header automatically when a namespace is detected in the `MountPoint` field (see below).
 
 
 ## License

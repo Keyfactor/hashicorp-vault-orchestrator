@@ -1,5 +1,5 @@
 
-//  Copyright 2025 Keyfactor
+//  Copyright 2026 Keyfactor
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 //  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
@@ -47,7 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
 
-            InitProps(props, config.Capability);
+            InitProps(props, config.Capability).GetAwaiter().GetResult();
 
             LogInitValues();
         }
@@ -118,7 +119,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger.LogTrace($"Enterprise Namespace: {JobParameters.Namespace}");
             logger.LogTrace($"Directories to ignore (subpath to search): {subPath}");
 
-            InitProps(config.JobProperties, config.Capability);
+            InitProps(config.JobProperties, config.Capability).GetAwaiter().GetResult();
 
             LogInitValues();
         }
@@ -132,11 +133,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
             JobParameters.StorePath = config.CertificateStoreDetails.StorePath;
             dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-            InitProps(props, config.Capability);
+            InitProps(props, config.Capability).GetAwaiter().GetResult();
             LogInitValues();
         }
 
-        private async void InitProps(dynamic props, string capability)
+        private async Task InitProps(dynamic props, string capability)
         {
             _storeType = capability;
 
@@ -145,16 +146,42 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             if (props.ContainsKey("StorePath"))
             {
                 JobParameters.StorePath = props["StorePath"].ToString();
-                JobParameters.StorePath = JobParameters.StorePath.TrimStart('/');
-                JobParameters.StorePath = JobParameters.StorePath.TrimEnd('/');
-                if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
-                {
-                    JobParameters.StorePath += "/"; //ensure single trailing slash for path for PKI or PEM stores.  Others use the entry value instead of the container.
-                }
+            }
+
+            // Normalize StorePath regardless of source (props or config.CertificateStoreDetails.StorePath)
+            JobParameters.StorePath = JobParameters.StorePath?.TrimStart('/').TrimEnd('/') ?? string.Empty;
+            if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
+            {
+                JobParameters.StorePath += "/"; // trailing slash required: HcvKeyValueClient prepends "/" and appends entry name directly
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-            JobParameters.MountPoint = !string.IsNullOrEmpty(mp) ? mp : JobParameters.MountPoint;
+            if (!string.IsNullOrEmpty(mp))
+            {
+                // Support the <namespace>/<mount> format for Vault Enterprise.
+                // Vault supports nested namespaces (e.g. "parent/child/mount"), so we split
+                // on the LAST slash: everything to the left is the namespace, the final
+                // segment is the bare mount name.  This ensures the X-Vault-Namespace header
+                // is sent on ALL job types (Inventory, Management, Discovery), not just Discovery.
+                // If Namespace was already set (Discovery pre-parsed it), we don't overwrite it
+                // but we still strip the namespace prefix from MountPoint.
+                var trimmedMp = mp.TrimEnd('/');
+                var lastSlash = trimmedMp.LastIndexOf('/');
+                if (lastSlash > 0)
+                {
+                    if (string.IsNullOrEmpty(JobParameters.Namespace))
+                    {
+                        var ns = trimmedMp.Substring(0, lastSlash).Trim('/');
+                        logger.LogTrace($"Detected namespace '{ns}' in MountPoint value '{mp}'; splitting into Namespace + MountPoint.");
+                        JobParameters.Namespace = ns;
+                    }
+                    JobParameters.MountPoint = trimmedMp.Substring(lastSlash + 1).Trim();
+                }
+                else
+                {
+                    JobParameters.MountPoint = trimmedMp.Trim('/');
+                }
+            }
 
             JobParameters.SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
@@ -177,9 +204,16 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             {
                 VaultClient = new HcvKeyfactorClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.StorePath);
             }
-            // logging token policies
-            var policies = await VaultClient.GetTokenPoliciesAsync();
-            logger.LogInformation($"token policies: {string.Join(", ", policies)}");
+            // logging token policies (best-effort; token may lack lookup-self or method may be unsupported)
+            try
+            {
+                var policies = await VaultClient.GetTokenPoliciesAsync();
+                logger.LogInformation($"token policies: {string.Join(", ", policies)}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug($"GetTokenPoliciesAsync skipped: {ex.Message}");
+            }
         }        
     }
 }
