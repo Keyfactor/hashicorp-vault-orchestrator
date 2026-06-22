@@ -154,7 +154,31 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-            JobParameters.MountPoint = !string.IsNullOrEmpty(mp) ? mp : JobParameters.MountPoint;
+            if (!string.IsNullOrEmpty(mp))
+            {
+                // Support the <namespace>/<mount> format for Enterprise Vault.
+                // Vault Enterprise supports nested namespaces (e.g. "parent/child/mount").
+                // We split on the LAST slash so that everything to the left becomes the
+                // namespace and only the final segment is the bare mount name.
+                // This mirrors the intent of the Discovery job parsing and ensures the
+                // X-Vault-Namespace header is sent on ALL job types, not just Discovery.
+                // If Namespace was already resolved (e.g. Discovery pre-parsed it), don't overwrite it.
+                var lastSlash = mp.TrimEnd('/').LastIndexOf('/');
+                if (lastSlash > 0)
+                {
+                    if (string.IsNullOrEmpty(JobParameters.Namespace))
+                    {
+                        var ns = mp.Substring(0, lastSlash).Trim('/');
+                        logger.LogTrace($"Detected namespace '{ns}' in MountPoint value '{mp}'; splitting into Namespace + MountPoint.");
+                        JobParameters.Namespace = ns;
+                    }
+                    JobParameters.MountPoint = mp.Substring(lastSlash + 1).Trim();
+                }
+                else
+                {
+                    JobParameters.MountPoint = mp.Trim('/');
+                }
+            }
 
             JobParameters.SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
