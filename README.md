@@ -179,12 +179,14 @@ the Keyfactor Command Portal
    This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point>
 
    ![HCVPKI Custom Field - MountPoint](docsource/images/HCVPKI-custom-field-MountPoint-dialog.svg)
+   ![HCVPKI Custom Field - MountPoint](docsource/images/HCVPKI-custom-field-MountPoint-validation-options-dialog.svg)
 
 
    ###### Passphrase Path
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-dialog.svg)
+   ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
    </details>
@@ -387,18 +389,21 @@ the Keyfactor Command Portal
    Should certificates found in sub-paths be included when performing an inventory?
 
    ![HCVKVPEM Custom Field - SubfolderInventory](docsource/images/HCVKVPEM-custom-field-SubfolderInventory-dialog.svg)
+   ![HCVKVPEM Custom Field - SubfolderInventory](docsource/images/HCVKVPEM-custom-field-SubfolderInventory-validation-options-dialog.svg)
 
 
    ###### Include Certificate Chain
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVPEM Custom Field - IncludeCertChain](docsource/images/HCVKVPEM-custom-field-IncludeCertChain-dialog.svg)
+   ![HCVKVPEM Custom Field - IncludeCertChain](docsource/images/HCVKVPEM-custom-field-IncludeCertChain-validation-options-dialog.svg)
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
    ![HCVKVPEM Custom Field - MountPoint](docsource/images/HCVKVPEM-custom-field-MountPoint-dialog.svg)
+   ![HCVKVPEM Custom Field - MountPoint](docsource/images/HCVKVPEM-custom-field-MountPoint-validation-options-dialog.svg)
 
 
    </details>
@@ -561,18 +566,21 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVJKS Custom Field - IncludeCertChain](docsource/images/HCVKVJKS-custom-field-IncludeCertChain-dialog.svg)
+   ![HCVKVJKS Custom Field - IncludeCertChain](docsource/images/HCVKVJKS-custom-field-IncludeCertChain-validation-options-dialog.svg)
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
    ![HCVKVJKS Custom Field - MountPoint](docsource/images/HCVKVJKS-custom-field-MountPoint-dialog.svg)
+   ![HCVKVJKS Custom Field - MountPoint](docsource/images/HCVKVJKS-custom-field-MountPoint-validation-options-dialog.svg)
 
 
    ###### Passphrase Path
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-dialog.svg)
+   ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
    </details>
@@ -735,18 +743,21 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVP12 Custom Field - IncludeCertChain](docsource/images/HCVKVP12-custom-field-IncludeCertChain-dialog.svg)
+   ![HCVKVP12 Custom Field - IncludeCertChain](docsource/images/HCVKVP12-custom-field-IncludeCertChain-validation-options-dialog.svg)
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
    ![HCVKVP12 Custom Field - MountPoint](docsource/images/HCVKVP12-custom-field-MountPoint-dialog.svg)
+   ![HCVKVP12 Custom Field - MountPoint](docsource/images/HCVKVP12-custom-field-MountPoint-validation-options-dialog.svg)
 
 
    ###### Passphrase Path
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-dialog.svg)
+   ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
    </details>
@@ -908,18 +919,21 @@ the Keyfactor Command Portal
    Should the certificate chain be included when performing an enrollment?
 
    ![HCVKVPFX Custom Field - IncludeCertChain](docsource/images/HCVKVPFX-custom-field-IncludeCertChain-dialog.svg)
+   ![HCVKVPFX Custom Field - IncludeCertChain](docsource/images/HCVKVPFX-custom-field-IncludeCertChain-validation-options-dialog.svg)
 
 
    ###### Mount Point
    The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
 
    ![HCVKVPFX Custom Field - MountPoint](docsource/images/HCVKVPFX-custom-field-MountPoint-dialog.svg)
+   ![HCVKVPFX Custom Field - MountPoint](docsource/images/HCVKVPFX-custom-field-MountPoint-validation-options-dialog.svg)
 
 
    ###### Passphrase Path
    This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
 
    ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-dialog.svg)
+   ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
    </details>
