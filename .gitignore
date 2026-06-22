@@ -10,3 +10,5 @@
 *.licenseheader
 README.md
 /README.md
+/hashicorp-vault-orchestrator.Tests/bin/Debug/net8.0
+/hashicorp-vault-orchestrator.Tests/obj
