@@ -1,5 +1,5 @@
 
-//  Copyright 2025 Keyfactor
+//  Copyright 2026 Keyfactor
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 //  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -156,7 +156,32 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
-            JobParameters.MountPoint = !string.IsNullOrEmpty(mp) ? mp : JobParameters.MountPoint;
+            if (!string.IsNullOrEmpty(mp))
+            {
+                // Support the <namespace>/<mount> format for Vault Enterprise.
+                // Vault supports nested namespaces (e.g. "parent/child/mount"), so we split
+                // on the LAST slash: everything to the left is the namespace, the final
+                // segment is the bare mount name.  This ensures the X-Vault-Namespace header
+                // is sent on ALL job types (Inventory, Management, Discovery), not just Discovery.
+                // If Namespace was already set (Discovery pre-parsed it), we don't overwrite it
+                // but we still strip the namespace prefix from MountPoint.
+                var trimmedMp = mp.TrimEnd('/');
+                var lastSlash = trimmedMp.LastIndexOf('/');
+                if (lastSlash > 0)
+                {
+                    if (string.IsNullOrEmpty(JobParameters.Namespace))
+                    {
+                        var ns = trimmedMp.Substring(0, lastSlash).Trim('/');
+                        logger.LogTrace($"Detected namespace '{ns}' in MountPoint value '{mp}'; splitting into Namespace + MountPoint.");
+                        JobParameters.Namespace = ns;
+                    }
+                    JobParameters.MountPoint = trimmedMp.Substring(lastSlash + 1).Trim();
+                }
+                else
+                {
+                    JobParameters.MountPoint = trimmedMp.Trim('/');
+                }
+            }
 
             JobParameters.SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;

@@ -1,5 +1,5 @@
 
-//  Copyright 2025 Keyfactor
+//  Copyright 2026 Keyfactor
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 //  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
     {
         private IVaultClient _vaultClient { get; set; }
 
-        protected IVaultClient VaultClient => _vaultClient;
+        protected IVaultClient VaultClient
+        {
+            get => _vaultClient;
+            set => _vaultClient = value; // settable for unit-test subclass injection
+        }
 
         private ILogger logger = LogHandler.GetClassLogger<HcvKeyValueClient>();
 
@@ -1141,11 +1145,25 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                         return kvVersion;
                     }
 
-                    // If no version in options, it's KV v1                    
+                    // If no version in options, it's KV v1
+                    _kvVersionCache = 1;
                     return 1;
                 }
 
                 throw new Exception($"Mount point '{_mountPoint}' not found");
+            }
+            catch (VaultApiException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                // The token does not have permission to list secret engine mounts (sys/mounts).
+                // This is a non-fatal condition: we default to KV v2 and warn so the operator
+                // can grant the permission or explicitly configure the mount point version.
+                logger.LogWarning(
+                    $"The Vault token does not have permission to read sys/mounts (HTTP 403). " +
+                    $"Unable to auto-detect the KV secrets engine version for mount '{_mountPoint}'. " +
+                    $"Defaulting to KV v2. To suppress this warning, grant the token 'read' access " +
+                    $"to 'sys/mounts' or ensure the mount point is a KV v2 engine.");
+                _kvVersionCache = 2;
+                return 2;
             }
             catch (Exception ex)
             {
