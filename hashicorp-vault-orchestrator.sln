@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hashicorp-vault-orchestrator", "hashicorp-vault-orchestrator\hashicorp-vault-orchestrator.csproj", "{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hashicorp-vault-orchestrator.Tests", "hashicorp-vault-orchestrator.Tests\hashicorp-vault-orchestrator.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{83623EBF-AC4C-4158-922D-959AEFC75453}"
 	ProjectSection(SolutionItems) = preProject
 		CHANGELOG.md = CHANGELOG.md
@@ -34,6 +36,10 @@ Global
 		{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76771DD1-BDF1-4C3F-9EAB-C9096A1BBF7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

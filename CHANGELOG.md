@@ -1,3 +1,7 @@
+## 3.2.1 
+* Fixed issue where token with insufficient permissions to check KV version would cause the job to fail
+* Added unit tests
+
 ## 3.2.0
 * added parameter "PassphrasePath" to support custom passphrase path (no longer needs to be a secret named 'passphrase' on the same level)
 * added support for optional parameter on store path and passphrase path to indicate the property containing the value (if JSON secret)

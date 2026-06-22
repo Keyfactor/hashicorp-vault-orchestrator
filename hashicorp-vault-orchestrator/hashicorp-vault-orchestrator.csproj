@@ -9,6 +9,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Include="..\hashicorp-vault-orchestrator.sln.licenseheader" Link="hashicorp-vault-orchestrator.sln.licenseheader" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
 		<PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
 		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0">
