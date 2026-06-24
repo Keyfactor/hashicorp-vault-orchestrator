@@ -189,43 +189,6 @@ the Keyfactor Command Portal
    ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
-
-   ###### Server Username
-   The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Mount Point
-   This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point>
-
-   ![HCVPKI Custom Field - MountPoint](docsource/images/HCVPKI-custom-field-MountPoint-dialog.png)
-
-
-
-   ###### Passphrase Path
-   This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
-
-   ![HCVPKI Custom Field - PassphrasePath](docsource/images/HCVPKI-custom-field-PassphrasePath-dialog.png)
-
-
-
-
-
    </details>
 </details>
 
@@ -443,50 +406,6 @@ the Keyfactor Command Portal
    ![HCVKVPEM Custom Field - MountPoint](docsource/images/HCVKVPEM-custom-field-MountPoint-validation-options-dialog.svg)
 
 
-
-   ###### Server Username
-   The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Subfolder Inventory
-   Should certificates found in sub-paths be included when performing an inventory?
-
-   ![HCVKVPEM Custom Field - SubfolderInventory](docsource/images/HCVKVPEM-custom-field-SubfolderInventory-dialog.png)
-
-
-
-   ###### Include Certificate Chain
-   Should the certificate chain be included when performing an enrollment?
-
-   ![HCVKVPEM Custom Field - IncludeCertChain](docsource/images/HCVKVPEM-custom-field-IncludeCertChain-dialog.png)
-
-
-
-   ###### Mount Point
-   The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
-
-   ![HCVKVPEM Custom Field - MountPoint](docsource/images/HCVKVPEM-custom-field-MountPoint-dialog.png)
-
-
-
-
-
    </details>
 </details>
 
@@ -662,50 +581,6 @@ the Keyfactor Command Portal
 
    ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-dialog.svg)
    ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-validation-options-dialog.svg)
-
-
-
-   ###### Server Username
-   The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Include Certificate Chain
-   Should the certificate chain be included when performing an enrollment?
-
-   ![HCVKVJKS Custom Field - IncludeCertChain](docsource/images/HCVKVJKS-custom-field-IncludeCertChain-dialog.png)
-
-
-
-   ###### Mount Point
-   The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
-
-   ![HCVKVJKS Custom Field - MountPoint](docsource/images/HCVKVJKS-custom-field-MountPoint-dialog.png)
-
-
-
-   ###### Passphrase Path
-   This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
-
-   ![HCVKVJKS Custom Field - PassphrasePath](docsource/images/HCVKVJKS-custom-field-PassphrasePath-dialog.png)
-
-
-
 
 
    </details>
@@ -885,50 +760,6 @@ the Keyfactor Command Portal
    ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
-
-   ###### Server Username
-   The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Include Certificate Chain
-   Should the certificate chain be included when performing an enrollment?
-
-   ![HCVKVP12 Custom Field - IncludeCertChain](docsource/images/HCVKVP12-custom-field-IncludeCertChain-dialog.png)
-
-
-
-   ###### Mount Point
-   The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
-
-   ![HCVKVP12 Custom Field - MountPoint](docsource/images/HCVKVP12-custom-field-MountPoint-dialog.png)
-
-
-
-   ###### Passphrase Path
-   This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
-
-   ![HCVKVP12 Custom Field - PassphrasePath](docsource/images/HCVKVP12-custom-field-PassphrasePath-dialog.png)
-
-
-
-
-
    </details>
 </details>
 
@@ -1105,50 +936,6 @@ the Keyfactor Command Portal
    ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-validation-options-dialog.svg)
 
 
-
-   ###### Server Username
-   The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
-
-
-   > [!IMPORTANT]
-   > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
-
-
-
-
-   ###### Include Certificate Chain
-   Should the certificate chain be included when performing an enrollment?
-
-   ![HCVKVPFX Custom Field - IncludeCertChain](docsource/images/HCVKVPFX-custom-field-IncludeCertChain-dialog.png)
-
-
-
-   ###### Mount Point
-   The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point>
-
-   ![HCVKVPFX Custom Field - MountPoint](docsource/images/HCVKVPFX-custom-field-MountPoint-dialog.png)
-
-
-
-   ###### Passphrase Path
-   This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret.
-
-   ![HCVKVPFX Custom Field - PassphrasePath](docsource/images/HCVKVPFX-custom-field-PassphrasePath-dialog.png)
-
-
-
-
-
    </details>
 </details>
 
@@ -1163,8 +950,9 @@ the Keyfactor Command Portal
    | --------- | ----------- | ----------- | ----------- |
    | Older than `11.0.0` | | | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` |
-   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` || Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
-   | `11.6` _and_ newer | `net8.0` | | `net8.0` | 
+   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` |
+   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
+   | `11.6` _and_ newer | `net8.0` | | `net8.0` |
 
     Unzip the archive containing extension assemblies to a known location.
 
