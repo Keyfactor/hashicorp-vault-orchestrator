@@ -1,7 +1,6 @@
 {
   "extensions": {
     "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
-
       "CertStores.HCVKVPEM.Inventory": {
         "assemblypath": "hashicorp-vault-orchestrator.dll",
         "TypeFullName": "Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs.Inventory"
