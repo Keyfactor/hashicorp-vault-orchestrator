@@ -6,7 +6,11 @@
 /hashicorp-vault-orchestrator/obj
 /hashicorp-vault-orchestrator/Properties
 /hashicorp-vault-orchestrator/hashicorp-vault-orchestrator.csproj.user
+/hashicorp-vault-orchestrator.Tests/bin
+/hashicorp-vault-orchestrator.Tests/obj
+/hashicorp-vault-orchestrator.Tests/hashicorp-vault-orchestrator.Tests.csproj.user
 .vs
+.idea
 *.licenseheader
 README.md
 /README.md
