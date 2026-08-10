@@ -61,6 +61,41 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
             pfx.Save(ms, passphrase.ToCharArray(), new SecureRandom());
             return Convert.ToBase64String(ms.ToArray());
         }
+
+        /// <summary>Returns base64-encoded bytes of a PKCS12 containing a self-signed cert with NO private key entry (e.g. a CA/chain-only certificate).</summary>
+        public static string SelfSignedCertOnlyPfxBase64(string alias, string passphrase = Passphrase)
+        {
+            var keyGen = new RsaKeyPairGenerator();
+            keyGen.Init(new KeyGenerationParameters(new SecureRandom(), 1024));
+            AsymmetricCipherKeyPair keyPair = keyGen.GenerateKeyPair();
+
+            var certGen = new X509V3CertificateGenerator();
+            var dn = new X509Name($"CN={alias}");
+            certGen.SetIssuerDN(dn);
+            certGen.SetSubjectDN(dn);
+            certGen.SetSerialNumber(BigInteger.ProbablePrime(64, new Random()));
+            certGen.SetNotBefore(DateTime.UtcNow.AddDays(-1));
+            certGen.SetNotAfter(DateTime.UtcNow.AddYears(1));
+            certGen.SetPublicKey(keyPair.Public);
+            var cert = certGen.Generate(new Asn1SignatureFactory("SHA256WithRSA", keyPair.Private));
+
+            var pfx = new Pkcs12StoreBuilder().Build();
+            pfx.SetCertificateEntry(alias, new X509CertificateEntry(cert));
+            using var ms = new MemoryStream();
+            pfx.Save(ms, passphrase.ToCharArray(), new SecureRandom());
+            return Convert.ToBase64String(ms.ToArray());
+        }
+
+        /// <summary>
+        /// A syntactically valid (but not cryptographically real) single PEM certificate block.
+        /// Header/footer literals are duplicated here rather than referencing the main project's
+        /// internal CertificateHeaders class — InternalsVisibleTo targets an assembly name
+        /// ("hashicorp-vault-orchestrator.Tests") that doesn't match this test project's actual
+        /// &lt;AssemblyName&gt; ("Keyfactor.Extensions.Orchestrators.HCV.Tests"), so internal types
+        /// aren't actually visible here. Pre-existing mismatch, out of scope for this change.
+        /// </summary>
+        public static string FakePemCert(string marker = "FAKECERTDATA")
+            => "-----BEGIN CERTIFICATE-----\n" + marker + "\n-----END CERTIFICATE-----";
     }
 
     // ============================================================
@@ -270,6 +305,347 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
 
             client.PatchCalls.Should().BeEmpty(
                 because: "non-JSON cert writes must use Write, not Patch");
+        }
+    }
+
+    // ============================================================
+    // CreatePemStore tests (Management-Create path, HCVKVPEM)
+    // ============================================================
+
+    public class CreatePemStoreTests
+    {
+        private const string CertPath = "certs/mycert_pem";
+        private const string ExpectedCertPath = "/certs/mycert_pem";
+
+        [Fact]
+        public async Task NoPassphrasePath_SeedsCertSecretOnly()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, null, storeType: "HCVKVPEM");
+            await client.CreateCertStore();
+
+            client.WriteCalls.Should().HaveCount(1,
+                because: "an omitted PassphrasePath means no private key secret should be seeded");
+            client.WriteCalls[0].path.Should().Be(ExpectedCertPath);
+        }
+
+        [Fact]
+        public async Task WithPassphrasePath_SeedsBothSecrets()
+        {
+            const string keyPath = "certs/mycert_pem_key";
+            var client = new TestableHcvKeyValueClient(CertPath, keyPath, storeType: "HCVKVPEM");
+            await client.CreateCertStore();
+
+            client.WriteCalls.Should().HaveCount(2);
+            client.WriteCalls[0].path.Should().Be(ExpectedCertPath);
+            client.WriteCalls[1].path.Should().Be("/certs/mycert_pem_key");
+        }
+
+        [Fact]
+        public async Task JsonPropertyMode_UsesConfiguredPropertyNames()
+        {
+            const string keyPath = "certs/mycert_pem_key";
+            var client = new TestableHcvKeyValueClient(CertPath, keyPath,
+                certPropName: "certdata", passphrasePropName: "keydata", storeType: "HCVKVPEM");
+            await client.CreateCertStore();
+
+            client.WriteCalls[0].data.Should().ContainKey("certdata");
+            client.WriteCalls[1].data.Should().ContainKey("keydata");
+        }
+    }
+
+    // ============================================================
+    // PutCertificateIntoPemStore tests (Management-Add path, HCVKVPEM)
+    // ============================================================
+
+    public class PutCertificateIntoPemStoreTests
+    {
+        private const string CertPath = "certs/mycert_pem";
+        private const string KeyPath = "certs/mycert_pem_key";
+        private const string ExpectedCertPath = "/certs/mycert_pem";
+        private const string ExpectedKeyPath = "/certs/mycert_pem_key";
+
+        [Fact]
+        public async Task CertAndKey_WrittenToSeparateSecrets()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath, storeType: "HCVKVPEM");
+
+            await client.PutCertificate(
+                certName: "mycert",
+                contents: TestCertHelper.SelfSignedPfxBase64("mycert"),
+                pfxPassword: TestCertHelper.Passphrase,
+                certPath: CertPath, certPropName: null,
+                keyPath: KeyPath, keyPropName: null,
+                includeChain: false);
+
+            client.WriteCalls.Should().Contain(c => c.path == ExpectedCertPath);
+            client.WriteCalls.Should().Contain(c => c.path == ExpectedKeyPath);
+        }
+
+        [Fact]
+        public async Task CertOnly_NoKeyEntryInPfx_SucceedsWithoutWritingKey()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath, storeType: "HCVKVPEM");
+
+            await client.PutCertificate(
+                certName: "cacert",
+                contents: TestCertHelper.SelfSignedCertOnlyPfxBase64("cacert"),
+                pfxPassword: TestCertHelper.Passphrase,
+                certPath: CertPath, certPropName: null,
+                keyPath: KeyPath, keyPropName: null,
+                includeChain: false);
+
+            client.WriteCalls.Should().ContainSingle(c => c.path == ExpectedCertPath,
+                because: "a certificate-only entry (no private key) should still write the cert");
+            client.WriteCalls.Should().NotContain(c => c.path == ExpectedKeyPath,
+                because: "there is no private key to write");
+        }
+
+        [Fact]
+        public async Task KeyPresent_NoPassphrasePathConfigured_Throws()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, null, storeType: "HCVKVPEM");
+
+            Func<Task> act = () => client.PutCertificate(
+                certName: "mycert",
+                contents: TestCertHelper.SelfSignedPfxBase64("mycert"),
+                pfxPassword: TestCertHelper.Passphrase,
+                certPath: CertPath, certPropName: null,
+                keyPath: null, keyPropName: null,
+                includeChain: false);
+
+            await act.Should().ThrowAsync<InvalidOperationException>(
+                because: "adding a cert with a private key but no configured PassphrasePath must fail clearly, not silently drop the key");
+        }
+
+        [Fact]
+        public async Task JsonPropertyMode_UsesPatchNotWrite()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath,
+                certPropName: "certdata", passphrasePropName: "keydata", storeType: "HCVKVPEM");
+
+            await client.PutCertificate(
+                certName: "mycert",
+                contents: TestCertHelper.SelfSignedPfxBase64("mycert"),
+                pfxPassword: TestCertHelper.Passphrase,
+                certPath: CertPath, certPropName: "certdata",
+                keyPath: KeyPath, keyPropName: "keydata",
+                includeChain: false);
+
+            client.PatchCalls.Should().Contain(c => c.path == ExpectedCertPath && c.data.ContainsKey("certdata"));
+            client.PatchCalls.Should().Contain(c => c.path == ExpectedKeyPath && c.data.ContainsKey("keydata"));
+            client.WriteCalls.Should().BeEmpty();
+        }
+    }
+
+    // ============================================================
+    // GetCertificateFromPemStore / GetCertificates tests (Inventory path, HCVKVPEM)
+    // ============================================================
+
+    public class GetCertificateFromPemStoreTests
+    {
+        private const string CertPath = "certs/mycert_pem";
+        private const string ExpectedCertPath = "/certs/mycert_pem";
+        private const string KeyPath = "certs/mycert_pem_key";
+        private const string ExpectedKeyPath = "/certs/mycert_pem_key";
+
+        [Fact]
+        public async Task CertOnly_NoPassphrasePath_PrivateKeyEntryFalse()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, null, storeType: "HCVKVPEM");
+            client.ReadResponses[ExpectedCertPath] = new Dictionary<string, object> { { "mycert_pem", TestCertHelper.FakePemCert() } };
+
+            var (certs, warnings) = await client.GetCertificates();
+
+            warnings.Should().BeEmpty();
+            certs.Should().ContainSingle();
+            certs[0].PrivateKeyEntry.Should().BeFalse(
+                because: "a missing private key is a normal case now (e.g. a CA trust chain), not an error");
+            certs[0].Alias.Should().Be("mycert_pem");
+        }
+
+        [Fact]
+        public async Task CertAndKey_PrivateKeyEntryTrue()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath, storeType: "HCVKVPEM");
+            client.ReadResponses[ExpectedCertPath] = new Dictionary<string, object> { { "mycert_pem", TestCertHelper.FakePemCert() } };
+            client.ReadResponses[ExpectedKeyPath] = new Dictionary<string, object> { { "mycert_pem_key", "-----BEGIN PRIVATE KEY-----\nFAKEKEY\n-----END PRIVATE KEY-----" } };
+
+            var (certs, warnings) = await client.GetCertificates();
+
+            warnings.Should().BeEmpty();
+            certs.Should().ContainSingle();
+            certs[0].PrivateKeyEntry.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task JsonPropertyMode_ReadsConfiguredProperties()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath,
+                certPropName: "certdata", passphrasePropName: "keydata", storeType: "HCVKVPEM");
+            client.ReadResponses[ExpectedCertPath] = new Dictionary<string, object> { { "certdata", TestCertHelper.FakePemCert() }, { "other", "ignored" } };
+            client.ReadResponses[ExpectedKeyPath] = new Dictionary<string, object> { { "keydata", "-----BEGIN PRIVATE KEY-----\nFAKEKEY\n-----END PRIVATE KEY-----" } };
+
+            var (certs, warnings) = await client.GetCertificates();
+
+            certs.Should().ContainSingle();
+            certs[0].PrivateKeyEntry.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task NoCertificateFound_ReturnsEmptyInventory()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, null, storeType: "HCVKVPEM");
+            // no ReadResponses seeded — cert secret reads back empty
+
+            var (certs, warnings) = await client.GetCertificates();
+
+            certs.Should().BeEmpty();
+            warnings.Should().BeEmpty();
+        }
+    }
+
+    // ============================================================
+    // RemoveCertificateFromPemStore tests (Management-Remove path, HCVKVPEM)
+    // ============================================================
+
+    public class RemoveCertificateFromPemStoreTests
+    {
+        private const string CertPath = "certs/mycert_pem";
+        private const string ExpectedCertPath = "/certs/mycert_pem";
+        private const string KeyPath = "certs/mycert_pem_key";
+        private const string ExpectedKeyPath = "/certs/mycert_pem_key";
+
+        [Fact]
+        public async Task NoPassphrasePath_DeletesCertSecretOnly()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, null, storeType: "HCVKVPEM");
+
+            await client.RemoveCertificate("mycert");
+
+            client.DeleteCalls.Should().ContainSingle();
+            client.DeleteCalls[0].path.Should().Be(ExpectedCertPath);
+        }
+
+        [Fact]
+        public async Task WithPassphrasePath_DeletesBothSecrets()
+        {
+            var client = new TestableHcvKeyValueClient(CertPath, KeyPath, storeType: "HCVKVPEM");
+
+            await client.RemoveCertificate("mycert");
+
+            client.DeleteCalls.Should().HaveCount(2);
+            client.DeleteCalls.Should().Contain(c => c.path == ExpectedCertPath);
+            client.DeleteCalls.Should().Contain(c => c.path == ExpectedKeyPath);
+        }
+
+        [Fact]
+        public async Task SharedSecretJsonMode_DeletesOnce()
+        {
+            // cert and key stored as two properties on the SAME secret
+            var client = new TestableHcvKeyValueClient(CertPath, CertPath,
+                certPropName: "certdata", passphrasePropName: "keydata", storeType: "HCVKVPEM");
+
+            await client.RemoveCertificate("mycert");
+
+            client.DeleteCalls.Should().ContainSingle(
+                because: "the cert and key live in the same secret, so only one delete should happen");
+        }
+    }
+
+    // ============================================================
+    // GetVaults (Discovery) tests — all 4 KV store types
+    // ============================================================
+
+    public class GetVaultsDiscoveryTests
+    {
+        [Fact]
+        public async Task WholeSecretMode_MatchingKeyNameEqualsSecretName_DiscoversSecretPathDirectly()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM");
+            client.SecretPaths["/certs/"] = new List<string> { "mycert_pem" };
+            client.SecretSubKeys["/certs/mycert_pem"] = new List<string> { "mycert_pem" };
+
+            (var paths, var warnings) = await client.GetVaults("/certs/");
+
+            warnings.Should().BeEmpty();
+            paths.Should().ContainSingle().Which.Should().Be("/certs/mycert_pem",
+                because: "when the matched key equals the secret's own name, the discovered path is just the secret itself");
+        }
+
+        [Fact]
+        public async Task JsonPropertyMode_KeyDiffersFromSecretName_DiscoversWithPropNameSuffix()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM");
+            client.SecretPaths["/certs/"] = new List<string> { "certdata" };
+            client.SecretSubKeys["/certs/certdata"] = new List<string> { "special_pem" };
+
+            (var paths, var warnings) = await client.GetVaults("/certs/");
+
+            paths.Should().ContainSingle().Which.Should().Be("/certs/certdata?special_pem",
+                because: "a JSON sub-property distinct from the secret's own name needs the ?propName suffix to be addressable");
+        }
+
+        [Fact]
+        public async Task PemStore_NoLongerSpecialCased_ReturnsRealSecretPathNotContainingFolder()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM");
+            client.SecretPaths["/certs/"] = new List<string> { "mycert_pem" };
+            client.SecretSubKeys["/certs/mycert_pem"] = new List<string> { "mycert_pem" };
+
+            (var paths, _) = await client.GetVaults("/certs/");
+
+            paths.Should().NotContain("/certs/",
+                because: "PEM discovery must no longer return the containing folder as the store path");
+        }
+
+        [Fact]
+        public async Task DiscoverySuffixOverride_ChangesWhichKeysMatch()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM", discoverySuffix: "_mycustom");
+            client.SecretPaths["/certs/"] = new List<string> { "mycert_mycustom" };
+            client.SecretSubKeys["/certs/mycert_mycustom"] = new List<string> { "mycert_mycustom" };
+
+            (var paths, _) = await client.GetVaults("/certs/");
+
+            paths.Should().ContainSingle().Which.Should().Be("/certs/mycert_mycustom");
+        }
+
+        [Fact]
+        public async Task DefaultSuffix_DoesNotMatchNonMatchingCustomSuffix()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM");
+            client.SecretPaths["/certs/"] = new List<string> { "mycert_mycustom" };
+            client.SecretSubKeys["/certs/mycert_mycustom"] = new List<string> { "mycert_mycustom" };
+
+            (var paths, _) = await client.GetVaults("/certs/");
+
+            paths.Should().BeEmpty(
+                because: "the default '_pem' suffix should not match a key using a different, non-overridden suffix");
+        }
+
+        [Fact]
+        public async Task RecursesIntoSubfolders()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", null, storeType: "HCVKVPEM");
+            client.SecretPaths["/certs/"] = new List<string> { "sub/" };
+            client.SecretPaths["/certs/sub/"] = new List<string> { "nested_pem" };
+            client.SecretSubKeys["/certs/sub/nested_pem"] = new List<string> { "nested_pem" };
+
+            (var paths, _) = await client.GetVaults("/certs/");
+
+            paths.Should().ContainSingle().Which.Should().Be("/certs/sub/nested_pem");
+        }
+
+        [Fact]
+        public async Task PfxDefaultSuffix_StillWorks()
+        {
+            var client = new TestableHcvKeyValueClient("/certs/", "/certs/passphrase", storeType: "HCVKVPFX");
+            client.SecretPaths["/certs/"] = new List<string> { "mystore_pfx" };
+            client.SecretSubKeys["/certs/mystore_pfx"] = new List<string> { "mystore_pfx" };
+
+            (var paths, _) = await client.GetVaults("/certs/");
+
+            paths.Should().ContainSingle().Which.Should().Be("/certs/mystore_pfx");
         }
     }
 

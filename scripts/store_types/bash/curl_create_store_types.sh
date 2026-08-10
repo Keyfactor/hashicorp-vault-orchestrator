@@ -96,8 +96,20 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
   "ShortName": "HCVKVPEM",
   "Capability": "HCVKVPEM",
   "LocalStore": false,
+  "StorePathType": "",
+  "StorePathValue": "example: '/mycerts/mycert_pem?b64cert'",
   "PrivateKeyAllowed": "Optional",
-  "JobProperties": [],
+  "JobProperties": [
+    {
+      "Name": "DiscoverySuffix",
+      "DisplayName": "Discovery Suffix",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "_pem",
+      "Required": false,
+      "Description": "The secret-key-name suffix Discovery jobs use to identify candidate PEM certificate secrets. Defaults to '_pem'."
+    }
+  ],
   "ServerRequired": true,
   "PowerShell": false,
   "BlueprintAllowed": false,
@@ -131,15 +143,6 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
     },
     {
-      "Name": "SubfolderInventory",
-      "DisplayName": "Subfolder Inventory",
-      "Description": "Should certificates found in sub-paths be included when performing an inventory?",
-      "Type": "Bool",
-      "DependsOn": "",
-      "DefaultValue": "false",
-      "Required": false
-    },
-    {
       "Name": "IncludeCertChain",
       "DisplayName": "Include Certificate Chain",
       "Description": "Should the certificate chain be included when performing an enrollment?",
@@ -156,6 +159,15 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
       "DependsOn": "",
       "DefaultValue": "",
       "Required": false
+    },
+    {
+      "Name": "PassphrasePath",
+      "DisplayName": "Private Key Path",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "",
+      "Required": false,
+      "Description": "This is the path to the secret that contains the PEM-encoded private key. Optional - omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted."
     }
   ],
   "EntryParameters": [],
@@ -183,7 +195,17 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
   "StorePathType": "",
   "StorePathValue": "example: '/mycerts/certstore.jks?b64cert'",
   "PrivateKeyAllowed": "Optional",
-  "JobProperties": [],
+  "JobProperties": [
+    {
+      "Name": "DiscoverySuffix",
+      "DisplayName": "Discovery Suffix",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "_jks",
+      "Required": false,
+      "Description": "The secret-key-name suffix Discovery jobs use to identify candidate JKS certificate secrets. Defaults to '_jks'."
+    }
+  ],
   "ServerRequired": true,
   "PowerShell": false,
   "BlueprintAllowed": false,
@@ -269,7 +291,17 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
   "StorePathType": "",
   "StorePathValue": "example: '/mycerts/certstore.p12?b64cert'",
   "PrivateKeyAllowed": "Optional",
-  "JobProperties": [],
+  "JobProperties": [
+    {
+      "Name": "DiscoverySuffix",
+      "DisplayName": "Discovery Suffix",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "_p12",
+      "Required": false,
+      "Description": "The secret-key-name suffix Discovery jobs use to identify candidate PKCS12 certificate secrets. Defaults to '_p12'."
+    }
+  ],
   "ServerRequired": true,
   "PowerShell": false,
   "BlueprintAllowed": false,
@@ -355,7 +387,17 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
   "StorePathType": "",
   "StorePathValue": "example: '/mycerts/certstore.pfx?b64cert'",
   "PrivateKeyAllowed": "Optional",
-  "JobProperties": [],
+  "JobProperties": [
+    {
+      "Name": "DiscoverySuffix",
+      "DisplayName": "Discovery Suffix",
+      "Type": "String",
+      "DependsOn": "",
+      "DefaultValue": "_pfx",
+      "Required": false,
+      "Description": "The secret-key-name suffix Discovery jobs use to identify candidate PFX certificate secrets. Defaults to '_pfx'."
+    }
+  ],
   "ServerRequired": true,
   "PowerShell": false,
   "BlueprintAllowed": false,

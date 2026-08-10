@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
@@ -19,6 +19,10 @@
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0">
 		  <IncludeAssets>all</IncludeAssets>
 		</PackageReference>
+		<!-- Not used directly by our code (migrated to System.Text.Json) — pinned only to override
+		     the vulnerable Newtonsoft.Json 12.0.3 pulled in transitively by
+		     Keyfactor.Orchestrators.IOrchestratorJobExtensions 0.7.0's nuspec (GHSA-5crp-9r3c-p9vr). -->
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="NLog" Version="5.3.4" />
 		<PackageReference Include="System.Drawing.Common" Version="6.0.0" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />

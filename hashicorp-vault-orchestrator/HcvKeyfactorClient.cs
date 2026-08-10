@@ -16,7 +16,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 {
@@ -41,6 +41,19 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("//", "/") }";
         }
 
+        // System.Text.Json deserializes Dictionary<string,object> values as boxed JsonElement,
+        // not native CLR primitives (unlike Newtonsoft.Json) — a plain `as string` cast on them
+        // always yields null. This extracts the string content regardless of the underlying
+        // JsonValueKind (or returns null if the value is genuinely absent/JSON null).
+        private static string AsString(object value)
+        {
+            if (value is JsonElement je)
+            {
+                return je.ValueKind == JsonValueKind.String ? je.GetString() : je.ToString();
+            }
+            return value?.ToString();
+        }
+
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
         {
             var fullPath = $"{ _vaultUrl }/cert/{ key }";
@@ -54,34 +67,37 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                     req.Headers.Add("X-Vault-Token", _vaultToken);
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
-                    CertResponse content = JsonConvert.DeserializeObject<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
+                    CertResponse content = JsonSerializer.Deserialize<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
 
                     content.data.TryGetValue("certificate", out object cert);
                     content.data.TryGetValue("ca_chain", out object caChain);
                     content.data.TryGetValue("private_key", out object privateKey);
                     content.data.TryGetValue("revocation_time", out object revokeTime);
 
-                    List<string> certList = new List<string>() { cert as string };
+                    var certString = AsString(cert);
+                    var caChainString = AsString(caChain);
+                    var privateKeyString = AsString(privateKey);
+
+                    List<string> certList = new List<string>() { certString };
 
                     // if the chain is available, include all certs
 
-                    if (!string.IsNullOrEmpty(caChain as string))
+                    if (!string.IsNullOrEmpty(caChainString))
                     {
-                        string fullChain = caChain.ToString();
-                        certList = fullChain.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        certList = caChainString.Split(new string[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
                     }
 
                     // don't include them in inventory unless they haven't been revoked
 
-                    if (revokeTime == null || Equals(revokeTime.ToString(), "0"))
+                    if (revokeTime == null || Equals(AsString(revokeTime), "0"))
                     {
                         var inventoryItem = new CurrentInventoryItem()
                         {
                             Alias = key,
                             Certificates = certList,
                             ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                            PrivateKeyEntry = !string.IsNullOrEmpty(privateKey as string),
-                            UseChainLevel = !string.IsNullOrEmpty(caChain as string),
+                            PrivateKeyEntry = !string.IsNullOrEmpty(privateKeyString),
+                            UseChainLevel = !string.IsNullOrEmpty(caChainString),
                         };
                         return inventoryItem;
                     }
@@ -122,7 +138,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
                 logger.LogTrace("parsing response", res);
 
-                var content = JsonConvert.DeserializeObject<ListResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
+                var content = JsonSerializer.Deserialize<ListResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
                 string[] certKeys;
 
                 content.data.TryGetValue("keys", out certKeys);

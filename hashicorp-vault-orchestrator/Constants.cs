@@ -37,7 +37,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public const string HCVKVJKS = "_jks";
         public const string HCVKVPKCS12 = "_p12";
         public const string HCVKVPFX = "_pfx";
-        public const string HCVKVPEM = "certificate";
+        public const string HCVKVPEM = "_pem";
         public const string PASSPHRASE = "passphrase";
 
         public static string ForStoreType(string type)
