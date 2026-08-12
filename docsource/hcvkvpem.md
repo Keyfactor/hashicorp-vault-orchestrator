@@ -3,7 +3,7 @@
 The Hashicorp Vault Key-Value PEM Certificate Store manages certificates in the PEM format that are stored in the Hashicorp Vault Key-Value secrets engine.
 As of version 4.0+ of this integration, each HCVKVPEM certificate store maps to a single certificate secret (plus an optional, separate private key secret) — the same "one store, one secret" model already used by HCVKVJKS, HCVKVP12, and HCVKVPFX — rather than a folder that could contain many certificate entries across sub-paths.
 
-> :warning: **Breaking change note for existing HCVKVPEM stores (upgrading from a version prior to 4.0):** `StorePath` used to be a folder path that could contain many certificates, optionally including sub-paths (via the now-removed `SubfolderInventory` field). It now points directly to the single secret containing the certificate. The private key, which used to live as a `private_key` property alongside `certificate` in that same secret, is now read from a separate secret referenced by the new `PassphrasePath` field. Existing HCVKVPEM certificate stores must be reconfigured after upgrading — there is no automatic migration.
+> :warning: **Breaking change note for existing HCVKVPEM stores (upgrading from a version prior to 4.0):** `StorePath` used to be a folder path that could contain many certificates, optionally including sub-paths (via the now-removed `SubfolderInventory` field). It now points directly to the single secret containing the certificate. The private key, which used to live as a `private_key` property alongside `certificate` in that same secret, is now read from a separate secret referenced by the new `PrivateKeyPath` field. Existing HCVKVPEM certificate stores must be reconfigured after upgrading — there is no automatic migration.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ As of version 4.0+ of this integration, each HCVKVPEM certificate store maps to 
 
 A certificate store is comprised of one or two secret entries:
 - The certificate, at the path configured in `StorePath`.
-- Optionally, a secret containing the PEM-encoded private key, at the path configured in `PassphrasePath`. Omit `PassphrasePath` entirely for certificate-only stores (e.g. a CA trust chain) that have no private key — unlike the other Key-Value store types, no sibling-secret convention (such as a secret named `passphrase` at the same level) is assumed when it's omitted.
+- Optionally, a secret containing the PEM-encoded private key, at the path configured in `PrivateKeyPath`. Omit `PrivateKeyPath` entirely for certificate-only stores (e.g. a CA trust chain) that have no private key — unlike the other Key-Value store types, no sibling-secret convention (such as a secret named `passphrase` at the same level) is assumed when it's omitted.
 
 This is what allows a PEM certificate and its private key to each be created as their own secret containing a single key-value pair — useful when your secret-management tooling only supports creating secrets with a single key-value pair per secret, which the old combined-secret shape did not allow.
 
@@ -31,7 +31,7 @@ StorePath = `kv-v2/mycerts/mycert_pem`
 > `<namespace>/<mount point>/<path-to-secret>?<json property name>`
 > if namespaces are not used, that section can be omitted.
 
-This convention applies to both `StorePath` and `PassphrasePath`.
+This convention applies to both `StorePath` and `PrivateKeyPath`.
 
 ## Configuration in Keyfactor Command
 
@@ -60,7 +60,7 @@ Here are the steps for manually creating the store type in Keyfactor Command.
 - Click the "Custom Fields" tab to add the following custom fields:
   - **MountPoint** - Type: *string*
   - **IncludeCertChain** - Type: *bool* (If true, the available intermediate certificates will also be written to Vault during enrollment)
-  - **PassphrasePath** - Type: *string* (The path to the secret containing the PEM-encoded private key. Optional — omit for certificate-only / CA trust chain stores with no private key)
+  - **PrivateKeyPath** - Type: *string* (The path to the secret containing the PEM-encoded private key. Optional — omit for certificate-only / CA trust chain stores with no private key)
 
 ![](images/cert-store-type-kv-custom-tab.png)
 
@@ -81,7 +81,7 @@ Create a new Certificate Store that resembles the one below:
 - **Mount Point** - This is the mount point name for the instance of the Key Value secrets engine.
   - If left blank, will default to "kv-v2".
   - If your organization utilizes Vault enterprise namespaces, you should include the namespace here.
-- **Passphrase Path** - The path to the secret (and optional JSON property) where the PEM-encoded private key is located. Leave blank for certificate-only stores with no private key.
+- **Private Key Path** - The path to the secret (and optional JSON property) where the PEM-encoded private key is located. Leave blank for certificate-only stores with no private key.
 
 #### Set the server username and password
 

@@ -161,7 +161,7 @@ $Body = @'
       "Required": false
     },
     {
-      "Name": "PassphrasePath",
+      "Name": "PrivateKeyPath",
       "DisplayName": "Private Key Path",
       "Type": "String",
       "DependsOn": "",

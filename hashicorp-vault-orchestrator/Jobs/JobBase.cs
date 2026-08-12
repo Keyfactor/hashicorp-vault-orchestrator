@@ -184,7 +184,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
 
-            JobParameters.PassphrasePath = props.ContainsKey("PassphrasePath") ? props["PassphrasePath"].ToString() : null;
+            // HCVKVPEM's manifest field is named "PrivateKeyPath" (it holds the private key itself,
+            // not a passphrase); the other KV store types keep "PassphrasePath". Both populate the
+            // same internal JobParameters.PassphrasePath, since the underlying two-secret read/write
+            // mechanism is identical either way.
+            var passphraseFieldName = _storeType == StoreType.HCVKVPEM ? "PrivateKeyPath" : "PassphrasePath";
+            JobParameters.PassphrasePath = props.ContainsKey(passphraseFieldName) ? props[passphraseFieldName].ToString() : null;
 
             // Discovery-only job property; overrides the default secret-key-name suffix used to
             // identify candidate secrets (StoreFileExtensions.ForStoreType). Not present for

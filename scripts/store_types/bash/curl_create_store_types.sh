@@ -161,7 +161,7 @@ curl -s -X POST "https://${KEYFACTOR_HOSTNAME}/${KEYFACTOR_API_PATH}/Certificate
       "Required": false
     },
     {
-      "Name": "PassphrasePath",
+      "Name": "PrivateKeyPath",
       "DisplayName": "Private Key Path",
       "Type": "String",
       "DependsOn": "",
