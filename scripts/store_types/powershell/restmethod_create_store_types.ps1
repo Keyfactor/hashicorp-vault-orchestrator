@@ -167,7 +167,7 @@ $Body = @'
       "DependsOn": "",
       "DefaultValue": "",
       "Required": false,
-      "Description": "This is the path to the secret that contains the PEM-encoded private key. Optional - omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted."
+      "Description": "This is the path to the secret that contains the PEM-encoded private key. Optional — omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted."
     }
   ],
   "EntryParameters": [],
