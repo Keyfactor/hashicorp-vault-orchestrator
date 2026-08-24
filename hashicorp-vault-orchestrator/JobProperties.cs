@@ -17,11 +17,11 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public string ClientMachine { get; set; }
         public string VaultServerUrl { get; set; }
         public string PassphrasePath { get; set; }
-        public string PassphraseSecretPath => PassphrasePath.Split('?')[0] ?? string.Empty; // everything before the optional ? is the path to the cert store password secret
-        public string PassphraseSecretPropName => PassphrasePath.Split('?').Length > 1 ? PassphrasePath.Split('?')[1] : string.Empty; // anything after the ? is the optional property name within the secret for the password
-        public bool SubfolderInventory { get; set; }
+        public string PassphraseSecretPath => PassphrasePath?.Split('?')[0] ?? string.Empty; // everything before the optional ? is the path to the cert store password secret. null when not configured (e.g. HCVKVPEM with no private key).
+        public string PassphraseSecretPropName => PassphrasePath != null && PassphrasePath.Split('?').Length > 1 ? PassphrasePath.Split('?')[1] : string.Empty; // anything after the ? is the optional property name within the secret for the password
         public bool IncludeCertChain { get; set; }
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to kv-v2 if not provided.
-        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point if needed. 
+        public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point if needed.
+        public string DiscoverySuffix { get; set; } // overrides the default secret-key-name suffix used to identify candidate secrets during a Discovery job.
     }
 }

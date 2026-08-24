@@ -13,7 +13,7 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 {
@@ -46,7 +46,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.StorePath = config.CertificateStoreDetails.StorePath;
             JobParameters.ClientMachine = config.CertificateStoreDetails.ClientMachine;
 
-            var props = JsonConvert.DeserializeObject<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
+            var props = JsonSerializer.Deserialize<Dictionary<string, object>>(config.CertificateStoreDetails.Properties);
 
             InitProps(props, config.Capability).GetAwaiter().GetResult();
 
@@ -64,14 +64,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger.LogTrace($"StorePath:\t{JobParameters.StorePath}");
             logger.LogTrace($"IncludeCertChain:\t{JobParameters.IncludeCertChain}");
 
-            if (!_storeType.Contains(StoreType.HCVKVPEM) && !_storeType.Contains(StoreType.HCVPKI))
+            if (!_storeType.Contains(StoreType.HCVPKI))
             {
                 logger.LogTrace($"CertSecretPath:\t{JobParameters.CertSecretPath}");
                 logger.LogTrace($"CertSecretPropName:\t{(String.IsNullOrEmpty(JobParameters.CertSecretPropName) ? "-not set- (entire secret content should be base64 encoded cert)" : JobParameters.CertSecretPropName)}");
                 logger.LogTrace($"PassphraseSecretPath:\t{JobParameters.PassphraseSecretPath}");
                 logger.LogTrace($"PassphraseSecretPropName:\t{(String.IsNullOrEmpty(JobParameters.PassphraseSecretPropName) ? "-not set- (entire secret content should be the passphrase)" : JobParameters.PassphraseSecretPropName)}");
             }
-            if (_storeType.Contains(StoreType.HCVKVPEM)) logger.LogTrace($"SubfolderInventory:\t{JobParameters.SubfolderInventory}");
             logger.LogTrace("- - - - - - - - -");
         }
 
@@ -132,7 +131,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             JobParameters.VaultServerUrl = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
             JobParameters.VaultToken = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
             JobParameters.StorePath = config.CertificateStoreDetails.StorePath;
-            dynamic props = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+            dynamic props = JsonSerializer.Deserialize<Dictionary<string, object>>(config.CertificateStoreDetails.Properties.ToString());
             InitProps(props, config.Capability).GetAwaiter().GetResult();
             LogInitValues();
         }
@@ -150,9 +149,9 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             // Normalize StorePath regardless of source (props or config.CertificateStoreDetails.StorePath)
             JobParameters.StorePath = JobParameters.StorePath?.TrimStart('/').TrimEnd('/') ?? string.Empty;
-            if (_storeType.Contains(StoreType.HCVKVPEM) || _storeType.Contains(StoreType.HCVPKI))
+            if (_storeType.Contains(StoreType.HCVPKI))
             {
-                JobParameters.StorePath += "/"; // trailing slash required: HcvKeyValueClient prepends "/" and appends entry name directly
+                JobParameters.StorePath += "/"; // trailing slash required: HcvKeyfactorClient prepends "/" and appends entry name directly
             }
 
             var mp = props.ContainsKey("MountPoint") ? props["MountPoint"].ToString() : null;
@@ -183,10 +182,20 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 }
             }
 
-            JobParameters.SubfolderInventory = props.ContainsKey("SubfolderInventory") ? bool.Parse(props["SubfolderInventory"].ToString()) : false;
             JobParameters.IncludeCertChain = props.ContainsKey("IncludeCertChain") ? bool.Parse(props["IncludeCertChain"].ToString()) : false;
 
-            JobParameters.PassphrasePath = props.ContainsKey("PassphrasePath") ? props["PassphrasePath"].ToString() : null;
+            // HCVKVPEM's manifest field is named "PrivateKeyPath" (it holds the private key itself,
+            // not a passphrase); the other KV store types keep "PassphrasePath". Both populate the
+            // same internal JobParameters.PassphrasePath, since the underlying two-secret read/write
+            // mechanism is identical either way.
+            var passphraseFieldName = _storeType == StoreType.HCVKVPEM ? "PrivateKeyPath" : "PassphrasePath";
+            JobParameters.PassphrasePath = props.ContainsKey(passphraseFieldName) ? props[passphraseFieldName].ToString() : null;
+
+            // Discovery-only job property; overrides the default secret-key-name suffix used to
+            // identify candidate secrets (StoreFileExtensions.ForStoreType). Not present for
+            // Inventory/Management jobs, so this is null for those — harmless, since only
+            // Discovery/GetVaults consults it.
+            JobParameters.DiscoverySuffix = props.ContainsKey("DiscoverySuffix") ? props["DiscoverySuffix"].ToString() : null;
 
             if (JobParameters.PassphrasePath == null && _storeType != StoreType.HCVKVPEM && _storeType != StoreType.HCVPKI)
             {
@@ -198,7 +207,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
 
             if (!_storeType.Contains("HCVPKI"))
             {
-                VaultClient = new HcvKeyValueClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.Namespace, _storeType, JobParameters.StorePath, JobParameters.CertSecretPropName, JobParameters.PassphrasePath, JobParameters.PassphraseSecretPropName, JobParameters.SubfolderInventory);
+                VaultClient = new HcvKeyValueClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.Namespace, _storeType, JobParameters.StorePath, JobParameters.CertSecretPropName, JobParameters.PassphrasePath, JobParameters.PassphraseSecretPropName, JobParameters.DiscoverySuffix);
             }
             else
             {

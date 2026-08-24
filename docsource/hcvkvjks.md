@@ -121,6 +121,7 @@ Set the following fields to configure a discovery job for JKS Certificate Stores
 - **SERVER PASSWORD** - the Vault Token to be used by the Orchestrator for authenticating into Vault
 - **Directories to Search** - used to restrict the certificate store search to a sub-path within the Secrets Engine
 - **Extensions** - The namespace (if used) and mount-point of the secrets engine to search.
+- **Discovery Suffix** (custom job property) - Overrides the default secret-key-name suffix (`_jks`) Discovery uses to identify candidate JKS certificate secrets. Use this if your organization's secret-naming convention doesn't end in `_jks`.
 
 > :warning: *If your mount point is different than the default "kv-v2" and/or enterprise namespaces are used, you should enter the mount point and namespace into the "Extensions" field in order for discovery to work.  Also, if you need to scope discovery to a sub-path rather than the root of the engine mount point, enter that in the "Directories to search" field.*
 

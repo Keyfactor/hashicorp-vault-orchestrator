@@ -48,25 +48,39 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
         public Dictionary<string, Dictionary<string, object>> ReadResponses { get; }
             = new Dictionary<string, Dictionary<string, object>>();
 
+        public List<(string path, string mountPoint)> DeleteCalls { get; }
+            = new List<(string, string)>();
+
+        /// <summary>Path → child entry names (as returned by Vault's list-paths API; folders end with "/"). Paths not listed return an empty list.</summary>
+        public Dictionary<string, List<string>> SecretPaths { get; }
+            = new Dictionary<string, List<string>>();
+
+        /// <summary>Path → sub-key (JSON property) names within the secret at that path. Paths not listed return an empty list.</summary>
+        public Dictionary<string, List<string>> SecretSubKeys { get; }
+            = new Dictionary<string, List<string>>();
+
         public TestableHcvKeyValueClient(
             string certPath,
             string passphrasePath,
             string certPropName = null,
             string passphrasePropName = null,
-            string storeType = "HCVKVPFX")
+            string storeType = "HCVKVPFX",
+            string discoverySuffix = null)
             : base(
                 vaultToken: "fake-token",
                 serverUrl: "http://127.0.0.1:8200",
                 mountPoint: "secret",
                 ns: null,
-                storeType: "Keyfactor.Extensions.Orchestrator.HashicorpVault.HCVKVPFX",
+                // HcvKeyValueClient's constructor resolves _storeType via storeType.Split('.')[1],
+                // matching the real Capability format the framework passes at runtime
+                // (e.g. "CertStores.HCVKVPEM.Discovery" — see manifest.json's job-routing keys).
+                storeType: $"CertStores.{storeType}.Test",
                 certPath: certPath,
                 certPropName: certPropName,
                 passphrasePath: passphrasePath,
                 passphrasePropName: passphrasePropName,
-                SubfolderInventory: false)
+                discoverySuffix: discoverySuffix)
         {
-            _storeType = storeType;
         }
 
         public override Task<int> GetKVVersionAsync() => Task.FromResult(2);
@@ -89,6 +103,28 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
                 ReadResponses.TryGetValue(path, out var resp)
                     ? resp
                     : new Dictionary<string, object>());
+        }
+
+        public override Task DeleteSecretAutoAsync(string path, string mountPoint)
+        {
+            DeleteCalls.Add((path, mountPoint));
+            return Task.CompletedTask;
+        }
+
+        public override Task<List<string>> ReadSecretPathsAutoAsync(string path, string mountPoint)
+        {
+            return Task.FromResult(
+                SecretPaths.TryGetValue(path, out var paths)
+                    ? paths
+                    : new List<string>());
+        }
+
+        public override Task<List<string>> ReadSecretSubKeysAutoAsync(string path, string mountPoint)
+        {
+            return Task.FromResult(
+                SecretSubKeys.TryGetValue(path, out var keys)
+                    ? keys
+                    : new List<string>());
         }
     }
 }

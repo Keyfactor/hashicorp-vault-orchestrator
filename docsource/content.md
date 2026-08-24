@@ -16,7 +16,7 @@ For the Key-Value secrets engine, we have 4 store types that can be used.
 - [*HCVKVJKS*](hcvkvjks.md) - For JKS certificate files, treats each file as it's own store.
 - [*HCVKVPFX*](hcvkvpfx.md) - For PFX certificate files, treats each file as it's own store.
 - [*HCVKVP12*](hcvkvp12.md) - For PKCS12 certificate files, treats each file as it's own store.
-- [*HCVKVPEM*](hcvkvpem.md) - For PEM encoded certificates, treats each _path_ as it's own store.  Each certificate exists in a sub-path from the store path.
+- [*HCVKVPEM*](hcvkvpem.md) - For PEM encoded certificates, treats each certificate secret as its own store, with an optional separate secret for the private key.
 
 ## The PKI and Keyfactor Secrets Engines
 
