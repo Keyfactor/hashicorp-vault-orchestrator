@@ -33,6 +33,9 @@
     <PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0" />
     <PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.7.0" />
     <PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
+    <!-- Not used directly by any test — pinned only to override the vulnerable Newtonsoft.Json
+         12.0.3 pulled in transitively by Keyfactor.Orchestrators.IOrchestratorJobExtensions
+         0.7.0's nuspec (GHSA-5crp-9r3c-p9vr). -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="VaultSharp" Version="1.17.5.1" />
   </ItemGroup>
