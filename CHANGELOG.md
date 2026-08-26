@@ -1,3 +1,6 @@
+## 4.0.1
+* **bug fix:** HCVPKI now adds the `X-Vault-Namespace` header to all requests when a namespace is detected in the `Namespace` field. 
+
 ## 4.0.0
 
 * **Breaking Change:** HCVKVPEM now reads the certificate and (optional) private key from two independent Vault secrets, matching the `PassphrasePath` convention already used by HCVKVJKS/HCVKVP12/HCVKVPFX, instead of requiring both `certificate` and `private_key` as JSON properties within a single combined secret. This allows PEM secrets to be created through tooling that can only produce a single key-value pair per secret. Existing HCVKVPEM certificate stores must be reconfigured in Keyfactor Command after upgrading — there is no automatic migration or legacy-shape fallback.
