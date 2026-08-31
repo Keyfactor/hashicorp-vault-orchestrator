@@ -32,13 +32,39 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
 
         private string _storePath { get; set; }
 
-        public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint, string storePath)
+        private string _namespace { get; set; }
+
+        public HcvKeyfactorClient(string vaultToken, string serverUrl, string mountPoint, string storePath, string ns = null)
         {
             _vaultToken = vaultToken;
-            _mountPoint = mountPoint ?? "keyfactor"; // the mount point, including the namespace. 
+            _mountPoint = mountPoint ?? "keyfactor"; // the mount point, including the namespace.
 
             _storePath = !string.IsNullOrEmpty(storePath) ? "/" + storePath : storePath;
             _vaultUrl = $"{ serverUrl }/v1/{ _mountPoint.Replace("//", "/") }";
+            _namespace = ns;
+        }
+
+        private void AddVaultHeaders(WebRequest req)
+        {
+            req.Headers.Add("X-Vault-Request", "true");
+            req.Headers.Add("X-Vault-Token", _vaultToken);
+            if (!string.IsNullOrEmpty(_namespace))
+            {
+                req.Headers.Add("X-Vault-Namespace", _namespace);
+            }
+        }
+
+        // System.Text.Json deserializes Dictionary<string,object> values as boxed JsonElement,
+        // not native CLR primitives (unlike Newtonsoft.Json) — a plain `as string` cast on them
+        // always yields null. This extracts the string content regardless of the underlying
+        // JsonValueKind (or returns null if the value is genuinely absent/JSON null).
+        private static string AsString(object value)
+        {
+            if (value is JsonElement je)
+            {
+                return je.ValueKind == JsonValueKind.String ? je.GetString() : je.ToString();
+            }
+            return value?.ToString();
         }
 
         // System.Text.Json deserializes Dictionary<string,object> values as boxed JsonElement,
@@ -63,8 +89,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
                 try
                 {
                     var req = WebRequest.Create(fullPath);
-                    req.Headers.Add("X-Vault-Request", "true");
-                    req.Headers.Add("X-Vault-Token", _vaultToken);
+                    AddVaultHeaders(req);
                     req.Method = WebRequestMethods.Http.Get;
                     var res = await req.GetResponseAsync();
                     CertResponse content = JsonSerializer.Deserialize<CertResponse>(new StreamReader(res.GetResponseStream()).ReadToEnd());
@@ -128,8 +153,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             try
             {
                 var req = WebRequest.Create(getKeysPath);
-                req.Headers.Add("X-Vault-Request", "true");
-                req.Headers.Add("X-Vault-Token", _vaultToken);
+                AddVaultHeaders(req);
                 req.Method = WebRequestMethods.Http.Get;
 
                 logger.LogTrace("sending request to vault for certs", req);
