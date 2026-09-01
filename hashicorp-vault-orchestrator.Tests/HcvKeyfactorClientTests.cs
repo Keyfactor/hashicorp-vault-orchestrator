@@ -25,6 +25,8 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
 
         public string LastRequestRaw { get; private set; } = string.Empty;
 
+        public string LastRequestBody { get; private set; } = string.Empty;
+
         public SingleRequestHttpServer()
         {
             _listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
@@ -32,7 +34,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
             Port = ((System.Net.IPEndPoint)_listener.LocalEndpoint).Port;
         }
 
-        public async Task RespondOnceAsync(string jsonBody)
+        public async Task RespondOnceAsync(string jsonBody, string status = "200 OK")
         {
             using var client = await _listener.AcceptTcpClientAsync();
             using var stream = client.GetStream();
@@ -40,14 +42,32 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Tests
 
             var lines = new System.Collections.Generic.List<string>();
             string line;
+            var contentLength = 0;
             while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
             {
                 lines.Add(line);
+                if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                {
+                    contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
+                }
             }
             LastRequestRaw = string.Join("\n", lines);
 
+            if (contentLength > 0)
+            {
+                var buffer = new char[contentLength];
+                var totalRead = 0;
+                while (totalRead < contentLength)
+                {
+                    var read = await reader.ReadAsync(buffer, totalRead, contentLength - totalRead);
+                    if (read == 0) break;
+                    totalRead += read;
+                }
+                LastRequestBody = new string(buffer, 0, totalRead);
+            }
+
             var bodyBytes = Encoding.UTF8.GetBytes(jsonBody);
-            var header = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {bodyBytes.Length}\r\nConnection: close\r\n\r\n";
+            var header = $"HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {bodyBytes.Length}\r\nConnection: close\r\n\r\n";
             var headerBytes = Encoding.ASCII.GetBytes(header);
             await stream.WriteAsync(headerBytes, 0, headerBytes.Length);
             await stream.WriteAsync(bodyBytes, 0, bodyBytes.Length);

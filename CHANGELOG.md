@@ -1,3 +1,7 @@
+## Unreleased
+
+* **added:** OAuth 2.0 Client Credentials authentication (`UseOAuth`, `ClientId`, `ClientSecret`, `OAuthUrl`, `Scope`, `VaultRoleName`, `AuthMountPoint` custom fields) to all store types, for non-interactive machine-to-machine login against a third-party IdP (e.g. PingFederate, Microsoft Entra ID) that is trusted by Vault's JWT auth method. The orchestrator obtains a JWT from the IdP via the Client Credentials grant and exchanges it for a short-lived Vault token via `auth/<mount>/login`; the resulting token is then used exactly like a static `Server Password` token. `Server Password` (Vault Token) is no longer marked `Required` at the manifest level, since it is optional when `UseOAuth` is enabled — this is validated in code instead, since Command's conditional field display (`DependsOn`) is unreliable for `Secret`-type fields. See the README's "OAuth 2.0 (Client Credentials) Authentication" section for the Vault-side and IdP-side prerequisites this depends on.
+
 ## 4.0.1
 * **bug fix:** HCVPKI now adds the `X-Vault-Namespace` header to all requests when a namespace is detected in the `Namespace` field. 
 

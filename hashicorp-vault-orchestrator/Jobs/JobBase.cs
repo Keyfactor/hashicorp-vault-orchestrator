@@ -61,6 +61,13 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             logger.LogTrace($"Namespace:\t{JobParameters.Namespace}");
             logger.LogTrace($"MountPoint:\t{JobParameters.MountPoint}");
             logger.LogTrace($"VaultToken:\t{JobParameters.VaultToken.Length} characters (value hidden)");
+            logger.LogTrace($"UseOAuth:\t{JobParameters.UseOAuth}");
+            if (JobParameters.UseOAuth)
+            {
+                logger.LogTrace($"OAuthUrl:\t{JobParameters.OAuthUrl}");
+                logger.LogTrace($"VaultRoleName:\t{JobParameters.VaultRoleName}");
+                logger.LogTrace($"AuthMountPoint:\t{JobParameters.AuthMountPoint}");
+            }
             logger.LogTrace($"StorePath:\t{JobParameters.StorePath}");
             logger.LogTrace($"IncludeCertChain:\t{JobParameters.IncludeCertChain}");
 
@@ -203,6 +210,31 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
                 // we assume the convention of a secret named "passphrase" at the same level as the cert secret.
                 // we assume the contents are a single string containing the passphrase
                 JobParameters.PassphrasePath = $"{JobParameters.CertSecretPath}/{StoreFileExtensions.PASSPHRASE}";
+            }
+
+            JobParameters.UseOAuth = props.ContainsKey("UseOAuth") && bool.Parse(props["UseOAuth"].ToString());
+
+            if (JobParameters.UseOAuth)
+            {
+                JobParameters.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Client ID", props.ContainsKey("ClientId") ? props["ClientId"].ToString() : null);
+                JobParameters.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Client Secret", props.ContainsKey("ClientSecret") ? props["ClientSecret"].ToString() : null);
+                JobParameters.OAuthUrl = props.ContainsKey("OAuthUrl") ? props["OAuthUrl"].ToString() : null;
+                JobParameters.Scope = props.ContainsKey("Scope") ? props["Scope"].ToString() : null;
+                JobParameters.VaultRoleName = props.ContainsKey("VaultRoleName") ? props["VaultRoleName"].ToString() : null;
+                JobParameters.AuthMountPoint = props.ContainsKey("AuthMountPoint") && !string.IsNullOrEmpty(props["AuthMountPoint"].ToString()) ? props["AuthMountPoint"].ToString() : "jwt/";
+
+                if (string.IsNullOrEmpty(JobParameters.ClientId) || string.IsNullOrEmpty(JobParameters.ClientSecret) || string.IsNullOrEmpty(JobParameters.OAuthUrl) || string.IsNullOrEmpty(JobParameters.VaultRoleName))
+                {
+                    throw new Exception("'Use OAuth 2.0 (Client Credentials)' is enabled, but one or more of 'Client ID', 'Client Secret', 'OAuth Token Endpoint', or 'Vault Role Name' is missing.");
+                }
+
+                logger.LogTrace("Use OAuth 2.0 (Client Credentials) is enabled — obtaining a JWT from the IdP and exchanging it for a Vault token.");
+                var jwt = await VaultOAuthAuthenticator.GetJwtAsync(JobParameters.OAuthUrl, JobParameters.ClientId, JobParameters.ClientSecret, JobParameters.Scope, logger);
+                JobParameters.VaultToken = await VaultOAuthAuthenticator.LoginWithJwtAsync(JobParameters.VaultServerUrl, JobParameters.AuthMountPoint, JobParameters.VaultRoleName, jwt, JobParameters.Namespace, logger);
+            }
+            else if (string.IsNullOrEmpty(JobParameters.VaultToken))
+            {
+                throw new Exception("'Server Password' (Vault Token) is required when 'Use OAuth 2.0 (Client Credentials)' is not enabled.");
             }
 
             if (!_storeType.Contains("HCVPKI"))

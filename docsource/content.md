@@ -43,6 +43,17 @@ Follow the instructions for the specific store type to..
 - Create the certificate store definition in the Keyfactor Command Platform
 - Discover Certificate stores
 
+## OAuth 2.0 (Client Credentials) Authentication
+
+As an alternative to the static `Server Password` Vault token, every store type supports non-interactive machine-to-machine authentication via OAuth 2.0 Client Credentials: the orchestrator obtains a JWT from a third-party IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token using Vault's [JWT auth method](https://developer.hashicorp.com/vault/docs/auth/jwt). Enable it by setting `Use OAuth 2.0 (Client Credentials)` to `true` and providing `Client ID`, `Client Secret`, `OAuth Token Endpoint`, `Vault Role Name`, and (if not using Vault's default `jwt/` mount) `JWT Auth Mount Point`. `Server Password` can then be left blank.
+
+This depends on prerequisites the extension does not configure — set these up before configuring the certificate store:
+
+1. **Vault must already trust the IdP.** A Vault administrator has to enable and configure the JWT auth method (`vault auth enable jwt`, then `vault write auth/jwt/config oidc_discovery_url=<IdP issuer> ...` or `jwt_validation_pubkeys=...`) and define a role (`vault write auth/jwt/role/<name> role_type=jwt bound_audiences=... user_claim=... policies=...`) that matches the audience/claims the IdP will issue. This extension only ever calls the resulting `auth/<mount>/login` endpoint — it never configures Vault's trust relationship with the IdP.
+2. **The IdP's Client Credentials grant must return a real signed JWT, not an opaque access token.** Vault's JWT auth method can only validate a cryptographically signed JWT against the configured discovery/JWKS endpoint; an opaque token gives it nothing to verify, and the login will fail regardless of how correctly everything else is configured. Whether a given IdP issues a JWT for this grant depends on how its administrator configured the target API/audience — verify this with a manual token request against the IdP before troubleshooting anything on the Vault or Keyfactor side.
+3. **Client ID/Secret are sent as OAuth 2.0 POST body parameters (`client_secret_post`), not HTTP Basic auth.** This matches Microsoft Entra ID's documented default and is accepted by PingFederate; if a specific IdP requires HTTP Basic auth instead, that is not currently supported and would need a code change.
+4. **`Scope` is IdP-specific and often required.** For example, Microsoft Entra ID app-only access typically needs `scope=api://<app-id-uri>/.default` to receive a JWT for the right audience; other IdPs may not need it at all.
+
 ## Post Installation
 
 ### Enroll a certificate via the platform 
