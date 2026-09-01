@@ -67,19 +67,6 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
             return value?.ToString();
         }
 
-        // System.Text.Json deserializes Dictionary<string,object> values as boxed JsonElement,
-        // not native CLR primitives (unlike Newtonsoft.Json) — a plain `as string` cast on them
-        // always yields null. This extracts the string content regardless of the underlying
-        // JsonValueKind (or returns null if the value is genuinely absent/JSON null).
-        private static string AsString(object value)
-        {
-            if (value is JsonElement je)
-            {
-                return je.ValueKind == JsonValueKind.String ? je.GetString() : je.ToString();
-            }
-            return value?.ToString();
-        }
-
         public async Task<CurrentInventoryItem> GetCertificateFromPemStore(string key)
         {
             var fullPath = $"{ _vaultUrl }/cert/{ key }";
