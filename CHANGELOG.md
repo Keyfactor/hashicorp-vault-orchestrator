@@ -1,5 +1,5 @@
 ## 4.0.1
-* **bug fix:** HCVPKI now adds the `X-Vault-Namespace` header to all requests when a namespace is detected in the `Namespace` field. 
+* **bug fix:** HCVPKI now adds the `X-Vault-Namespace` header to all requests when a namespace is detected in the `Namespace` field.
 
 ## 4.0.0
 
