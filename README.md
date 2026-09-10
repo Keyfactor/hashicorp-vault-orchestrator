@@ -150,14 +150,14 @@ the Keyfactor Command Portal
 
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
-   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret | <vault server url> | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <vault token> | 🔲 Unchecked |
    | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
-   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client id> | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client secret> | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <oauth url> | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <scope> | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <vault role name> | 🔲 Unchecked |
    | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | MountPoint | Mount Point | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> | String |  | ✅ Checked |
    | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
@@ -366,14 +366,14 @@ the Keyfactor Command Portal
 
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
-   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret | <vault server url> | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <vault token> | 🔲 Unchecked |
    | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
-   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client id> | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client secret> | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <oauth url> | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <scope> | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <vault role name> | 🔲 Unchecked |
    | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
@@ -599,14 +599,14 @@ the Keyfactor Command Portal
 
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
-   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret | <vault server url> | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <vault token> | 🔲 Unchecked |
    | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
-   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client id> | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client secret> | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <oauth url> | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <scope> | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <vault role name> | 🔲 Unchecked |
    | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
@@ -832,14 +832,14 @@ the Keyfactor Command Portal
 
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
-   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret | <vault server url> | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <vault token> | 🔲 Unchecked |
    | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
-   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client id> | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client secret> | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <oauth url> | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <scope> | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <vault role name> | 🔲 Unchecked |
    | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
@@ -1064,14 +1064,14 @@ the Keyfactor Command Portal
 
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
-   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret | <vault server url> | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <vault token> | 🔲 Unchecked |
    | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
-   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
-   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
-   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client id> | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret | <client secret> | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <oauth url> | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <scope> | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | <vault role name> | 🔲 Unchecked |
    | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |

@@ -51,6 +51,7 @@
   <rect x="34" y="183" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="198" class="value">Server Username</text>
   <text x="292" y="198" class="value">Secret</text>
+  <text x="452" y="198" class="value">&lt;vault server url&gt;</text>
   <rect x="21" y="210" width="658" height="38" fill="#f7f7f7" />
   <line x1="20" y1="248" x2="680" y2="248" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="210" x2="64" y2="248" stroke="#e8e8e8" stroke-width="1" />
@@ -59,6 +60,7 @@
   <rect x="34" y="221" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="236" class="value">Server Password</text>
   <text x="292" y="236" class="value">Secret</text>
+  <text x="452" y="236" class="value">&lt;vault token&gt;</text>
   <rect x="21" y="248" width="658" height="38" fill="#ffffff" />
   <line x1="20" y1="286" x2="680" y2="286" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="248" x2="64" y2="286" stroke="#e8e8e8" stroke-width="1" />
@@ -76,6 +78,7 @@
   <rect x="34" y="297" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="312" class="value">Client ID</text>
   <text x="292" y="312" class="value">Secret</text>
+  <text x="452" y="312" class="value">&lt;client id&gt;</text>
   <rect x="21" y="324" width="658" height="38" fill="#ffffff" />
   <line x1="20" y1="362" x2="680" y2="362" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="324" x2="64" y2="362" stroke="#e8e8e8" stroke-width="1" />
@@ -84,6 +87,7 @@
   <rect x="34" y="335" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="350" class="value">Client Secret</text>
   <text x="292" y="350" class="value">Secret</text>
+  <text x="452" y="350" class="value">&lt;client secret&gt;</text>
   <rect x="21" y="362" width="658" height="38" fill="#f7f7f7" />
   <line x1="20" y1="400" x2="680" y2="400" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="362" x2="64" y2="400" stroke="#e8e8e8" stroke-width="1" />
@@ -92,6 +96,7 @@
   <rect x="34" y="373" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="388" class="value">OAuth Token Endpoint</text>
   <text x="292" y="388" class="value">String</text>
+  <text x="452" y="388" class="value">&lt;oauth url&gt;</text>
   <rect x="21" y="400" width="658" height="38" fill="#ffffff" />
   <line x1="20" y1="438" x2="680" y2="438" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="400" x2="64" y2="438" stroke="#e8e8e8" stroke-width="1" />
@@ -100,6 +105,7 @@
   <rect x="34" y="411" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="426" class="value">OAuth Scope</text>
   <text x="292" y="426" class="value">String</text>
+  <text x="452" y="426" class="value">&lt;scope&gt;</text>
   <rect x="21" y="438" width="658" height="38" fill="#f7f7f7" />
   <line x1="20" y1="476" x2="680" y2="476" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="438" x2="64" y2="476" stroke="#e8e8e8" stroke-width="1" />
@@ -108,6 +114,7 @@
   <rect x="34" y="449" width="16" height="16" fill="#ffffff" stroke="#cccccc" rx="3" />
   <text x="72" y="464" class="value">Vault Role Name</text>
   <text x="292" y="464" class="value">String</text>
+  <text x="452" y="464" class="value">&lt;vault role name&gt;</text>
   <rect x="21" y="476" width="658" height="38" fill="#ffffff" />
   <line x1="20" y1="514" x2="680" y2="514" stroke="#e8e8e8" stroke-width="1" />
   <line x1="64" y1="476" x2="64" y2="514" stroke="#e8e8e8" stroke-width="1" />

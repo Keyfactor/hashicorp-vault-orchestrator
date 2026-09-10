@@ -35,7 +35,7 @@
   <text x="666" y="265" font-size="12" fill="#666666" font-family="'Segoe UI', Arial, sans-serif">∨</text>
   <text x="20" y="299" class="label">Default Value</text>
   <rect x="20" y="302" width="660" height="36" fill="#ffffff" stroke="#cccccc" rx="4" />
-  <text x="30" y="327" class="value"></text>
+  <text x="30" y="327" class="value">&lt;oauth url&gt;</text>
   <text x="20" y="362" class="label">Depends On</text>
   <rect x="20" y="375" width="15" height="15" fill="#1a73e8" stroke="#1a73e8" rx="2" />
   <polyline points="23,382 26,386 32,379" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
