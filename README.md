@@ -151,7 +151,14 @@ the Keyfactor Command Portal
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | MountPoint | Mount Point | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> | String |  | ✅ Checked |
    | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
 
@@ -168,11 +175,60 @@ the Keyfactor Command Portal
 
 
    ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
+   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled.
 
 
    > [!IMPORTANT]
    > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+   ###### Use OAuth 2.0 (Client Credentials)
+   Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token.
+
+   ![HCVPKI Custom Field - UseOAuth](docsource/images/HCVPKI-custom-field-UseOAuth-dialog.svg)
+   ![HCVPKI Custom Field - UseOAuth](docsource/images/HCVPKI-custom-field-UseOAuth-validation-options-dialog.svg)
+
+
+   ###### Client ID
+   The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - ClientId](docsource/images/HCVPKI-custom-field-ClientId-dialog.svg)
+   ![HCVPKI Custom Field - ClientId](docsource/images/HCVPKI-custom-field-ClientId-validation-options-dialog.svg)
+
+
+   ###### Client Secret
+   The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - ClientSecret](docsource/images/HCVPKI-custom-field-ClientSecret-dialog.svg)
+   ![HCVPKI Custom Field - ClientSecret](docsource/images/HCVPKI-custom-field-ClientSecret-validation-options-dialog.svg)
+
+
+   ###### OAuth Token Endpoint
+   The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - OAuthUrl](docsource/images/HCVPKI-custom-field-OAuthUrl-dialog.svg)
+   ![HCVPKI Custom Field - OAuthUrl](docsource/images/HCVPKI-custom-field-OAuthUrl-validation-options-dialog.svg)
+
+
+   ###### OAuth Scope
+   Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - Scope](docsource/images/HCVPKI-custom-field-Scope-dialog.svg)
+   ![HCVPKI Custom Field - Scope](docsource/images/HCVPKI-custom-field-Scope-validation-options-dialog.svg)
+
+
+   ###### Vault Role Name
+   The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - VaultRoleName](docsource/images/HCVPKI-custom-field-VaultRoleName-dialog.svg)
+   ![HCVPKI Custom Field - VaultRoleName](docsource/images/HCVPKI-custom-field-VaultRoleName-validation-options-dialog.svg)
+
+
+   ###### JWT Auth Mount Point
+   The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVPKI Custom Field - AuthMountPoint](docsource/images/HCVPKI-custom-field-AuthMountPoint-dialog.svg)
+   ![HCVPKI Custom Field - AuthMountPoint](docsource/images/HCVPKI-custom-field-AuthMountPoint-validation-options-dialog.svg)
 
 
    ###### Mount Point
@@ -311,7 +367,14 @@ the Keyfactor Command Portal
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
    | PrivateKeyPath | Private Key Path | This is the path to the secret that contains the PEM-encoded private key. Optional — omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted. | String |  | 🔲 Unchecked |
@@ -329,11 +392,60 @@ the Keyfactor Command Portal
 
 
    ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
+   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled.
 
 
    > [!IMPORTANT]
    > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+   ###### Use OAuth 2.0 (Client Credentials)
+   Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token.
+
+   ![HCVKVPEM Custom Field - UseOAuth](docsource/images/HCVKVPEM-custom-field-UseOAuth-dialog.svg)
+   ![HCVKVPEM Custom Field - UseOAuth](docsource/images/HCVKVPEM-custom-field-UseOAuth-validation-options-dialog.svg)
+
+
+   ###### Client ID
+   The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - ClientId](docsource/images/HCVKVPEM-custom-field-ClientId-dialog.svg)
+   ![HCVKVPEM Custom Field - ClientId](docsource/images/HCVKVPEM-custom-field-ClientId-validation-options-dialog.svg)
+
+
+   ###### Client Secret
+   The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - ClientSecret](docsource/images/HCVKVPEM-custom-field-ClientSecret-dialog.svg)
+   ![HCVKVPEM Custom Field - ClientSecret](docsource/images/HCVKVPEM-custom-field-ClientSecret-validation-options-dialog.svg)
+
+
+   ###### OAuth Token Endpoint
+   The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - OAuthUrl](docsource/images/HCVKVPEM-custom-field-OAuthUrl-dialog.svg)
+   ![HCVKVPEM Custom Field - OAuthUrl](docsource/images/HCVKVPEM-custom-field-OAuthUrl-validation-options-dialog.svg)
+
+
+   ###### OAuth Scope
+   Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - Scope](docsource/images/HCVKVPEM-custom-field-Scope-dialog.svg)
+   ![HCVKVPEM Custom Field - Scope](docsource/images/HCVKVPEM-custom-field-Scope-validation-options-dialog.svg)
+
+
+   ###### Vault Role Name
+   The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - VaultRoleName](docsource/images/HCVKVPEM-custom-field-VaultRoleName-dialog.svg)
+   ![HCVKVPEM Custom Field - VaultRoleName](docsource/images/HCVKVPEM-custom-field-VaultRoleName-validation-options-dialog.svg)
+
+
+   ###### JWT Auth Mount Point
+   The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPEM Custom Field - AuthMountPoint](docsource/images/HCVKVPEM-custom-field-AuthMountPoint-dialog.svg)
+   ![HCVKVPEM Custom Field - AuthMountPoint](docsource/images/HCVKVPEM-custom-field-AuthMountPoint-validation-options-dialog.svg)
 
 
    ###### Include Certificate Chain
@@ -488,7 +600,14 @@ the Keyfactor Command Portal
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
    | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
@@ -506,11 +625,60 @@ the Keyfactor Command Portal
 
 
    ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
+   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled.
 
 
    > [!IMPORTANT]
    > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+   ###### Use OAuth 2.0 (Client Credentials)
+   Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token.
+
+   ![HCVKVJKS Custom Field - UseOAuth](docsource/images/HCVKVJKS-custom-field-UseOAuth-dialog.svg)
+   ![HCVKVJKS Custom Field - UseOAuth](docsource/images/HCVKVJKS-custom-field-UseOAuth-validation-options-dialog.svg)
+
+
+   ###### Client ID
+   The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - ClientId](docsource/images/HCVKVJKS-custom-field-ClientId-dialog.svg)
+   ![HCVKVJKS Custom Field - ClientId](docsource/images/HCVKVJKS-custom-field-ClientId-validation-options-dialog.svg)
+
+
+   ###### Client Secret
+   The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - ClientSecret](docsource/images/HCVKVJKS-custom-field-ClientSecret-dialog.svg)
+   ![HCVKVJKS Custom Field - ClientSecret](docsource/images/HCVKVJKS-custom-field-ClientSecret-validation-options-dialog.svg)
+
+
+   ###### OAuth Token Endpoint
+   The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - OAuthUrl](docsource/images/HCVKVJKS-custom-field-OAuthUrl-dialog.svg)
+   ![HCVKVJKS Custom Field - OAuthUrl](docsource/images/HCVKVJKS-custom-field-OAuthUrl-validation-options-dialog.svg)
+
+
+   ###### OAuth Scope
+   Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - Scope](docsource/images/HCVKVJKS-custom-field-Scope-dialog.svg)
+   ![HCVKVJKS Custom Field - Scope](docsource/images/HCVKVJKS-custom-field-Scope-validation-options-dialog.svg)
+
+
+   ###### Vault Role Name
+   The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - VaultRoleName](docsource/images/HCVKVJKS-custom-field-VaultRoleName-dialog.svg)
+   ![HCVKVJKS Custom Field - VaultRoleName](docsource/images/HCVKVJKS-custom-field-VaultRoleName-validation-options-dialog.svg)
+
+
+   ###### JWT Auth Mount Point
+   The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVJKS Custom Field - AuthMountPoint](docsource/images/HCVKVJKS-custom-field-AuthMountPoint-dialog.svg)
+   ![HCVKVJKS Custom Field - AuthMountPoint](docsource/images/HCVKVJKS-custom-field-AuthMountPoint-validation-options-dialog.svg)
 
 
    ###### Include Certificate Chain
@@ -665,7 +833,14 @@ the Keyfactor Command Portal
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
    | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
@@ -683,11 +858,60 @@ the Keyfactor Command Portal
 
 
    ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
+   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled.
 
 
    > [!IMPORTANT]
    > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+   ###### Use OAuth 2.0 (Client Credentials)
+   Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token.
+
+   ![HCVKVP12 Custom Field - UseOAuth](docsource/images/HCVKVP12-custom-field-UseOAuth-dialog.svg)
+   ![HCVKVP12 Custom Field - UseOAuth](docsource/images/HCVKVP12-custom-field-UseOAuth-validation-options-dialog.svg)
+
+
+   ###### Client ID
+   The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - ClientId](docsource/images/HCVKVP12-custom-field-ClientId-dialog.svg)
+   ![HCVKVP12 Custom Field - ClientId](docsource/images/HCVKVP12-custom-field-ClientId-validation-options-dialog.svg)
+
+
+   ###### Client Secret
+   The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - ClientSecret](docsource/images/HCVKVP12-custom-field-ClientSecret-dialog.svg)
+   ![HCVKVP12 Custom Field - ClientSecret](docsource/images/HCVKVP12-custom-field-ClientSecret-validation-options-dialog.svg)
+
+
+   ###### OAuth Token Endpoint
+   The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - OAuthUrl](docsource/images/HCVKVP12-custom-field-OAuthUrl-dialog.svg)
+   ![HCVKVP12 Custom Field - OAuthUrl](docsource/images/HCVKVP12-custom-field-OAuthUrl-validation-options-dialog.svg)
+
+
+   ###### OAuth Scope
+   Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - Scope](docsource/images/HCVKVP12-custom-field-Scope-dialog.svg)
+   ![HCVKVP12 Custom Field - Scope](docsource/images/HCVKVP12-custom-field-Scope-validation-options-dialog.svg)
+
+
+   ###### Vault Role Name
+   The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - VaultRoleName](docsource/images/HCVKVP12-custom-field-VaultRoleName-dialog.svg)
+   ![HCVKVP12 Custom Field - VaultRoleName](docsource/images/HCVKVP12-custom-field-VaultRoleName-validation-options-dialog.svg)
+
+
+   ###### JWT Auth Mount Point
+   The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVP12 Custom Field - AuthMountPoint](docsource/images/HCVKVP12-custom-field-AuthMountPoint-dialog.svg)
+   ![HCVKVP12 Custom Field - AuthMountPoint](docsource/images/HCVKVP12-custom-field-AuthMountPoint-validation-options-dialog.svg)
 
 
    ###### Include Certificate Chain
@@ -841,7 +1065,14 @@ the Keyfactor Command Portal
    | Name | Display Name | Description | Type | Default Value/Options | Required |
    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
    | ServerUsername | Server Username | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 | Secret |  | ✅ Checked |
-   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance | Secret |  | ✅ Checked |
+   | ServerPassword | Server Password | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | UseOAuth | Use OAuth 2.0 (Client Credentials) | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. | Bool | false | 🔲 Unchecked |
+   | ClientId | Client ID | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | ClientSecret | Client Secret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | Secret |  | 🔲 Unchecked |
+   | OAuthUrl | OAuth Token Endpoint | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | Scope | OAuth Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | VaultRoleName | Vault Role Name | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String |  | 🔲 Unchecked |
+   | AuthMountPoint | JWT Auth Mount Point | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. | String | jwt/ | 🔲 Unchecked |
    | IncludeCertChain | Include Certificate Chain | Should the certificate chain be included when performing an enrollment? | Bool | false | 🔲 Unchecked |
    | MountPoint | Mount Point | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> | String |  | 🔲 Unchecked |
    | PassphrasePath | Passphrase Path | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. | String |  | 🔲 Unchecked |
@@ -859,11 +1090,60 @@ the Keyfactor Command Portal
 
 
    ###### Server Password
-   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance
+   Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled.
 
 
    > [!IMPORTANT]
    > This field is created by the `Needs Server` on the Basic tab, do not create this field manually.
+
+
+   ###### Use OAuth 2.0 (Client Credentials)
+   Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token.
+
+   ![HCVKVPFX Custom Field - UseOAuth](docsource/images/HCVKVPFX-custom-field-UseOAuth-dialog.svg)
+   ![HCVKVPFX Custom Field - UseOAuth](docsource/images/HCVKVPFX-custom-field-UseOAuth-validation-options-dialog.svg)
+
+
+   ###### Client ID
+   The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - ClientId](docsource/images/HCVKVPFX-custom-field-ClientId-dialog.svg)
+   ![HCVKVPFX Custom Field - ClientId](docsource/images/HCVKVPFX-custom-field-ClientId-validation-options-dialog.svg)
+
+
+   ###### Client Secret
+   The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - ClientSecret](docsource/images/HCVKVPFX-custom-field-ClientSecret-dialog.svg)
+   ![HCVKVPFX Custom Field - ClientSecret](docsource/images/HCVKVPFX-custom-field-ClientSecret-validation-options-dialog.svg)
+
+
+   ###### OAuth Token Endpoint
+   The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - OAuthUrl](docsource/images/HCVKVPFX-custom-field-OAuthUrl-dialog.svg)
+   ![HCVKVPFX Custom Field - OAuthUrl](docsource/images/HCVKVPFX-custom-field-OAuthUrl-validation-options-dialog.svg)
+
+
+   ###### OAuth Scope
+   Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - Scope](docsource/images/HCVKVPFX-custom-field-Scope-dialog.svg)
+   ![HCVKVPFX Custom Field - Scope](docsource/images/HCVKVPFX-custom-field-Scope-validation-options-dialog.svg)
+
+
+   ###### Vault Role Name
+   The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - VaultRoleName](docsource/images/HCVKVPFX-custom-field-VaultRoleName-dialog.svg)
+   ![HCVKVPFX Custom Field - VaultRoleName](docsource/images/HCVKVPFX-custom-field-VaultRoleName-validation-options-dialog.svg)
+
+
+   ###### JWT Auth Mount Point
+   The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled.
+
+   ![HCVKVPFX Custom Field - AuthMountPoint](docsource/images/HCVKVPFX-custom-field-AuthMountPoint-dialog.svg)
+   ![HCVKVPFX Custom Field - AuthMountPoint](docsource/images/HCVKVPFX-custom-field-AuthMountPoint-validation-options-dialog.svg)
 
 
    ###### Include Certificate Chain
@@ -1001,7 +1281,14 @@ The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate St
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVPKI` certificates. Specifically, one with the `HCVPKI` capability. |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | MountPoint | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> |
    | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
@@ -1029,7 +1316,14 @@ The Hashicorp Vault Universal Orchestrator extension implements 5 Certificate St
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVPKI` certificates. Specifically, one with the `HCVPKI` capability. |
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | Properties.ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | Properties.MountPoint | This is the mount point of the instance of the PKI or Keyfactor secrets engine plugin.  If using enterprise namespaces: <namespace>/<mount point> |
    | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
 
@@ -1049,7 +1343,9 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | Attribute | Description |
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1152,7 +1448,14 @@ At this point, the certificate store should be created and ready to peform inven
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVPEM` certificates. Specifically, one with the `HCVKVPEM` capability. |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | PrivateKeyPath | This is the path to the secret that contains the PEM-encoded private key. Optional — omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted. |
@@ -1181,7 +1484,14 @@ At this point, the certificate store should be created and ready to peform inven
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVPEM` certificates. Specifically, one with the `HCVKVPEM` capability. |
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | Properties.ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | Properties.PrivateKeyPath | This is the path to the secret that contains the PEM-encoded private key. Optional — omit for CA trust chain / certificate-only PEM stores that have no private key. Unlike other Key-Value store types, no sibling-secret convention is assumed when this is omitted. |
@@ -1202,7 +1512,9 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | Attribute | Description |
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1295,7 +1607,14 @@ At this point, the certificate store should be created and ready to perform inve
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVJKS` certificates. Specifically, one with the `HCVKVJKS` capability. |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1324,7 +1643,14 @@ At this point, the certificate store should be created and ready to perform inve
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVJKS` certificates. Specifically, one with the `HCVKVJKS` capability. |
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | Properties.ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1345,7 +1671,9 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | Attribute | Description |
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1439,7 +1767,14 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVP12` certificates. Specifically, one with the `HCVKVP12` capability. |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1468,7 +1803,14 @@ In Keyfactor Command create a new Certificate Store that resembles the one below
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVP12` certificates. Specifically, one with the `HCVKVP12` capability. |
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | Properties.ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1489,7 +1831,9 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | Attribute | Description |
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1585,7 +1929,14 @@ At this point, the certificate store should be created and ready to peform inven
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVPFX` certificates. Specifically, one with the `HCVKVPFX` capability. |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1614,7 +1965,14 @@ At this point, the certificate store should be created and ready to peform inven
    | Store Password | Vault token that will be used for authenticating |
    | Orchestrator | Select an approved orchestrator capable of managing `HCVKVPFX` certificates. Specifically, one with the `HCVKVPFX` capability. |
    | Properties.ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | Properties.ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.UseOAuth | Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token. |
+   | Properties.ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.OAuthUrl | The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.Scope | Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.VaultRoleName | The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | Properties.AuthMountPoint | The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
    | Properties.IncludeCertChain | Should the certificate chain be included when performing an enrollment? |
    | Properties.MountPoint | The base mount point of the secrets engine.  If using Vault Namespaces, include the namespace; ie. <namespace>/<mount point> |
    | Properties.PassphrasePath | This is the path to the secret that contains the passphrase to the cert store file.  If empty or omitted, assume the secret is named 'passphrase' on the same level as the certificate store secret. |
@@ -1635,7 +1993,9 @@ If a PAM provider was installed _on the Universal Orchestrator_ in the [Installa
    | Attribute | Description |
    | --------- | ----------- |
    | ServerUsername | The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200 |
-   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance |
+   | ServerPassword | Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientId | The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
+   | ClientSecret | The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled. |
 
 Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
 > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
@@ -1864,6 +2224,17 @@ Follow the instructions for the specific store type to..
 - Create the Store type definition in the Keyfactor Command Platform
 - Create the certificate store definition in the Keyfactor Command Platform
 - Discover Certificate stores
+
+## OAuth 2.0 (Client Credentials) Authentication
+
+As an alternative to the static `Server Password` Vault token, every store type supports non-interactive machine-to-machine authentication via OAuth 2.0 Client Credentials: the orchestrator obtains a JWT from a third-party IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token using Vault's [JWT auth method](https://developer.hashicorp.com/vault/docs/auth/jwt). Enable it by setting `Use OAuth 2.0 (Client Credentials)` to `true` and providing `Client ID`, `Client Secret`, `OAuth Token Endpoint`, `Vault Role Name`, and (if not using Vault's default `jwt/` mount) `JWT Auth Mount Point`. `Server Password` can then be left blank.
+
+This depends on prerequisites the extension does not configure — set these up before configuring the certificate store:
+
+1. **Vault must already trust the IdP.** A Vault administrator has to enable and configure the JWT auth method (`vault auth enable jwt`, then `vault write auth/jwt/config oidc_discovery_url=<IdP issuer> ...` or `jwt_validation_pubkeys=...`) and define a role (`vault write auth/jwt/role/<name> role_type=jwt bound_audiences=... user_claim=... policies=...`) that matches the audience/claims the IdP will issue. This extension only ever calls the resulting `auth/<mount>/login` endpoint — it never configures Vault's trust relationship with the IdP.
+2. **The IdP's Client Credentials grant must return a real signed JWT, not an opaque access token.** Vault's JWT auth method can only validate a cryptographically signed JWT against the configured discovery/JWKS endpoint; an opaque token gives it nothing to verify, and the login will fail regardless of how correctly everything else is configured. Whether a given IdP issues a JWT for this grant depends on how its administrator configured the target API/audience — verify this with a manual token request against the IdP before troubleshooting anything on the Vault or Keyfactor side.
+3. **Client ID/Secret are sent as OAuth 2.0 POST body parameters (`client_secret_post`), not HTTP Basic auth.** This matches Microsoft Entra ID's documented default and is accepted by PingFederate; if a specific IdP requires HTTP Basic auth instead, that is not currently supported and would need a code change.
+4. **`Scope` is IdP-specific and often required.** For example, Microsoft Entra ID app-only access typically needs `scope=api://<app-id-uri>/.default` to receive a JWT for the right audience; other IdPs may not need it at all.
 
 ## Notes / Future Enhancements
 
