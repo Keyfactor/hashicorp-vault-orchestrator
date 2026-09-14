@@ -23,5 +23,12 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault
         public string MountPoint { get; set; } // the mount point of the KV secrets engine.  defaults to kv-v2 if not provided.
         public string Namespace { get; set; } // for enterprise editions of vault that utilize namespaces; split from the passed in mount point if needed.
         public string DiscoverySuffix { get; set; } // overrides the default secret-key-name suffix used to identify candidate secrets during a Discovery job.
+        public bool UseOAuth { get; set; } // when true, authenticate via OAuth 2.0 Client Credentials + Vault's JWT auth method instead of the static VaultToken.
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
+        public string OAuthUrl { get; set; } // the IdP's OAuth 2.0 token endpoint.
+        public string Scope { get; set; } // optional OAuth 2.0 scope requested from the IdP.
+        public string VaultRoleName { get; set; } // the Vault role bound to the JWT auth mount.
+        public string AuthMountPoint { get; set; } // the mount point of Vault's JWT auth method.  defaults to "jwt/" if not provided.
     }
 }
