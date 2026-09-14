@@ -40,7 +40,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -50,10 +50,75 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
-      "Required": true,
+      "DefaultValue": "<vault token>",
+      "Required": false,
       "IsPAMEligible": true,
-      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
+      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "UseOAuth",
+      "DisplayName": "Use OAuth 2.0 (Client Credentials)",
+      "Type": "Bool",
+      "DependsOn": "",
+      "DefaultValue": "false",
+      "Required": false,
+      "Description": "Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token."
+    },
+    {
+      "Name": "ClientId",
+      "DisplayName": "Client ID",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client id>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "ClientSecret",
+      "DisplayName": "Client Secret",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client secret>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "OAuthUrl",
+      "DisplayName": "OAuth Token Endpoint",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<oauth url>",
+      "Required": false,
+      "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "Scope",
+      "DisplayName": "OAuth Scope",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<scope>",
+      "Required": false,
+      "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "VaultRoleName",
+      "DisplayName": "Vault Role Name",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<vault role name>",
+      "Required": false,
+      "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "AuthMountPoint",
+      "DisplayName": "JWT Auth Mount Point",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "jwt/",
+      "Required": false,
+      "Description": "The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
     {
       "Name": "MountPoint",
@@ -127,7 +192,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -137,10 +202,75 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
-      "Required": true,
+      "DefaultValue": "<vault token>",
+      "Required": false,
       "IsPAMEligible": true,
-      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
+      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "UseOAuth",
+      "DisplayName": "Use OAuth 2.0 (Client Credentials)",
+      "Type": "Bool",
+      "DependsOn": "",
+      "DefaultValue": "false",
+      "Required": false,
+      "Description": "Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token."
+    },
+    {
+      "Name": "ClientId",
+      "DisplayName": "Client ID",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client id>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "ClientSecret",
+      "DisplayName": "Client Secret",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client secret>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "OAuthUrl",
+      "DisplayName": "OAuth Token Endpoint",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<oauth url>",
+      "Required": false,
+      "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "Scope",
+      "DisplayName": "OAuth Scope",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<scope>",
+      "Required": false,
+      "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "VaultRoleName",
+      "DisplayName": "Vault Role Name",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<vault role name>",
+      "Required": false,
+      "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "AuthMountPoint",
+      "DisplayName": "JWT Auth Mount Point",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "jwt/",
+      "Required": false,
+      "Description": "The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
     {
       "Name": "IncludeCertChain",
@@ -223,7 +353,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -233,10 +363,75 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
-      "Required": true,
+      "DefaultValue": "<vault token>",
+      "Required": false,
       "IsPAMEligible": true,
-      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
+      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "UseOAuth",
+      "DisplayName": "Use OAuth 2.0 (Client Credentials)",
+      "Type": "Bool",
+      "DependsOn": "",
+      "DefaultValue": "false",
+      "Required": false,
+      "Description": "Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token."
+    },
+    {
+      "Name": "ClientId",
+      "DisplayName": "Client ID",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client id>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "ClientSecret",
+      "DisplayName": "Client Secret",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client secret>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "OAuthUrl",
+      "DisplayName": "OAuth Token Endpoint",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<oauth url>",
+      "Required": false,
+      "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "Scope",
+      "DisplayName": "OAuth Scope",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<scope>",
+      "Required": false,
+      "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "VaultRoleName",
+      "DisplayName": "Vault Role Name",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<vault role name>",
+      "Required": false,
+      "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "AuthMountPoint",
+      "DisplayName": "JWT Auth Mount Point",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "jwt/",
+      "Required": false,
+      "Description": "The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
     {
       "Name": "IncludeCertChain",
@@ -319,7 +514,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -329,10 +524,75 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
-      "Required": true,
+      "DefaultValue": "<vault token>",
+      "Required": false,
       "IsPAMEligible": true,
-      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
+      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "UseOAuth",
+      "DisplayName": "Use OAuth 2.0 (Client Credentials)",
+      "Type": "Bool",
+      "DependsOn": "",
+      "DefaultValue": "false",
+      "Required": false,
+      "Description": "Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token."
+    },
+    {
+      "Name": "ClientId",
+      "DisplayName": "Client ID",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client id>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "ClientSecret",
+      "DisplayName": "Client Secret",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client secret>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "OAuthUrl",
+      "DisplayName": "OAuth Token Endpoint",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<oauth url>",
+      "Required": false,
+      "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "Scope",
+      "DisplayName": "OAuth Scope",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<scope>",
+      "Required": false,
+      "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "VaultRoleName",
+      "DisplayName": "Vault Role Name",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<vault role name>",
+      "Required": false,
+      "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "AuthMountPoint",
+      "DisplayName": "JWT Auth Mount Point",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "jwt/",
+      "Required": false,
+      "Description": "The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
     {
       "Name": "IncludeCertChain",
@@ -415,7 +675,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -425,10 +685,75 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
-      "Required": true,
+      "DefaultValue": "<vault token>",
+      "Required": false,
       "IsPAMEligible": true,
-      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance"
+      "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "UseOAuth",
+      "DisplayName": "Use OAuth 2.0 (Client Credentials)",
+      "Type": "Bool",
+      "DependsOn": "",
+      "DefaultValue": "false",
+      "Required": false,
+      "Description": "Enables OAuth 2.0 Client Credentials authentication: the orchestrator obtains a JWT from the configured IdP (e.g. PingFederate, Microsoft Entra ID) and exchanges it for a short-lived Vault token via Vault's JWT auth method, instead of using a static 'Server Password' Vault token."
+    },
+    {
+      "Name": "ClientId",
+      "DisplayName": "Client ID",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client id>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "ClientSecret",
+      "DisplayName": "Client Secret",
+      "Type": "Secret",
+      "DependsOn": "",
+      "DefaultValue": "<client secret>",
+      "Required": false,
+      "IsPAMEligible": true,
+      "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "OAuthUrl",
+      "DisplayName": "OAuth Token Endpoint",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<oauth url>",
+      "Required": false,
+      "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "Scope",
+      "DisplayName": "OAuth Scope",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<scope>",
+      "Required": false,
+      "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "VaultRoleName",
+      "DisplayName": "Vault Role Name",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "<vault role name>",
+      "Required": false,
+      "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
+    },
+    {
+      "Name": "AuthMountPoint",
+      "DisplayName": "JWT Auth Mount Point",
+      "Type": "String",
+      "DependsOn": "UseOAuth",
+      "DefaultValue": "jwt/",
+      "Required": false,
+      "Description": "The mount point of Vault's JWT auth method used to exchange the IdP-issued JWT for a Vault token. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
     {
       "Name": "IncludeCertChain",
