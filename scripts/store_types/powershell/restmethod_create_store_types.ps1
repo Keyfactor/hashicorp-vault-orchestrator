@@ -40,7 +40,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -50,7 +50,7 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault token>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -69,7 +69,7 @@ $Body = @'
       "DisplayName": "Client ID",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client id>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -79,7 +79,7 @@ $Body = @'
       "DisplayName": "Client Secret",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client secret>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -89,7 +89,7 @@ $Body = @'
       "DisplayName": "OAuth Token Endpoint",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<oauth url>",
       "Required": false,
       "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -98,7 +98,7 @@ $Body = @'
       "DisplayName": "OAuth Scope",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<scope>",
       "Required": false,
       "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -107,7 +107,7 @@ $Body = @'
       "DisplayName": "Vault Role Name",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<vault role name>",
       "Required": false,
       "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -192,7 +192,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -202,7 +202,7 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault token>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -221,7 +221,7 @@ $Body = @'
       "DisplayName": "Client ID",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client id>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -231,7 +231,7 @@ $Body = @'
       "DisplayName": "Client Secret",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client secret>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -241,7 +241,7 @@ $Body = @'
       "DisplayName": "OAuth Token Endpoint",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<oauth url>",
       "Required": false,
       "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -250,7 +250,7 @@ $Body = @'
       "DisplayName": "OAuth Scope",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<scope>",
       "Required": false,
       "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -259,7 +259,7 @@ $Body = @'
       "DisplayName": "Vault Role Name",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<vault role name>",
       "Required": false,
       "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -353,7 +353,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -363,7 +363,7 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault token>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -382,7 +382,7 @@ $Body = @'
       "DisplayName": "Client ID",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client id>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -392,7 +392,7 @@ $Body = @'
       "DisplayName": "Client Secret",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client secret>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -402,7 +402,7 @@ $Body = @'
       "DisplayName": "OAuth Token Endpoint",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<oauth url>",
       "Required": false,
       "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -411,7 +411,7 @@ $Body = @'
       "DisplayName": "OAuth Scope",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<scope>",
       "Required": false,
       "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -420,7 +420,7 @@ $Body = @'
       "DisplayName": "Vault Role Name",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<vault role name>",
       "Required": false,
       "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -514,7 +514,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -524,7 +524,7 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault token>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -543,7 +543,7 @@ $Body = @'
       "DisplayName": "Client ID",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client id>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -553,7 +553,7 @@ $Body = @'
       "DisplayName": "Client Secret",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client secret>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -563,7 +563,7 @@ $Body = @'
       "DisplayName": "OAuth Token Endpoint",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<oauth url>",
       "Required": false,
       "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -572,7 +572,7 @@ $Body = @'
       "DisplayName": "OAuth Scope",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<scope>",
       "Required": false,
       "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -581,7 +581,7 @@ $Body = @'
       "DisplayName": "Vault Role Name",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<vault role name>",
       "Required": false,
       "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -675,7 +675,7 @@ $Body = @'
       "DisplayName": "Server Username",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault server url>",
       "Required": true,
       "IsPAMEligible": true,
       "Description": "The base URI (and port) to the instance of Hashicorp Vault ex: https://localhost:8200"
@@ -685,7 +685,7 @@ $Body = @'
       "DisplayName": "Server Password",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<vault token>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "Vault token that will be used by the Orchestrator integration for authenticating and performing operations in the Vault instance. Required unless 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -704,7 +704,7 @@ $Body = @'
       "DisplayName": "Client ID",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client id>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client ID registered with your IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -714,7 +714,7 @@ $Body = @'
       "DisplayName": "Client Secret",
       "Type": "Secret",
       "DependsOn": "",
-      "DefaultValue": "",
+      "DefaultValue": "<client secret>",
       "Required": false,
       "IsPAMEligible": true,
       "Description": "The OAuth 2.0 Client Secret for the above Client ID. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
@@ -724,7 +724,7 @@ $Body = @'
       "DisplayName": "OAuth Token Endpoint",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<oauth url>",
       "Required": false,
       "Description": "The IdP's OAuth 2.0 token endpoint URL used to obtain a JWT via the Client Credentials grant. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -733,7 +733,7 @@ $Body = @'
       "DisplayName": "OAuth Scope",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<scope>",
       "Required": false,
       "Description": "Optional OAuth 2.0 scope to request from the IdP (e.g. Entra ID typically needs 'api://<app-id-uri>/.default'). Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
@@ -742,7 +742,7 @@ $Body = @'
       "DisplayName": "Vault Role Name",
       "Type": "String",
       "DependsOn": "UseOAuth",
-      "DefaultValue": "",
+      "DefaultValue": "<vault role name>",
       "Required": false,
       "Description": "The name of the Vault role, configured under the JWT auth mount (e.g. 'auth/jwt/role/<name>'), to authenticate against using the JWT obtained from the IdP. Only used when 'Use OAuth 2.0 (Client Credentials)' is enabled."
     },
