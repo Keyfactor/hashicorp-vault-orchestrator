@@ -8,4 +8,6 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("hashicorp-vault-orchestrator.Tests")]
+// Must match the test project's actual <AssemblyName> (Keyfactor.Extensions.Orchestrators.HCV.Tests),
+// not its project/folder name — InternalsVisibleTo matches by assembly name only.
+[assembly: InternalsVisibleTo("Keyfactor.Extensions.Orchestrators.HCV.Tests")]
