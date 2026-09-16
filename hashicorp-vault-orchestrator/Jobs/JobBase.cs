@@ -211,7 +211,7 @@ namespace Keyfactor.Extensions.Orchestrator.HashicorpVault.Jobs
             }
             else
             {
-                VaultClient = new HcvKeyfactorClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.StorePath);
+                VaultClient = new HcvKeyfactorClient(JobParameters.VaultToken, JobParameters.VaultServerUrl, JobParameters.MountPoint, JobParameters.StorePath, JobParameters.Namespace);
             }
             // logging token policies (best-effort; token may lack lookup-self or method may be unsupported)
             try
